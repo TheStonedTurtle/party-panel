@@ -2,38 +2,34 @@ package thestonedturtle.partypanel;
 
 import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
-import jdk.internal.jline.internal.Nullable;
+import javax.swing.SwingUtilities;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
-import net.runelite.api.InventoryID;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.client.account.AccountSession;
+import net.runelite.client.account.SessionManager;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.PartyChanged;
+import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
-import net.runelite.client.ws.PartyMember;
 import net.runelite.client.ws.PartyService;
 import net.runelite.client.ws.WSClient;
-import net.runelite.http.api.ws.messages.party.UserJoin;
 import net.runelite.http.api.ws.messages.party.UserPart;
 import net.runelite.http.api.ws.messages.party.UserSync;
 import thestonedturtle.partypanel.data.PartyPlayer;
-import thestonedturtle.partypanel.data.Stats;
 
 @Slf4j
 @PluginDescriptor(
@@ -56,6 +52,12 @@ public class PartyPanelPlugin extends Plugin
 	private PartyService partyService;
 
 	@Inject
+	private SessionManager sessionManager;
+
+	@Inject
+	SpriteManager spriteManager;
+
+	@Inject
 	private WSClient wsClient;
 
 	@Provides
@@ -64,17 +66,19 @@ public class PartyPanelPlugin extends Plugin
 		return configManager.getConfig(PartyPanelConfig.class);
 	}
 
+	@Getter
 	private final Map<UUID, PartyPlayer> partyMembers = new HashMap<>();
 
 	private NavigationButton navButton;
 	private PartyPanel panel;
-	private PartyPlayer myPlayer;
+	@Getter
+	private PartyPlayer myPlayer = null;
 	private boolean fetchPlayerName = false;
 
 	@Override
 	protected void startUp() throws Exception
 	{
-		panel = new PartyPanel();
+		panel = new PartyPanel(this);
 		navButton = NavigationButton.builder()
 			.tooltip("Party Panel")
 			.icon(ICON)
@@ -84,6 +88,15 @@ public class PartyPanelPlugin extends Plugin
 
 		clientToolbar.addNavigation(navButton);
 		wsClient.registerMessage(PartyPlayer.class);
+
+		// If there isn't already a session open, open one
+		if (!wsClient.sessionExists())
+		{
+			AccountSession accountSession = sessionManager.getAccountSession();
+			// Use the existing account session, if it exists, otherwise generate a new session id
+			UUID uuid = accountSession != null ? accountSession.getUuid() : UUID.randomUUID();
+			wsClient.changeSession(uuid);
+		}
 	}
 
 	@Override
@@ -92,12 +105,13 @@ public class PartyPanelPlugin extends Plugin
 		clientToolbar.removeNavigation(navButton);
 		wsClient.unregisterMessage(PartyPlayer.class);
 		partyMembers.clear();
+		partyService.changeParty(null);
 	}
 
 	boolean isInParty()
 	{
 		// TODO: Determine if this is the correct way to check if we are in a party
-		return partyService.getLocalMember() != null;
+		return wsClient.sessionExists() && partyService.getLocalMember() != null;
 	}
 
 	@Subscribe
@@ -160,6 +174,7 @@ public class PartyPanelPlugin extends Plugin
 				myPlayer = new PartyPlayer(partyService.getLocalMember(), client);
 				// member changed account, send new data to all members
 				wsClient.send(myPlayer);
+				SwingUtilities.invokeLater(panel::refreshUI);
 			}
 		}
 	}
