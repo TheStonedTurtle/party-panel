@@ -24,7 +24,6 @@
  */
 package thestonedturtle.partypanel.data;
 
-import java.util.Objects;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import net.runelite.api.Client;
@@ -32,6 +31,7 @@ import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.InventoryID;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
+import net.runelite.api.Skill;
 import net.runelite.client.ws.PartyMember;
 import net.runelite.http.api.ws.WebsocketMessage;
 
@@ -48,12 +48,48 @@ public class PartyPlayer extends WebsocketMessage
 	public PartyPlayer(final PartyMember member, final Client client)
 	{
 		this.member = member;
-		this.username = Objects.requireNonNull(client.getLocalPlayer()).getName();
-		this.stats = new Stats(client);
+		this.username = null;
+		this.stats = null;
+		this.inventory = new Item[28];
+		this.equipment = new Item[EquipmentInventorySlot.AMMO.getSlotIdx() + 1];
 
-		final ItemContainer invi = client.getItemContainer(InventoryID.INVENTORY);
-		inventory = invi == null ? new Item[28] : invi.getItems();
-		final ItemContainer equip = client.getItemContainer(InventoryID.EQUIPMENT);
-		equipment = equip == null ? new Item[EquipmentInventorySlot.AMMO.getSlotIdx() + 1] : equip.getItems();
+		// Player is logged in
+		if (client.getLocalPlayer() != null)
+		{
+			this.username = client.getLocalPlayer().getName();
+			this.stats = new Stats(client);
+
+			final ItemContainer invi = client.getItemContainer(InventoryID.INVENTORY);
+			if (invi != null)
+			{
+				this.inventory = invi.getItems();
+			}
+
+			final ItemContainer equip = client.getItemContainer(InventoryID.EQUIPMENT);
+			if (equip != null)
+			{
+				this.equipment = equip.getItems();
+			}
+		}
+	}
+
+	public int getSkillBoostedLevel(final Skill skill)
+	{
+		if (stats == null)
+		{
+			return 0;
+		}
+
+		return stats.getBoostedLevels().get(skill);
+	}
+
+	public int getSkillRealLevel(final Skill skill)
+	{
+		if (stats == null)
+		{
+			return 0;
+		}
+
+		return stats.getBaseLevels().get(skill);
 	}
 }
