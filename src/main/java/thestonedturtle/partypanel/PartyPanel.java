@@ -25,13 +25,191 @@
 package thestonedturtle.partypanel;
 
 import com.google.inject.Inject;
+import java.awt.Color;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
+import thestonedturtle.partypanel.data.PartyPlayer;
+import thestonedturtle.partypanel.ui.PlayerBanner;
 
-public class PartyPanel extends PluginPanel
+class PartyPanel extends PluginPanel
 {
+	private enum PartyPanelViewType
+	{
+		BANNER,
+		PLAYER
+	}
+
+	private static final Color BACKGROUND_COLOR = ColorScheme.DARK_GRAY_COLOR;
+	private static final Color BACKGROUND_HOVER_COLOR = ColorScheme.DARK_GRAY_HOVER_COLOR;
+
+	private final PartyPanelPlugin plugin;
+	private final Map<UUID, PlayerBanner> bannerMap = new HashMap<>();
+
+	private PartyPanelViewType viewType = PartyPanelViewType.BANNER;
+	private PartyPlayer selectedPlayer = null;
+
 	@Inject
-	public PartyPanel()
+	PartyPanel(final PartyPanelPlugin plugin)
 	{
 		super();
+		this.plugin = plugin;
+	}
+
+	void refreshUI()
+	{
+		this.removeAll();
+		switch (viewType)
+		{
+			case BANNER:
+				showBannerView();
+				break;
+			case PLAYER:
+				showPlayerView();
+				break;
+		}
+	}
+
+	/**
+	 * Shows all members of the party, excluding the local player, in banner view. See {@link PlayerBanner)
+	 */
+	void showBannerView()
+	{
+		viewType = PartyPanelViewType.BANNER;
+		removeAll();
+
+		final Collection<PartyPlayer> players = plugin.getPartyMembers().values()
+			.stream()
+			// Sort by username, if it doesn't exist use their discord name
+			.sorted(Comparator.comparing(o -> o.getUsername() == null ? o.getMember().getName() : o.getUsername()))
+			.collect(Collectors.toList());
+
+		for (final PartyPlayer player : players)
+		{
+			final PlayerBanner banner = new PlayerBanner(player, plugin.spriteManager);
+			banner.addMouseListener(new MouseAdapter()
+			{
+				@Override
+				public void mousePressed(MouseEvent e)
+				{
+					if (e.getButton() == MouseEvent.BUTTON1)
+					{
+						selectedPlayer = player;
+						viewType = PartyPanelViewType.PLAYER;
+						showPlayerView();
+					}
+				}
+
+				@Override
+				public void mouseEntered(MouseEvent e)
+				{
+					banner.setBackground(BACKGROUND_HOVER_COLOR);
+				}
+
+				@Override
+				public void mouseExited(MouseEvent e)
+				{
+					banner.setBackground(BACKGROUND_COLOR);
+				}
+			});
+			add(banner);
+			bannerMap.put(player.getMember().getMemberId(), banner);
+		}
+
+		if (getComponentCount() == 0)
+		{
+			add(new JLabel("There are no members in your party"));
+		}
+
+		this.revalidate();
+		this.repaint();
+	}
+
+	void showPlayerView()
+	{
+		if (selectedPlayer == null)
+		{
+			showBannerView();
+		}
+
+		removeAll();
+		add(createPlayerTitle());
+		add(new PlayerBanner(selectedPlayer, plugin.spriteManager));
+
+		this.revalidate();
+		this.repaint();
+	}
+
+	// Title element for Loot breakdown view
+	private JButton createPlayerTitle()
+	{
+		final JButton label = new JButton("Back to party overview");
+		label.setFocusable(false);
+		label.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseEntered(MouseEvent e)
+			{
+				label.setBackground(BACKGROUND_HOVER_COLOR);
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e)
+			{
+				label.setBackground(BACKGROUND_COLOR);
+			}
+
+			@Override
+			public void mousePressed(MouseEvent e)
+			{
+				if (e.getButton() == MouseEvent.BUTTON1)
+				{
+					showBannerView();
+				}
+			}
+		});
+
+		return label;
+	}
+
+	void updatePartyPlayer(final PartyPlayer player)
+	{
+		switch (viewType)
+		{
+			case BANNER:
+				final PlayerBanner panel = bannerMap.get(player.getMember().getMemberId());
+				if (panel == null)
+				{
+					// New member, recreate entire view
+					showBannerView();
+					return;
+				}
+
+				panel.setPlayer(player);
+				if (player.getUsername().equals(panel.getPlayer().getUsername()))
+				{
+					panel.recreateStatsPanel();
+				}
+				else
+				{
+					panel.recreatePanel();
+				}
+				break;
+			case PLAYER:
+				if (player.equals(selectedPlayer))
+				{
+					showPlayerView();
+				}
+				break;
+		}
 	}
 }
