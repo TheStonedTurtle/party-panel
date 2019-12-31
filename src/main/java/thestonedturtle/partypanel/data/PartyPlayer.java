@@ -29,9 +29,9 @@ import lombok.EqualsAndHashCode;
 import net.runelite.api.Client;
 import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.InventoryID;
-import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.Skill;
+import net.runelite.client.game.ItemManager;
 import net.runelite.client.ws.PartyMember;
 import net.runelite.http.api.ws.WebsocketMessage;
 
@@ -42,16 +42,16 @@ public class PartyPlayer extends WebsocketMessage
 	private PartyMember member;
 	private String username;
 	private Stats stats;
-	private Item[] inventory;
-	private Item[] equipment;
+	private GameItem[] inventory;
+	private GameItem[] equipment;
 
-	public PartyPlayer(final PartyMember member, final Client client)
+	public PartyPlayer(final PartyMember member, final Client client, final ItemManager itemManager)
 	{
 		this.member = member;
 		this.username = null;
 		this.stats = null;
-		this.inventory = new Item[28];
-		this.equipment = new Item[EquipmentInventorySlot.AMMO.getSlotIdx() + 1];
+		this.inventory = new GameItem[28];
+		this.equipment = new GameItem[EquipmentInventorySlot.AMMO.getSlotIdx() + 1];
 
 		// Player is logged in
 		if (client.getLocalPlayer() != null)
@@ -62,13 +62,13 @@ public class PartyPlayer extends WebsocketMessage
 			final ItemContainer invi = client.getItemContainer(InventoryID.INVENTORY);
 			if (invi != null)
 			{
-				this.inventory = invi.getItems();
+				this.inventory = GameItem.convertItemsToGameItems(invi.getItems(), itemManager);
 			}
 
 			final ItemContainer equip = client.getItemContainer(InventoryID.EQUIPMENT);
 			if (equip != null)
 			{
-				this.equipment = equip.getItems();
+				this.equipment = GameItem.convertItemsToGameItems(equip.getItems(), itemManager);
 			}
 		}
 	}
