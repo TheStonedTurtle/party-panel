@@ -93,4 +93,24 @@ public class PartyPlayer extends PartyMemberMessage
 
 		return stats.getBaseLevels().get(skill);
 	}
+
+	public void setSkillsBoostedLevel(final Skill skill, final int level)
+	{
+		if (stats == null)
+		{
+			return;
+		}
+
+		stats.getBoostedLevels().put(skill, level);
+	}
+
+	public void setSkillsRealLevel(final Skill skill, final int level)
+	{
+		if (stats == null)
+		{
+			return;
+		}
+
+		stats.getBaseLevels().put(skill, level);
+	}
 }
