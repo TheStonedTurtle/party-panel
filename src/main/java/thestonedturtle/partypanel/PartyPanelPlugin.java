@@ -4,6 +4,7 @@ import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -112,6 +113,11 @@ public class PartyPanelPlugin extends Plugin
 			wsClient.changeSession(uuid);
 		}
 
+		if (isInParty())
+		{
+			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
+			wsClient.send(myPlayer);
+		}
 		doSync = true;
 	}
 
@@ -133,11 +139,12 @@ public class PartyPanelPlugin extends Plugin
 	@Subscribe
 	public void onPartyPlayer(final PartyPlayer player)
 	{
-		if (player.equals(myPlayer))
+		if (player.getMemberId().equals(myPlayer.getMemberId()))
 		{
 			return;
 		}
 
+		player.setMember(partyService.getMemberById(player.getMemberId()));
 		final boolean newMember = !partyMembers.containsKey(player.getMember().getMemberId());
 		partyMembers.put(player.getMember().getMemberId(), player);
 		if (newMember)
@@ -158,12 +165,20 @@ public class PartyPanelPlugin extends Plugin
 				.runeLiteFormattedMessage(builder.build())
 				.build());
 		}
+
+		SwingUtilities.invokeLater(() -> panel.updatePartyPlayer(player));
 	}
 
 	@Subscribe
 	public void onUserJoin(final UserJoin event)
 	{
 		// TODO: Figure out how to support people not using the plugin
+		if (partyService.getLocalMember() == null)
+		{
+			return;
+		}
+
+		// Self joined
 		if (event.getMemberId().equals(partyService.getLocalMember().getMemberId()))
 		{
 			if (myPlayer == null)
@@ -239,15 +254,15 @@ public class PartyPanelPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(final GameTick tick)
 	{
-		if (!isInParty())
+		if (!isInParty() || client.getLocalPlayer() == null)
 		{
 			return;
 		}
 
-		if (fetchPlayerName && client.getLocalPlayer() != null)
+		if (fetchPlayerName)
 		{
 			fetchPlayerName = false;
-			if (myPlayer == null || !myPlayer.getUsername().equals(client.getLocalPlayer().getName()))
+			if (myPlayer == null || !Objects.equals(client.getLocalPlayer().getName(), myPlayer.getUsername()))
 			{
 				myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
 				// member changed account, send new data to all members
@@ -265,7 +280,7 @@ public class PartyPanelPlugin extends Plugin
 			return null;
 		}
 
-		if (uuid.equals(myPlayer.getMember().getMemberId()))
+		if (uuid.equals(myPlayer.getMemberId()))
 		{
 			return myPlayer;
 		}

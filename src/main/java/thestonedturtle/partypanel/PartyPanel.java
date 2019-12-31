@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.swing.JButton;
@@ -40,6 +41,9 @@ import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 import thestonedturtle.partypanel.data.PartyPlayer;
 import thestonedturtle.partypanel.ui.PlayerBanner;
+import thestonedturtle.partypanel.ui.PlayerInventoryPanel;
+import thestonedturtle.partypanel.ui.equipment.PlayerEquipmentPanel;
+import thestonedturtle.partypanel.ui.skills.PlayerSkillsPanel;
 
 class PartyPanel extends PluginPanel
 {
@@ -144,6 +148,9 @@ class PartyPanel extends PluginPanel
 		removeAll();
 		add(createPlayerTitle());
 		add(new PlayerBanner(selectedPlayer, plugin.spriteManager));
+		add(new PlayerInventoryPanel(selectedPlayer.getInventory(), plugin.itemManager));
+		add(new PlayerEquipmentPanel(selectedPlayer.getEquipment(), plugin.spriteManager, plugin.itemManager));
+		add(new PlayerSkillsPanel(selectedPlayer, plugin.spriteManager, plugin.itemManager));
 
 		this.revalidate();
 		this.repaint();
@@ -194,8 +201,9 @@ class PartyPanel extends PluginPanel
 					return;
 				}
 
+				final boolean usernameChanged = Objects.equals(player.getUsername(), panel.getPlayer().getUsername());
 				panel.setPlayer(player);
-				if (player.getUsername().equals(panel.getPlayer().getUsername()))
+				if (usernameChanged)
 				{
 					panel.recreateStatsPanel();
 				}

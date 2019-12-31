@@ -69,7 +69,10 @@ public class TotalPanelSlot extends JPanel
 		textLabel.setForeground(Color.YELLOW);
 		add(textLabel, c);
 
-		levelLabel.setText(String.valueOf(totalLevel));
+		if (totalLevel > 0)
+		{
+			levelLabel.setText(String.valueOf(totalLevel));
+		}
 		levelLabel.setFont(FontManager.getRunescapeSmallFont());
 		levelLabel.setForeground(Color.YELLOW);
 		c.gridy++;

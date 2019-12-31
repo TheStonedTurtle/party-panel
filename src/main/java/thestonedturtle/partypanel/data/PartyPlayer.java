@@ -33,13 +33,13 @@ import net.runelite.api.ItemContainer;
 import net.runelite.api.Skill;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ws.PartyMember;
-import net.runelite.http.api.ws.WebsocketMessage;
+import net.runelite.http.api.ws.messages.party.PartyMemberMessage;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class PartyPlayer extends WebsocketMessage
+public class PartyPlayer extends PartyMemberMessage
 {
-	private PartyMember member;
+	private transient PartyMember member;
 	private String username;
 	private Stats stats;
 	private GameItem[] inventory;
@@ -47,6 +47,7 @@ public class PartyPlayer extends WebsocketMessage
 
 	public PartyPlayer(final PartyMember member, final Client client, final ItemManager itemManager)
 	{
+		this.setMemberId(member.getMemberId());
 		this.member = member;
 		this.username = null;
 		this.stats = null;

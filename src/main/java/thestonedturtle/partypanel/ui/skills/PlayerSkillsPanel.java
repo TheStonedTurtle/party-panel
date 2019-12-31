@@ -139,6 +139,7 @@ public class PlayerSkillsPanel extends JPanel
 			this.add(slot);
 		}
 
-		this.add(new TotalPanelSlot(player.getStats().getTotalLevel(), spriteManager));
+		final int totalLevel = player.getStats() == null ? -1 : player.getStats().getTotalLevel();
+		this.add(new TotalPanelSlot(totalLevel, spriteManager));
 	}
 }
