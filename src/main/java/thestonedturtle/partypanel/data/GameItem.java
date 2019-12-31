@@ -63,7 +63,7 @@ public class GameItem
 		for (int i = 0; i < items.length; i++)
 		{
 			final Item item = items[i];
-			if (item == null)
+			if (item == null || item.getId() == -1)
 			{
 				output[i] = null;
 			}
