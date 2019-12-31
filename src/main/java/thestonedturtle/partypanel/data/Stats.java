@@ -39,6 +39,7 @@ public class Stats
 	private Map<Skill, Integer> boostedLevels = new HashMap<>();
 	private int specialPercent;
 	private int combatLevel;
+	private int totalLevel;
 
 	public Stats(final Client client)
 	{
@@ -61,5 +62,6 @@ public class Stats
 		);
 
 		specialPercent = client.getVar(VarPlayer.SPECIAL_ATTACK_PERCENT);
+		totalLevel = client.getTotalLevel();
 	}
 }
