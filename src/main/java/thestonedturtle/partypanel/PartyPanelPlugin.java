@@ -11,17 +11,16 @@ import javax.inject.Inject;
 import javax.swing.SwingUtilities;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.InventoryID;
+import net.runelite.api.Skill;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.ItemContainerChanged;
+import net.runelite.api.events.StatChanged;
 import net.runelite.client.account.AccountSession;
 import net.runelite.client.account.SessionManager;
-import net.runelite.client.chat.ChatColorType;
-import net.runelite.client.chat.ChatMessageBuilder;
-import net.runelite.client.chat.ChatMessageManager;
-import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.PartyChanged;
@@ -37,6 +36,7 @@ import net.runelite.client.ws.WSClient;
 import net.runelite.http.api.ws.messages.party.UserJoin;
 import net.runelite.http.api.ws.messages.party.UserPart;
 import net.runelite.http.api.ws.messages.party.UserSync;
+import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
 
 @Slf4j
@@ -46,9 +46,6 @@ import thestonedturtle.partypanel.data.PartyPlayer;
 public class PartyPanelPlugin extends Plugin
 {
 	private final static BufferedImage ICON = ImageUtil.getResourceStreamFromClass(PartyPanelPlugin.class, "icon.png");
-
-	@Inject
-	private ChatMessageManager chatMessageManager;
 
 	@Inject
 	private Client client;
@@ -84,8 +81,6 @@ public class PartyPanelPlugin extends Plugin
 	private PartyPanel panel;
 	@Getter
 	private PartyPlayer myPlayer = null;
-	private boolean fetchPlayerName = false;
-	private boolean doSync;
 
 	@Inject
 	ItemManager itemManager;
@@ -118,7 +113,6 @@ public class PartyPanelPlugin extends Plugin
 			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
 			wsClient.send(myPlayer);
 		}
-		doSync = true;
 	}
 
 	@Override
@@ -127,7 +121,6 @@ public class PartyPanelPlugin extends Plugin
 		clientToolbar.removeNavigation(navButton);
 		partyMembers.clear();
 		wsClient.unregisterMessage(PartyPlayer.class);
-		doSync = false;
 	}
 
 	boolean isInParty()
@@ -145,26 +138,7 @@ public class PartyPanelPlugin extends Plugin
 		}
 
 		player.setMember(partyService.getMemberById(player.getMemberId()));
-		final boolean newMember = !partyMembers.containsKey(player.getMember().getMemberId());
-		partyMembers.put(player.getMember().getMemberId(), player);
-		if (newMember)
-		{
-			final ChatMessageBuilder builder = new ChatMessageBuilder()
-				.append(ChatColorType.HIGHLIGHT)
-				.append(player.getMember().getName());
-			if (player.getUsername() != null)
-			{
-				builder.append(" (")
-					.append(player.getUsername())
-					.append(")");
-			}
-			builder.append(" has joined the party!");
-
-			chatMessageManager.queue(QueuedMessage.builder()
-				.type(ChatMessageType.FRIENDSCHATNOTIFICATION)
-				.runeLiteFormattedMessage(builder.build())
-				.build());
-		}
+		partyMembers.put(player.getMemberId(), player);
 
 		SwingUtilities.invokeLater(() -> panel.updatePartyPlayer(player));
 	}
@@ -192,26 +166,8 @@ public class PartyPanelPlugin extends Plugin
 	@Subscribe
 	public void onUserPart(final UserPart event)
 	{
-		final PartyPlayer removed = partyMembers.remove(event.getMemberId());
-
-		if (removed != null)
-		{
-			final ChatMessageBuilder builder = new ChatMessageBuilder()
-				.append(ChatColorType.HIGHLIGHT)
-				.append(removed.getMember().getName());
-			if (removed.getUsername() != null)
-			{
-				builder.append(" (")
-					.append(removed.getUsername())
-					.append(")");
-			}
-			builder.append(" has left the party!");
-
-			chatMessageManager.queue(QueuedMessage.builder()
-				.type(ChatMessageType.FRIENDSCHATNOTIFICATION)
-				.runeLiteFormattedMessage(builder.build())
-				.build());
-		}
+		partyMembers.remove(event.getMemberId());
+		panel.refreshUI();
 	}
 
 	@Subscribe
@@ -224,6 +180,7 @@ public class PartyPanelPlugin extends Plugin
 	public void onPartyChanged(final PartyChanged event)
 	{
 		partyMembers.clear();
+		panel.refreshUI();
 		myPlayer = null;
 	}
 
@@ -235,20 +192,10 @@ public class PartyPanelPlugin extends Plugin
 			return;
 		}
 
-		if (event.getGameState() == GameState.LOGGING_IN)
+		if (event.getGameState().equals(GameState.LOGIN_SCREEN))
 		{
-			fetchPlayerName = true;
+			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
 		}
-
-		if (doSync && !partyService.getMembers().isEmpty())
-		{
-			// Request sync
-			final UserSync userSync = new UserSync();
-			userSync.setMemberId(partyService.getLocalMember().getMemberId());
-			wsClient.send(userSync);
-		}
-
-		doSync = false;
 	}
 
 	@Subscribe
@@ -259,17 +206,57 @@ public class PartyPanelPlugin extends Plugin
 			return;
 		}
 
-		if (fetchPlayerName)
+		if (myPlayer == null)
 		{
-			fetchPlayerName = false;
-			if (myPlayer == null || !Objects.equals(client.getLocalPlayer().getName(), myPlayer.getUsername()))
-			{
-				myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
-				// member changed account, send new data to all members
-				wsClient.send(myPlayer);
-				SwingUtilities.invokeLater(panel::refreshUI);
-			}
+			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
+			// member changed account, send new data to all members
+			wsClient.send(myPlayer);
 		}
+
+		if (!Objects.equals(client.getLocalPlayer().getName(), myPlayer.getUsername()))
+		{
+			myPlayer.setUsername(client.getLocalPlayer().getName());
+			wsClient.send(myPlayer);
+		}
+	}
+
+	@Subscribe
+	public void onStatChanged(final StatChanged event)
+	{
+		if (!isInParty())
+		{
+			return;
+		}
+
+		final Skill s = event.getSkill();
+		if (myPlayer.getSkillBoostedLevel(s) == event.getBoostedLevel() && myPlayer.getSkillRealLevel(s) == event.getLevel())
+		{
+			return;
+		}
+
+		myPlayer.setSkillsBoostedLevel(event.getSkill(), event.getBoostedLevel());
+		myPlayer.setSkillsRealLevel(event.getSkill(), event.getLevel());
+		wsClient.send(myPlayer);
+	}
+
+	@Subscribe
+	public void onItemContainerChanged(final ItemContainerChanged c)
+	{
+		if (!isInParty())
+		{
+			return;
+		}
+		
+		if (c.getContainerId() == InventoryID.INVENTORY.getId())
+		{
+			myPlayer.setInventory(GameItem.convertItemsToGameItems(c.getItemContainer().getItems(), itemManager));
+		}
+		else if (c.getContainerId() == InventoryID.EQUIPMENT.getId())
+		{
+			myPlayer.setEquipment(GameItem.convertItemsToGameItems(c.getItemContainer().getItems(), itemManager));
+		}
+
+		wsClient.send(myPlayer);
 	}
 
 	@Nullable
