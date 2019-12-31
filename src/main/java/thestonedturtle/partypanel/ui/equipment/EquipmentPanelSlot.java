@@ -24,11 +24,11 @@
  */
 package thestonedturtle.partypanel.ui.equipment;
 
-import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import lombok.Getter;
+import thestonedturtle.partypanel.ImgUtil;
 import thestonedturtle.partypanel.data.GameItem;
 
 public class EquipmentPanelSlot extends JLabel
@@ -43,7 +43,7 @@ public class EquipmentPanelSlot extends JLabel
 		super();
 
 		this.background = background;
-		this.placeholder = placeholder;
+		this.placeholder = ImgUtil.overlapImages(placeholder, background);
 
 		setVerticalAlignment(JLabel.CENTER);
 		setHorizontalAlignment(JLabel.CENTER);
@@ -56,24 +56,10 @@ public class EquipmentPanelSlot extends JLabel
 
 		if (item == null)
 		{
-			setIcon(new ImageIcon(createNewImage(placeholder)));
+			setIcon(new ImageIcon(placeholder));
 			return;
 		}
 
-		setIcon(new ImageIcon(createNewImage(image)));
-	}
-
-	private BufferedImage createNewImage(final BufferedImage foreground)
-	{
-		final int centeredX = background.getWidth() / 2 - foreground.getWidth() / 2;
-		final int centeredY = background.getHeight() / 2 - foreground.getHeight() / 2;
-
-		BufferedImage combined = new BufferedImage(background.getWidth(), background.getHeight(), BufferedImage.TYPE_INT_ARGB);
-		Graphics2D g2d = combined.createGraphics();
-		g2d.drawImage(background, 0, 0, null);
-		g2d.drawImage(foreground, centeredX, centeredY, null);
-		g2d.dispose();
-
-		return combined;
+		setIcon(new ImageIcon(ImgUtil.overlapImages(image, background)));
 	}
 }
