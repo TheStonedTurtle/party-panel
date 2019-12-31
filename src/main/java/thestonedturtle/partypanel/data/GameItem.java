@@ -63,7 +63,14 @@ public class GameItem
 		for (int i = 0; i < items.length; i++)
 		{
 			final Item item = items[i];
-			output[i] = new GameItem(item, itemManager);
+			if (item == null)
+			{
+				output[i] = null;
+			}
+			else
+			{
+				output[i] = new GameItem(item, itemManager);
+			}
 		}
 
 		return output;
