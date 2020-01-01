@@ -61,5 +61,6 @@ public class EquipmentPanelSlot extends JLabel
 		}
 
 		setIcon(new ImageIcon(ImgUtil.overlapImages(image, background)));
+		setToolTipText(item.getName());
 	}
 }
