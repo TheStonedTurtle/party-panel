@@ -148,18 +148,27 @@ public class PlayerBanner extends JPanel
 	{
 		statsPanel.removeAll();
 
-		statsPanel.add(createIconTextLabel(hitpointsIcon, player.getSkillBoostedLevel(Skill.HITPOINTS)));
-		statsPanel.add(createIconTextLabel(prayIcon, player.getSkillBoostedLevel(Skill.PRAYER)));
-		statsPanel.add(createIconTextLabel(specialAttackIcon, player.getStats() == null ? 0 : player.getStats().getSpecialPercent()));
+		final JPanel hp = createIconTextLabel(hitpointsIcon, String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS)));
+		hp.setToolTipText("Hitpoints HP");
+		statsPanel.add(hp);
+		final JPanel pray = createIconTextLabel(prayIcon, String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER)));
+		pray.setToolTipText("Prayer");
+		statsPanel.add(pray);
+		final JPanel special = createIconTextLabel(specialAttackIcon, player.getStats() == null ? "0%" : String.valueOf(player.getStats().getSpecialPercent()) + "%");
+		special.setToolTipText("Special Attack");
+		statsPanel.add(special);
+
+		statsPanel.revalidate();
+		statsPanel.repaint();
 	}
 
-	private JPanel createIconTextLabel(final BufferedImage icon, final int value)
+	private JPanel createIconTextLabel(final BufferedImage icon, final String value)
 	{
 		final JLabel iconLabel = new JLabel();
 		iconLabel.setPreferredSize(STAT_ICON_SIZE);
 		iconLabel.setIcon(new ImageIcon(ImageUtil.resizeImage(icon, STAT_ICON_SIZE.width, STAT_ICON_SIZE.height)));
 
-		final JLabel textLabel = new JLabel(String.valueOf(value));
+		final JLabel textLabel = new JLabel(value);
 
 		final JPanel panel = new JPanel();
 		panel.add(iconLabel);
