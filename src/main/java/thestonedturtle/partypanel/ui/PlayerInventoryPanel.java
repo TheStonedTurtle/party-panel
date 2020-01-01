@@ -27,7 +27,6 @@ package thestonedturtle.partypanel.ui;
 import java.awt.Color;
 import java.awt.Dimension;
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.Border;
@@ -71,7 +70,7 @@ public class PlayerInventoryPanel extends JPanel
 					name += " x " + QuantityFormatter.formatNumber(i.getQty());
 				}
 				label.setToolTipText("<html>" + name + "</html>");
-				label.setIcon(new ImageIcon(itemManager.getImage(i.getId(), i.getQty(), i.isStackable())));
+				itemManager.getImage(i.getId(), i.getQty(), i.isStackable()).addTo(label);
 			}
 
 			add(label);
