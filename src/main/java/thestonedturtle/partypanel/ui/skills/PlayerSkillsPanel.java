@@ -135,6 +135,7 @@ public class PlayerSkillsPanel extends JPanel
 		for (final Skill s : SKILLS)
 		{
 			final SkillPanelSlot slot = new SkillPanelSlot(player.getSkillBoostedLevel(s), player.getSkillRealLevel(s), spriteManager.getSprite(SPRITE_MAP.get(s), 0), spriteManager);
+			slot.setToolTipText(s.getName());
 			panelMap.put(s, slot);
 			this.add(slot);
 		}
