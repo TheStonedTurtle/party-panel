@@ -28,6 +28,7 @@ import com.google.common.collect.ImmutableMap;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.image.BufferedImage;
@@ -97,6 +98,7 @@ public class PlayerEquipmentPanel extends JPanel
 		this.setPreferredSize(PANEL_SIZE);
 		this.setBorder(PANEL_BORDER);
 		this.setLayout(new GridBagLayout());
+		this.setBackground(new Color(62, 53, 41));
 
 		final GridBagConstraints c = new GridBagConstraints();
 		c.gridx = 0;
@@ -156,7 +158,10 @@ public class PlayerEquipmentPanel extends JPanel
 	protected void paintComponent(Graphics g)
 	{
 		super.paintComponent(g);
-		g.drawImage(PANEL_BACKGROUND, 0, 0, null);
+		Graphics2D g2d = (Graphics2D) g;
+		final int x = (this.getWidth() - PANEL_BACKGROUND.getWidth()) / 2;
+		final int y = (this.getHeight() - PANEL_BACKGROUND.getHeight()) / 2;
+		g2d.drawImage(PANEL_BACKGROUND, x, y, null);
 	}
 
 	private EquipmentPanelSlot createEquipmentPanelSlot(final EquipmentInventorySlot slot, final GameItem[] items, final BufferedImage background)
