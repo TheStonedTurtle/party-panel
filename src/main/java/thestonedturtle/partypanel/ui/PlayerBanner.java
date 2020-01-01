@@ -56,10 +56,12 @@ public class PlayerBanner extends JPanel
 	private final BufferedImage prayIcon;
 	private final BufferedImage specialAttackIcon;
 	private final JPanel statsPanel = new JPanel();
+	private final JLabel iconLabel = new JLabel();
 
 	@Setter
 	@Getter
 	private PartyPlayer player;
+	private boolean checkIcon;
 
 	public PlayerBanner(final PartyPlayer player, SpriteManager spriteManager)
 	{
@@ -95,16 +97,15 @@ public class PlayerBanner extends JPanel
 		c.ipady = 4;
 
 		// Add avatar label regardless of if one exists just to have UI matching
-		final JLabel iconLabel = new JLabel();
 		iconLabel.setBorder(new MatteBorder(1, 1, 1, 1, ColorScheme.DARKER_GRAY_HOVER_COLOR));
 		iconLabel.setPreferredSize(ICON_SIZE);
 		iconLabel.setMinimumSize(ICON_SIZE);
 		iconLabel.setOpaque(false);
 
-		if (player.getMember().getAvatar() != null)
+		checkIcon = player.getMember().getAvatar() == null;
+		if (!checkIcon)
 		{
-			final BufferedImage resized = ImageUtil.resizeImage(player.getMember().getAvatar(), Constants.ITEM_SPRITE_WIDTH, Constants.ITEM_SPRITE_HEIGHT);
-			iconLabel.setIcon(new ImageIcon(resized));
+			addIcon();
 		}
 
 		add(iconLabel, c);
@@ -144,8 +145,23 @@ public class PlayerBanner extends JPanel
 		add(statsPanel, c);
 	}
 
+	private void addIcon()
+	{
+		final BufferedImage resized = ImageUtil.resizeImage(player.getMember().getAvatar(), Constants.ITEM_SPRITE_WIDTH, Constants.ITEM_SPRITE_HEIGHT);
+		iconLabel.setIcon(new ImageIcon(resized));
+	}
+
 	public void recreateStatsPanel()
 	{
+		if (checkIcon)
+		{
+			if (player.getMember().getAvatar() != null)
+			{
+				addIcon();
+				checkIcon = false;
+			}
+		}
+
 		statsPanel.removeAll();
 
 		final JPanel hp = createIconTextLabel(hitpointsIcon, String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS)));
