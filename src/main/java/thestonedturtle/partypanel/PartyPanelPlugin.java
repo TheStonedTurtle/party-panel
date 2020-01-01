@@ -177,8 +177,11 @@ public class PartyPanelPlugin extends Plugin
 	@Subscribe
 	public void onUserPart(final UserPart event)
 	{
-		partyMembers.remove(event.getMemberId());
-		SwingUtilities.invokeLater(panel::refreshUI);
+		final PartyPlayer removed = partyMembers.remove(event.getMemberId());
+		if (removed != null)
+		{
+			SwingUtilities.invokeLater(() -> panel.removePartyPlayer(removed));
+		}
 	}
 
 	@Subscribe

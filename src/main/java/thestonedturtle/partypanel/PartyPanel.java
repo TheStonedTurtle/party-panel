@@ -221,4 +221,16 @@ class PartyPanel extends PluginPanel
 				break;
 		}
 	}
+
+	void removePartyPlayer(final PartyPlayer player)
+	{
+		if (selectedPlayer != null && !selectedPlayer.getMemberId().equals(player.getMemberId()))
+		{
+			// Nothing to do when viewing another players panel
+			return;
+		}
+
+		selectedPlayer = null;
+		showBannerView();
+	}
 }
