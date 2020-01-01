@@ -202,8 +202,9 @@ class PartyPanel extends PluginPanel
 				}
 
 				final boolean usernameChanged = Objects.equals(player.getUsername(), panel.getPlayer().getUsername());
+				final boolean avatarChanged = !Objects.equals(player.getMember().getAvatar(), panel.getPlayer().getMember().getAvatar());
 				panel.setPlayer(player);
-				if (usernameChanged)
+				if (usernameChanged || avatarChanged)
 				{
 					panel.recreateStatsPanel();
 				}
