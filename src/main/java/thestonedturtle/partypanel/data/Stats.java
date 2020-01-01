@@ -27,6 +27,7 @@ package thestonedturtle.partypanel.data;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
+import lombok.Setter;
 import net.runelite.api.Client;
 import net.runelite.api.Experience;
 import net.runelite.api.Skill;
@@ -37,8 +38,10 @@ public class Stats
 {
 	private Map<Skill, Integer> baseLevels = new HashMap<>();
 	private Map<Skill, Integer> boostedLevels = new HashMap<>();
+	@Setter
 	private int specialPercent;
 	private int combatLevel;
+	@Setter
 	private int totalLevel;
 
 	public Stats(final Client client)
@@ -61,7 +64,7 @@ public class Stats
 			baseLevels.get(Skill.PRAYER)
 		);
 
-		specialPercent = client.getVar(VarPlayer.SPECIAL_ATTACK_PERCENT);
+		specialPercent = client.getVar(VarPlayer.SPECIAL_ATTACK_PERCENT) / 10;
 		totalLevel = client.getTotalLevel();
 	}
 }

@@ -122,7 +122,8 @@ public class PlayerBanner extends JPanel
 		}
 		else
 		{
-			usernameLabel.setText(player.getUsername() + " (Lvl - " + player.getStats().getCombatLevel() + ")");
+			final String levelText = player.getStats() == null ? "" : " (Lvl - " + player.getStats().getCombatLevel() + ")";
+			usernameLabel.setText(player.getUsername() + levelText);
 		}
 
 		final JLabel discordNameLabel = new JLabel(player.getMember().getName());

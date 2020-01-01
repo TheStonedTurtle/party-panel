@@ -54,6 +54,11 @@ public class PartyPlayer extends PartyMemberMessage
 		this.inventory = new GameItem[28];
 		this.equipment = new GameItem[EquipmentInventorySlot.AMMO.getSlotIdx() + 1];
 
+		updatePlayerInfo(client, itemManager);
+	}
+
+	public void updatePlayerInfo(final Client client, final ItemManager itemManager)
+	{
 		// Player is logged in
 		if (client.getLocalPlayer() != null)
 		{

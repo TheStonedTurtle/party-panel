@@ -193,7 +193,7 @@ class PartyPanel extends PluginPanel
 		switch (viewType)
 		{
 			case BANNER:
-				final PlayerBanner panel = bannerMap.get(player.getMember().getMemberId());
+				final PlayerBanner panel = bannerMap.get(player.getMemberId());
 				if (panel == null)
 				{
 					// New member, recreate entire view
@@ -213,8 +213,9 @@ class PartyPanel extends PluginPanel
 				}
 				break;
 			case PLAYER:
-				if (player.equals(selectedPlayer))
+				if (player.getMemberId().equals(selectedPlayer.getMemberId()))
 				{
+					this.selectedPlayer = player;
 					showPlayerView();
 				}
 				break;

@@ -15,10 +15,12 @@ import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.InventoryID;
 import net.runelite.api.Skill;
+import net.runelite.api.VarPlayer;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.StatChanged;
+import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.account.AccountSession;
 import net.runelite.client.account.SessionManager;
 import net.runelite.client.config.ConfigManager;
@@ -66,6 +68,9 @@ public class PartyPanelPlugin extends Plugin
 	SpriteManager spriteManager;
 
 	@Inject
+	ItemManager itemManager;
+
+	@Inject
 	private WSClient wsClient;
 
 	@Provides
@@ -81,9 +86,6 @@ public class PartyPanelPlugin extends Plugin
 	private PartyPanel panel;
 	@Getter
 	private PartyPlayer myPlayer = null;
-
-	@Inject
-	ItemManager itemManager;
 
 	@Override
 	protected void startUp() throws Exception
@@ -132,14 +134,23 @@ public class PartyPanelPlugin extends Plugin
 	@Subscribe
 	public void onPartyPlayer(final PartyPlayer player)
 	{
-		if (player.getMemberId().equals(myPlayer.getMemberId()))
+		if (!isInParty())
+		{
+			return;
+		}
+
+		if (player.getMemberId().equals(partyService.getLocalMember().getMemberId()))
 		{
 			return;
 		}
 
 		player.setMember(partyService.getMemberById(player.getMemberId()));
-		partyMembers.put(player.getMemberId(), player);
+		if (player.getMember() == null)
+		{
+			return;
+		}
 
+		partyMembers.put(player.getMemberId(), player);
 		SwingUtilities.invokeLater(() -> panel.updatePartyPlayer(player));
 	}
 
@@ -167,7 +178,7 @@ public class PartyPanelPlugin extends Plugin
 	public void onUserPart(final UserPart event)
 	{
 		partyMembers.remove(event.getMemberId());
-		panel.refreshUI();
+		SwingUtilities.invokeLater(panel::refreshUI);
 	}
 
 	@Subscribe
@@ -180,7 +191,7 @@ public class PartyPanelPlugin extends Plugin
 	public void onPartyChanged(final PartyChanged event)
 	{
 		partyMembers.clear();
-		panel.refreshUI();
+		SwingUtilities.invokeLater(panel::refreshUI);
 		myPlayer = null;
 	}
 
@@ -213,6 +224,11 @@ public class PartyPanelPlugin extends Plugin
 			wsClient.send(myPlayer);
 		}
 
+		if (myPlayer.getStats() == null)
+		{
+			myPlayer.updatePlayerInfo(client, itemManager);
+		}
+
 		if (!Objects.equals(client.getLocalPlayer().getName(), myPlayer.getUsername()))
 		{
 			myPlayer.setUsername(client.getLocalPlayer().getName());
@@ -223,7 +239,7 @@ public class PartyPanelPlugin extends Plugin
 	@Subscribe
 	public void onStatChanged(final StatChanged event)
 	{
-		if (!isInParty())
+		if (myPlayer == null || myPlayer.getStats() == null || !isInParty())
 		{
 			return;
 		}
@@ -236,6 +252,7 @@ public class PartyPanelPlugin extends Plugin
 
 		myPlayer.setSkillsBoostedLevel(event.getSkill(), event.getBoostedLevel());
 		myPlayer.setSkillsRealLevel(event.getSkill(), event.getLevel());
+		myPlayer.getStats().setTotalLevel(client.getTotalLevel());
 		wsClient.send(myPlayer);
 	}
 
@@ -246,7 +263,7 @@ public class PartyPanelPlugin extends Plugin
 		{
 			return;
 		}
-		
+
 		if (c.getContainerId() == InventoryID.INVENTORY.getId())
 		{
 			myPlayer.setInventory(GameItem.convertItemsToGameItems(c.getItemContainer().getItems(), itemManager));
@@ -255,8 +272,28 @@ public class PartyPanelPlugin extends Plugin
 		{
 			myPlayer.setEquipment(GameItem.convertItemsToGameItems(c.getItemContainer().getItems(), itemManager));
 		}
+		else
+		{
+			return;
+		}
 
 		wsClient.send(myPlayer);
+	}
+
+	@Subscribe
+	public void onVarbitChanged(final VarbitChanged event)
+	{
+		if (myPlayer == null || myPlayer.getStats() == null || !isInParty())
+		{
+			return;
+		}
+
+		final int specialPercent = client.getVar(VarPlayer.SPECIAL_ATTACK_PERCENT) / 10;
+		if (specialPercent != myPlayer.getStats().getSpecialPercent())
+		{
+			myPlayer.getStats().setSpecialPercent(specialPercent);
+			wsClient.send(myPlayer);
+		}
 	}
 
 	@Nullable
