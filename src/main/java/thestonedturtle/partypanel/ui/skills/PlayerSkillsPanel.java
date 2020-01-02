@@ -121,6 +121,8 @@ public class PlayerSkillsPanel extends JPanel
 
 	@Getter
 	private final Map<Skill, SkillPanelSlot> panelMap = new HashMap<>();
+	@Getter
+	private final TotalPanelSlot totalLevelPanel;
 
 	public PlayerSkillsPanel(final PartyPlayer player, final SpriteManager spriteManager, final ItemManager itemManager)
 	{
@@ -141,6 +143,7 @@ public class PlayerSkillsPanel extends JPanel
 		}
 
 		final int totalLevel = player.getStats() == null ? -1 : player.getStats().getTotalLevel();
-		this.add(new TotalPanelSlot(totalLevel, spriteManager));
+		totalLevelPanel = new TotalPanelSlot(totalLevel, spriteManager);
+		this.add(totalLevelPanel);
 	}
 }

@@ -69,10 +69,20 @@ public class PlayerInventoryPanel extends JPanel
 				{
 					name += " x " + QuantityFormatter.formatNumber(i.getQty());
 				}
-				label.setToolTipText("<html>" + name + "</html>");
+				label.setToolTipText(name);
 				itemManager.getImage(i.getId(), i.getQty(), i.isStackable()).addTo(label);
 			}
 
+			add(label);
+		}
+
+		for (int i = getComponentCount(); i < 28; i++)
+		{
+			final JLabel label = new JLabel();
+			label.setMinimumSize(INVI_SLOT_SIZE);
+			label.setPreferredSize(INVI_SLOT_SIZE);
+			label.setVerticalAlignment(JLabel.CENTER);
+			label.setHorizontalAlignment(JLabel.CENTER);
 			add(label);
 		}
 

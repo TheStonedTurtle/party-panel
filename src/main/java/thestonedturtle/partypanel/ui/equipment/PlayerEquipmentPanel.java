@@ -50,7 +50,7 @@ import thestonedturtle.partypanel.data.GameItem;
 
 public class PlayerEquipmentPanel extends JPanel
 {
-	private static final ImmutableMap<EquipmentInventorySlot, Integer> EQUIPMENT_SLOT_SPIRTE_MAP;
+	private static final ImmutableMap<EquipmentInventorySlot, Integer> EQUIPMENT_SLOT_SPRITE_MAP;
 	static
 	{
 		final ImmutableMap.Builder<EquipmentInventorySlot, Integer> sprites = new ImmutableMap.Builder<>();
@@ -66,7 +66,7 @@ public class PlayerEquipmentPanel extends JPanel
 		sprites.put(EquipmentInventorySlot.BOOTS, SpriteID.EQUIPMENT_SLOT_FEET);
 		sprites.put(EquipmentInventorySlot.AMMO, SpriteID.EQUIPMENT_SLOT_AMMUNITION);
 
-		EQUIPMENT_SLOT_SPIRTE_MAP = sprites.build();
+		EQUIPMENT_SLOT_SPRITE_MAP = sprites.build();
 	}
 
 	private static final BufferedImage PANEL_BACKGROUND = ImageUtil.getResourceStreamFromClass(PlayerEquipmentPanel.class, "equipment-bars.png");
@@ -169,7 +169,7 @@ public class PlayerEquipmentPanel extends JPanel
 		final GameItem item = items.length > slot.getSlotIdx() ? items[slot.getSlotIdx()] : null;
 		final AsyncBufferedImage image = item == null ? null : itemManager.getImage(item.getId(), item.getQty(), item.isStackable());
 
-		final EquipmentPanelSlot panel = new EquipmentPanelSlot(item, image, background, spriteManager.getSprite(EQUIPMENT_SLOT_SPIRTE_MAP.get(slot), 0));
+		final EquipmentPanelSlot panel = new EquipmentPanelSlot(item, image, background, spriteManager.getSprite(EQUIPMENT_SLOT_SPRITE_MAP.get(slot), 0));
 		panelMap.put(slot, panel);
 
 		if (image != null)

@@ -34,14 +34,13 @@ import net.runelite.api.Skill;
 import net.runelite.api.VarPlayer;
 
 @Getter
+@Setter
 public class Stats
 {
-	private Map<Skill, Integer> baseLevels = new HashMap<>();
-	private Map<Skill, Integer> boostedLevels = new HashMap<>();
-	@Setter
+	private final Map<Skill, Integer> baseLevels = new HashMap<>();
+	private final Map<Skill, Integer> boostedLevels = new HashMap<>();
 	private int specialPercent;
 	private int combatLevel;
-	@Setter
 	private int totalLevel;
 
 	public Stats(final Client client)

@@ -165,7 +165,7 @@ public class PlayerBanner extends JPanel
 		statsPanel.removeAll();
 
 		final JPanel hp = createIconTextLabel(hitpointsIcon, String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS)));
-		hp.setToolTipText("Hitpoints HP");
+		hp.setToolTipText("Hitpoints");
 		statsPanel.add(hp);
 		final JPanel pray = createIconTextLabel(prayIcon, String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER)));
 		pray.setToolTipText("Prayer");

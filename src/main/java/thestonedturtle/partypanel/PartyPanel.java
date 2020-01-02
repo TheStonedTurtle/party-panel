@@ -41,25 +41,15 @@ import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 import thestonedturtle.partypanel.data.PartyPlayer;
 import thestonedturtle.partypanel.ui.PlayerBanner;
-import thestonedturtle.partypanel.ui.PlayerInventoryPanel;
-import thestonedturtle.partypanel.ui.equipment.PlayerEquipmentPanel;
-import thestonedturtle.partypanel.ui.skills.PlayerSkillsPanel;
+import thestonedturtle.partypanel.ui.PlayerPanel;
 
 class PartyPanel extends PluginPanel
 {
-	private enum PartyPanelViewType
-	{
-		BANNER,
-		PLAYER
-	}
-
 	private static final Color BACKGROUND_COLOR = ColorScheme.DARK_GRAY_COLOR;
 	private static final Color BACKGROUND_HOVER_COLOR = ColorScheme.DARK_GRAY_HOVER_COLOR;
 
 	private final PartyPanelPlugin plugin;
 	private final Map<UUID, PlayerBanner> bannerMap = new HashMap<>();
-
-	private PartyPanelViewType viewType = PartyPanelViewType.BANNER;
 	private PartyPlayer selectedPlayer = null;
 
 	@Inject
@@ -72,14 +62,18 @@ class PartyPanel extends PluginPanel
 	void refreshUI()
 	{
 		this.removeAll();
-		switch (viewType)
+		if (selectedPlayer == null)
 		{
-			case BANNER:
-				showBannerView();
-				break;
-			case PLAYER:
-				showPlayerView();
-				break;
+			showBannerView();
+		}
+		else if (plugin.getPartyMembers().containsKey(selectedPlayer.getMemberId()))
+		{
+			showPlayerView();
+		}
+		else
+		{
+			selectedPlayer = null;
+			showBannerView();
 		}
 	}
 
@@ -88,7 +82,7 @@ class PartyPanel extends PluginPanel
 	 */
 	void showBannerView()
 	{
-		viewType = PartyPanelViewType.BANNER;
+		selectedPlayer = null;
 		removeAll();
 
 		final Collection<PartyPlayer> players = plugin.getPartyMembers().values()
@@ -108,7 +102,6 @@ class PartyPanel extends PluginPanel
 					if (e.getButton() == MouseEvent.BUTTON1)
 					{
 						selectedPlayer = player;
-						viewType = PartyPanelViewType.PLAYER;
 						showPlayerView();
 					}
 				}
@@ -146,11 +139,9 @@ class PartyPanel extends PluginPanel
 		}
 
 		removeAll();
+
 		add(createPlayerTitle());
-		add(new PlayerBanner(selectedPlayer, plugin.spriteManager));
-		add(new PlayerInventoryPanel(selectedPlayer.getInventory(), plugin.itemManager));
-		add(new PlayerEquipmentPanel(selectedPlayer.getEquipment(), plugin.spriteManager, plugin.itemManager));
-		add(new PlayerSkillsPanel(selectedPlayer, plugin.spriteManager, plugin.itemManager));
+		add(new PlayerPanel(selectedPlayer, plugin.spriteManager, plugin.itemManager));
 
 		this.revalidate();
 		this.repaint();
@@ -190,35 +181,34 @@ class PartyPanel extends PluginPanel
 
 	void updatePartyPlayer(final PartyPlayer player)
 	{
-		switch (viewType)
+		if (selectedPlayer == null)
 		{
-			case BANNER:
-				final PlayerBanner panel = bannerMap.get(player.getMemberId());
-				if (panel == null)
-				{
-					// New member, recreate entire view
-					showBannerView();
-					return;
-				}
+			final PlayerBanner panel = bannerMap.get(player.getMemberId());
+			if (panel == null)
+			{
+				// New member, recreate entire view
+				showBannerView();
+				return;
+			}
 
-				final String oldPlayerName = panel.getPlayer().getUsername();
-				panel.setPlayer(player);
-				if (!Objects.equals(player.getUsername(), oldPlayerName))
-				{
-					panel.recreatePanel();
-				}
-				else
-				{
-					panel.recreateStatsPanel();
-				}
-				break;
-			case PLAYER:
-				if (player.getMemberId().equals(selectedPlayer.getMemberId()))
-				{
-					this.selectedPlayer = player;
-					showPlayerView();
-				}
-				break;
+			final String oldPlayerName = panel.getPlayer().getUsername();
+			panel.setPlayer(player);
+			if (!Objects.equals(player.getUsername(), oldPlayerName))
+			{
+				panel.recreatePanel();
+			}
+			else
+			{
+				panel.recreateStatsPanel();
+			}
+		}
+		else
+		{
+			if (player.getMemberId().equals(selectedPlayer.getMemberId()))
+			{
+				this.selectedPlayer = player;
+				showPlayerView();
+			}
 		}
 	}
 
