@@ -29,6 +29,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
+import java.util.HashMap;
+import java.util.Map;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -52,11 +54,9 @@ public class PlayerBanner extends JPanel
 	private static final Dimension STAT_ICON_SIZE = new Dimension(18, 18);
 	private static final Dimension ICON_SIZE = new Dimension(Constants.ITEM_SPRITE_WIDTH, Constants.ITEM_SPRITE_HEIGHT);
 
-	private final BufferedImage hitpointsIcon;
-	private final BufferedImage prayIcon;
-	private final BufferedImage specialAttackIcon;
 	private final JPanel statsPanel = new JPanel();
 	private final JLabel iconLabel = new JLabel();
+	private final Map<String, JLabel> statLabels = new HashMap<>();
 
 	@Setter
 	@Getter
@@ -79,9 +79,20 @@ public class PlayerBanner extends JPanel
 		statsPanel.setLayout(new DynamicGridLayout(1, 3));
 		statsPanel.setOpaque(false);
 
-		hitpointsIcon = spriteManager.getSprite(SpriteID.SKILL_HITPOINTS, 0);
-		prayIcon = spriteManager.getSprite(SpriteID.SKILL_PRAYER, 0);
-		specialAttackIcon = spriteManager.getSprite(SpriteID.MULTI_COMBAT_ZONE_CROSSED_SWORDS, 0);
+		final BufferedImage hpIcon = spriteManager.getSprite(SpriteID.SKILL_HITPOINTS, 0);
+		final JPanel hp = createIconTextLabel(Skill.HITPOINTS.getName(), hpIcon, String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS)));
+		hp.setToolTipText("Hitpoints");
+		statsPanel.add(hp);
+
+		final BufferedImage prayIcon = spriteManager.getSprite(SpriteID.SKILL_PRAYER, 0);
+		final JPanel pray = createIconTextLabel(Skill.PRAYER.getName(), prayIcon, String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER)));
+		pray.setToolTipText("Prayer");
+		statsPanel.add(pray);
+
+		final BufferedImage specialAttackIcon = spriteManager.getSprite(SpriteID.MULTI_COMBAT_ZONE_CROSSED_SWORDS, 0);
+		final JPanel special = createIconTextLabel("SPECIAL", specialAttackIcon, player.getStats() == null ? "0%" : String.valueOf(player.getStats().getSpecialPercent()) + "%");
+		special.setToolTipText("Special Attack");
+		statsPanel.add(special);
 
 		recreatePanel();
 	}
@@ -137,7 +148,7 @@ public class PlayerBanner extends JPanel
 		c.fill = GridBagConstraints.HORIZONTAL;
 		add(nameContainer, c);
 
-		recreateStatsPanel();
+		refreshStats();
 		c.gridy++;
 		c.weightx = 0;
 		c.gridx = 0;
@@ -151,7 +162,7 @@ public class PlayerBanner extends JPanel
 		iconLabel.setIcon(new ImageIcon(resized));
 	}
 
-	public void recreateStatsPanel()
+	public void refreshStats()
 	{
 		if (checkIcon)
 		{
@@ -162,29 +173,22 @@ public class PlayerBanner extends JPanel
 			}
 		}
 
-		statsPanel.removeAll();
-
-		final JPanel hp = createIconTextLabel(hitpointsIcon, String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS)));
-		hp.setToolTipText("Hitpoints");
-		statsPanel.add(hp);
-		final JPanel pray = createIconTextLabel(prayIcon, String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER)));
-		pray.setToolTipText("Prayer");
-		statsPanel.add(pray);
-		final JPanel special = createIconTextLabel(specialAttackIcon, player.getStats() == null ? "0%" : String.valueOf(player.getStats().getSpecialPercent()) + "%");
-		special.setToolTipText("Special Attack");
-		statsPanel.add(special);
+		statLabels.get(Skill.HITPOINTS.getName()).setText(String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS)));
+		statLabels.get(Skill.PRAYER.getName()).setText(String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER)));
+		statLabels.get("SPECIAL").setText(player.getStats() == null ? "0%" : String.valueOf(player.getStats().getSpecialPercent()) + "%");
 
 		statsPanel.revalidate();
 		statsPanel.repaint();
 	}
 
-	private JPanel createIconTextLabel(final BufferedImage icon, final String value)
+	private JPanel createIconTextLabel(final String name, final BufferedImage icon, final String value)
 	{
 		final JLabel iconLabel = new JLabel();
 		iconLabel.setPreferredSize(STAT_ICON_SIZE);
 		iconLabel.setIcon(new ImageIcon(ImageUtil.resizeImage(icon, STAT_ICON_SIZE.width, STAT_ICON_SIZE.height)));
 
 		final JLabel textLabel = new JLabel(value);
+		statLabels.put(name, textLabel);
 
 		final JPanel panel = new JPanel();
 		panel.add(iconLabel);

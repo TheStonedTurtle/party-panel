@@ -199,7 +199,7 @@ class PartyPanel extends PluginPanel
 			}
 			else
 			{
-				panel.recreateStatsPanel();
+				panel.refreshStats();
 			}
 		}
 		else
