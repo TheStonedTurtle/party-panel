@@ -136,6 +136,11 @@ public class PlayerPanel extends JPanel
 			banner.refreshStats();
 			for (final Skill s : Skill.values())
 			{
+				if (s.equals(Skill.OVERALL))
+				{
+					continue;
+				}
+
 				final SkillPanelSlot panel = skillsPanel.getPanelMap().get(s);
 				panel.updateBoostedLevel(player.getStats().getBoostedLevels().get(s));
 				panel.updateBaseLevel(player.getStats().getBaseLevels().get(s));
