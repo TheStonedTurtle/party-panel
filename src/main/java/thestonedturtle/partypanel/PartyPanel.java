@@ -128,6 +128,8 @@ class PartyPanel extends PluginPanel
 			add(new JLabel("There are no members in your party"));
 		}
 
+		add(createLeaveButton());
+
 		this.revalidate();
 		this.repaint();
 	}
@@ -151,6 +153,7 @@ class PartyPanel extends PluginPanel
 			playerPanel = new PlayerPanel(selectedPlayer, plugin.spriteManager, plugin.itemManager);
 		}
 		add(playerPanel);
+		add(createLeaveButton());
 
 		this.revalidate();
 		this.repaint();
@@ -180,6 +183,37 @@ class PartyPanel extends PluginPanel
 				if (e.getButton() == MouseEvent.BUTTON1)
 				{
 					showBannerView();
+				}
+			}
+		});
+
+		return label;
+	}
+
+	private JButton createLeaveButton()
+	{
+		final JButton label = new JButton("Leave Party");
+		label.setFocusable(false);
+		label.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseEntered(MouseEvent e)
+			{
+				label.setBackground(BACKGROUND_HOVER_COLOR);
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e)
+			{
+				label.setBackground(BACKGROUND_COLOR);
+			}
+
+			@Override
+			public void mousePressed(MouseEvent e)
+			{
+				if (e.getButton() == MouseEvent.BUTTON1)
+				{
+					plugin.leaveParty();
 				}
 			}
 		});

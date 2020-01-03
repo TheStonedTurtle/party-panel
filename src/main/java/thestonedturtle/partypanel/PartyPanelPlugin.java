@@ -314,4 +314,9 @@ public class PartyPanelPlugin extends Plugin
 
 		return partyMembers.get(uuid);
 	}
+
+	public void leaveParty()
+	{
+		partyService.changeParty(null);
+	}
 }
