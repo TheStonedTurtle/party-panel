@@ -50,6 +50,7 @@ class PartyPanel extends PluginPanel
 
 	private final PartyPanelPlugin plugin;
 	private final Map<UUID, PlayerBanner> bannerMap = new HashMap<>();
+	private PlayerPanel playerPanel;
 	private PartyPlayer selectedPlayer = null;
 
 	@Inject
@@ -139,18 +140,25 @@ class PartyPanel extends PluginPanel
 		}
 
 		removeAll();
+		add(createReturnButton());
 
-		add(createPlayerTitle());
-		add(new PlayerPanel(selectedPlayer, plugin.spriteManager, plugin.itemManager));
+		if (playerPanel != null)
+		{
+			playerPanel.changePlayer(selectedPlayer);
+		}
+		else
+		{
+			playerPanel = new PlayerPanel(selectedPlayer, plugin.spriteManager, plugin.itemManager);
+		}
+		add(playerPanel);
 
 		this.revalidate();
 		this.repaint();
 	}
 
-	// Title element for Loot breakdown view
-	private JButton createPlayerTitle()
+	private JButton createReturnButton()
 	{
-		final JButton label = new JButton("Back to party overview");
+		final JButton label = new JButton("Return to party overview");
 		label.setFocusable(false);
 		label.addMouseListener(new MouseAdapter()
 		{

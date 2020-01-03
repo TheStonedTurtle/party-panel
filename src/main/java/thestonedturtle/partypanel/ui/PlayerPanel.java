@@ -30,6 +30,8 @@ import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import lombok.Getter;
+import net.runelite.api.EquipmentInventorySlot;
+import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
@@ -37,16 +39,19 @@ import net.runelite.client.ui.DynamicGridLayout;
 import net.runelite.client.ui.components.materialtabs.MaterialTab;
 import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
 import net.runelite.client.util.ImageUtil;
+import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
+import thestonedturtle.partypanel.ui.equipment.EquipmentPanelSlot;
 import thestonedturtle.partypanel.ui.equipment.PlayerEquipmentPanel;
 import thestonedturtle.partypanel.ui.skills.PlayerSkillsPanel;
+import thestonedturtle.partypanel.ui.skills.SkillPanelSlot;
 
 @Getter
 public class PlayerPanel extends JPanel
 {
 	private static final Dimension IMAGE_SIZE = new Dimension(24, 24);
 
-	private final PartyPlayer player;
+	private PartyPlayer player;
 	private final SpriteManager spriteManager;
 	private final ItemManager itemManager;
 
@@ -102,4 +107,43 @@ public class PlayerPanel extends JPanel
 	}
 
 	// TODO add smarter ways to update data
+	public void changePlayer(final PartyPlayer newPlayer)
+	{
+		final boolean newUser = !newPlayer.getMemberId().equals(player.getMemberId());
+
+		player = newPlayer;
+		banner.setPlayer(player);
+		inventoryPanel.updateInventory(player.getInventory());
+
+		for (final EquipmentInventorySlot equipSlot : EquipmentInventorySlot.values())
+		{
+			final EquipmentPanelSlot slot = this.equipmentPanel.getPanelMap().get(equipSlot);
+			final GameItem item = player.getEquipment()[equipSlot.getSlotIdx()];
+			if (item != null)
+			{
+				slot.setGameItem(item, itemManager.getImage(item.getId(), item.getQty(), item.isStackable()));
+			}
+			else
+			{
+				slot.setGameItem(null, null);
+			}
+		}
+
+		if (newUser)
+		{
+			banner.recreatePanel();
+		}
+
+		if (player.getStats() != null)
+		{
+			banner.refreshStats();
+			for (final Skill s : Skill.values())
+			{
+				final SkillPanelSlot panel = skillsPanel.getPanelMap().get(s);
+				panel.updateBoostedLevel(player.getStats().getBoostedLevels().get(s));
+				panel.updateBaseLevel(player.getStats().getBaseLevels().get(s));
+			}
+			skillsPanel.getTotalLevelPanel().updateTotalLevel(player.getStats().getTotalLevel());
+		}
+	}
 }

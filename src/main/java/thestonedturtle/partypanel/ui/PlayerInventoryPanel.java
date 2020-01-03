@@ -46,13 +46,24 @@ public class PlayerInventoryPanel extends JPanel
 		BorderFactory.createEmptyBorder(2, 2, 2, 2)
 	);
 
+	private final ItemManager itemManager;
+
 	public PlayerInventoryPanel(final GameItem[] items, final ItemManager itemManager)
 	{
 		super();
 
+		this.itemManager = itemManager;
+
 		setLayout(new DynamicGridLayout(7, 4, 2, 2));
 		setBackground(INVI_BACKGROUND);
 		setBorder(INVI_BORDER);
+
+		updateInventory(items);
+	}
+
+	public void updateInventory(final GameItem[] items)
+	{
+		this.removeAll();
 
 		for (final GameItem i : items)
 		{
