@@ -69,11 +69,11 @@ public class PlayerPanel extends JPanel
 		this.skillsPanel = new PlayerSkillsPanel(selectedPlayer, spriteManager, itemManager);
 
 		final MaterialTabGroup tabGroup = new MaterialTabGroup(view);
+		tabGroup.setBorder(new EmptyBorder(10, 0, 10, 0));
 
 		final MaterialTab inventory = new MaterialTab(createImageIcon(spriteManager.getSprite(SpriteID.TAB_INVENTORY, 0)), tabGroup, inventoryPanel);
 		inventory.setToolTipText("Inventory");
 		tabGroup.addTab(inventory);
-		tabGroup.setBorder(new EmptyBorder(10, 0, 10, 0));
 
 		final MaterialTab equipment = new MaterialTab(createImageIcon(spriteManager.getSprite(SpriteID.TAB_EQUIPMENT, 0)), tabGroup, equipmentPanel);
 		equipment.setToolTipText("Equipment");
