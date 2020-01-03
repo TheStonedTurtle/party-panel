@@ -54,7 +54,7 @@ public class EquipmentPanelSlot extends JLabel
 	{
 		this.item = item;
 
-		if (item == null)
+		if (item == null || image == null)
 		{
 			setIcon(new ImageIcon(placeholder));
 			return;

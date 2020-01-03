@@ -50,7 +50,7 @@ class PartyPanel extends PluginPanel
 
 	private final PartyPanelPlugin plugin;
 	private final Map<UUID, PlayerBanner> bannerMap = new HashMap<>();
-	private PlayerPanel playerPanel;
+	private PlayerPanel playerPanel = null;
 	private PartyPlayer selectedPlayer = null;
 
 	@Inject

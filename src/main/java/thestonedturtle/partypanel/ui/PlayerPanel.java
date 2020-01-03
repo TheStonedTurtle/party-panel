@@ -56,8 +56,6 @@ public class PlayerPanel extends JPanel
 	private final ItemManager itemManager;
 
 	private final PlayerBanner banner;
-	private final JPanel view = new JPanel();
-
 	private final PlayerInventoryPanel inventoryPanel;
 	private final PlayerEquipmentPanel equipmentPanel;
 	private final PlayerSkillsPanel skillsPanel;
@@ -73,6 +71,7 @@ public class PlayerPanel extends JPanel
 		this.equipmentPanel = new PlayerEquipmentPanel(selectedPlayer.getEquipment(), spriteManager, itemManager);
 		this.skillsPanel = new PlayerSkillsPanel(selectedPlayer, spriteManager, itemManager);
 
+		final JPanel view = new JPanel();
 		final MaterialTabGroup tabGroup = new MaterialTabGroup(view);
 		tabGroup.setBorder(new EmptyBorder(10, 0, 10, 0));
 
@@ -82,13 +81,11 @@ public class PlayerPanel extends JPanel
 
 		final MaterialTab equipment = new MaterialTab(createImageIcon(spriteManager.getSprite(SpriteID.TAB_EQUIPMENT, 0)), tabGroup, equipmentPanel);
 		equipment.setToolTipText("Equipment");
-		tabGroup.addTab(inventory);
+		tabGroup.addTab(equipment);
 
 		final MaterialTab skills = new MaterialTab(createImageIcon(spriteManager.getSprite(SpriteID.TAB_STATS, 0)), tabGroup, skillsPanel);
 		skills.setToolTipText("Skills");
 		tabGroup.addTab(skills);
-
-		tabGroup.addTab(equipment);
 
 		setLayout(new DynamicGridLayout(0, 1));
 		add(banner);

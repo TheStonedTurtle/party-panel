@@ -69,7 +69,7 @@ import thestonedturtle.partypanel.data.PartyPlayer;
 public class PlayerSkillsPanel extends JPanel
 {
 	/**
-	 * Real skills, ordered in the way they should be displayed in the panel.
+	 * Skills ordered in the way they should be displayed in the panel.
 	 */
 	private static final List<Skill> SKILLS = ImmutableList.of(
 		ATTACK, HITPOINTS, MINING,
