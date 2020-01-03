@@ -83,6 +83,7 @@ public class PartyPanelPlugin extends Plugin
 	private final Map<UUID, PartyPlayer> partyMembers = new HashMap<>();
 
 	private NavigationButton navButton;
+	private boolean addedButton = false;
 	private PartyPanel panel;
 	@Getter
 	private PartyPlayer myPlayer = null;
@@ -98,7 +99,6 @@ public class PartyPanelPlugin extends Plugin
 			.panel(panel)
 			.build();
 
-		clientToolbar.addNavigation(navButton);
 		wsClient.registerMessage(PartyPlayer.class);
 
 		// If there isn't already a session open, open one
@@ -112,6 +112,8 @@ public class PartyPanelPlugin extends Plugin
 
 		if (isInParty())
 		{
+			clientToolbar.addNavigation(navButton);
+			addedButton = true;
 			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
 			wsClient.send(myPlayer);
 		}
@@ -121,6 +123,7 @@ public class PartyPanelPlugin extends Plugin
 	protected void shutDown() throws Exception
 	{
 		clientToolbar.removeNavigation(navButton);
+		addedButton = false;
 		partyMembers.clear();
 		wsClient.unregisterMessage(PartyPlayer.class);
 	}
@@ -163,6 +166,12 @@ public class PartyPanelPlugin extends Plugin
 			return;
 		}
 
+		if (!addedButton)
+		{
+			clientToolbar.addNavigation(navButton);
+			addedButton = true;
+		}
+
 		// Self joined
 		if (event.getMemberId().equals(partyService.getLocalMember().getMemberId()))
 		{
@@ -182,6 +191,12 @@ public class PartyPanelPlugin extends Plugin
 		{
 			SwingUtilities.invokeLater(() -> panel.removePartyPlayer(removed));
 		}
+
+		if (addedButton && (!isInParty() || partyService.getMembers().size() == 0))
+		{
+			clientToolbar.removeNavigation(navButton);
+			addedButton = false;
+		}
 	}
 
 	@Subscribe
@@ -196,6 +211,12 @@ public class PartyPanelPlugin extends Plugin
 		partyMembers.clear();
 		SwingUtilities.invokeLater(panel::refreshUI);
 		myPlayer = null;
+
+		if (!isInParty())
+		{
+			clientToolbar.removeNavigation(navButton);
+			addedButton = false;
+		}
 	}
 
 	@Subscribe
