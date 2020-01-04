@@ -213,6 +213,9 @@ class PartyPanel extends PluginPanel
 			{
 				if (e.getButton() == MouseEvent.BUTTON1)
 				{
+					selectedPlayer = null;
+					bannerMap.clear();
+					playerPanel = null;
 					plugin.leaveParty();
 				}
 			}
@@ -256,9 +259,10 @@ class PartyPanel extends PluginPanel
 
 	void removePartyPlayer(final PartyPlayer player)
 	{
+		bannerMap.remove(player.getMemberId());
+
 		if (selectedPlayer != null && !selectedPlayer.getMemberId().equals(player.getMemberId()))
 		{
-			// Nothing to do when viewing another players panel
 			return;
 		}
 
