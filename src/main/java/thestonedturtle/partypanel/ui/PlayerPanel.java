@@ -114,8 +114,13 @@ public class PlayerPanel extends JPanel
 
 		for (final EquipmentInventorySlot equipSlot : EquipmentInventorySlot.values())
 		{
+			GameItem item = null;
+			if (player.getEquipment().length > equipSlot.getSlotIdx())
+			{
+				item = player.getEquipment()[equipSlot.getSlotIdx()];
+			}
+
 			final EquipmentPanelSlot slot = this.equipmentPanel.getPanelMap().get(equipSlot);
-			final GameItem item = player.getEquipment()[equipSlot.getSlotIdx()];
 			if (item != null)
 			{
 				slot.setGameItem(item, itemManager.getImage(item.getId(), item.getQty(), item.isStackable()));
