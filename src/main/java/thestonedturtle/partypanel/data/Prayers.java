@@ -60,8 +60,10 @@ public class Prayers
 		}
 	}
 
-	public void updatePrayerState(final PrayerSprites p, final Client client)
+	public boolean updatePrayerState(final PrayerSprites p, final Client client)
 	{
+		boolean changed = false;
+
 		client.runScript(PRAYER_IS_AVAILABLE, p.getScriptIndex());
 		final boolean available = client.getIntStack()[0] > 0;
 
@@ -71,13 +73,16 @@ public class Prayers
 		if (data == null)
 		{
 			data = new PrayerData(p.getPrayer(), available, enabled);
+			changed = true;
 		}
 		else
 		{
+			changed = data.isAvailable() != available || data.isActivated() != enabled;
 			data.setAvailable(available);
 			data.setActivated(enabled);
 		}
 
 		prayerData.put(data.getPrayer(), data);
+		return changed;
 	}
 }
