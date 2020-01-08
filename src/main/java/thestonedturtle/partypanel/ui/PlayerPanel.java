@@ -38,6 +38,7 @@ import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.DynamicGridLayout;
 import net.runelite.client.ui.components.materialtabs.MaterialTab;
 import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
+import net.runelite.client.util.AsyncBufferedImage;
 import net.runelite.client.util.ImageUtil;
 import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
@@ -130,7 +131,12 @@ public class PlayerPanel extends JPanel
 			final EquipmentPanelSlot slot = this.equipmentPanel.getPanelMap().get(equipSlot);
 			if (item != null)
 			{
-				slot.setGameItem(item, itemManager.getImage(item.getId(), item.getQty(), item.isStackable()));
+				final AsyncBufferedImage img = itemManager.getImage(item.getId(), item.getQty(), item.isStackable());
+				slot.setGameItem(item, img);
+
+				// Ensure item is set when image loads
+				final GameItem finalItem = item;
+				img.onLoaded(() -> slot.setGameItem(finalItem, img));
 			}
 			else
 			{
