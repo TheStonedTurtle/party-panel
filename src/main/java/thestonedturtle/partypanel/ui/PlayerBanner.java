@@ -99,6 +99,8 @@ public class PlayerBanner extends JPanel
 
 	public void recreatePanel()
 	{
+		removeAll();
+
 		final GridBagConstraints c = new GridBagConstraints();
 		c.anchor = GridBagConstraints.NORTHWEST;
 		c.gridx = 0;
@@ -154,6 +156,9 @@ public class PlayerBanner extends JPanel
 		c.gridx = 0;
 		c.gridwidth = 2;
 		add(statsPanel, c);
+
+		revalidate();
+		repaint();
 	}
 
 	private void addIcon()
