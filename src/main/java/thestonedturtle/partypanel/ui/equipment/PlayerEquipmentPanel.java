@@ -70,7 +70,7 @@ public class PlayerEquipmentPanel extends JPanel
 	}
 
 	private static final BufferedImage PANEL_BACKGROUND = ImageUtil.getResourceStreamFromClass(PlayerEquipmentPanel.class, "equipment-bars.png");
-	private static final Dimension PANEL_SIZE = new Dimension(PluginPanel.PANEL_WIDTH - 10, 200);
+	private static final Dimension PANEL_SIZE = new Dimension(PluginPanel.PANEL_WIDTH - 10, 300);
 	private static final Color PANEL_BORDER_COLOR = new Color(87, 80, 64);
 	private static final Border PANEL_BORDER = BorderFactory.createCompoundBorder(
 		BorderFactory.createMatteBorder(3, 3, 3, 3, PANEL_BORDER_COLOR),

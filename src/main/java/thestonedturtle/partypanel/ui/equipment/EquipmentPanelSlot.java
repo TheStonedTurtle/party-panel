@@ -28,11 +28,13 @@ import java.awt.image.BufferedImage;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import lombok.Getter;
+import net.runelite.client.util.ImageUtil;
 import thestonedturtle.partypanel.ImgUtil;
 import thestonedturtle.partypanel.data.GameItem;
 
 public class EquipmentPanelSlot extends JLabel
 {
+	private final int IMAGE_SIZE = 48; // Background is squared at 32x32, we want 50% bigger so 48x48
 	private final BufferedImage background;
 	private final BufferedImage placeholder;
 	@Getter
@@ -43,7 +45,7 @@ public class EquipmentPanelSlot extends JLabel
 		super();
 
 		this.background = background;
-		this.placeholder = ImgUtil.overlapImages(placeholder, background);
+		this.placeholder = ImageUtil.resizeImage(ImgUtil.overlapImages(placeholder, background), IMAGE_SIZE, IMAGE_SIZE);
 
 		setVerticalAlignment(JLabel.CENTER);
 		setHorizontalAlignment(JLabel.CENTER);
@@ -61,7 +63,7 @@ public class EquipmentPanelSlot extends JLabel
 			return;
 		}
 
-		setIcon(new ImageIcon(ImgUtil.overlapImages(image, background)));
+		setIcon(new ImageIcon(ImageUtil.resizeImage(ImgUtil.overlapImages(image, background), IMAGE_SIZE, IMAGE_SIZE)));
 		setToolTipText(item.getName());
 	}
 }
