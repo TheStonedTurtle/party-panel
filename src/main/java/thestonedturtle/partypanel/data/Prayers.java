@@ -65,7 +65,7 @@ public class Prayers
 		client.runScript(PRAYER_IS_AVAILABLE, p.getScriptIndex());
 		final boolean available = client.getIntStack()[0] > 0;
 
-		final boolean enabled = client.getVar(p.getPrayer().getVarbit()) > 0;
+		final boolean enabled = client.isPrayerActive(p.getPrayer());
 
 		PrayerData data = prayerData.get(p.getPrayer());
 		if (data == null)
