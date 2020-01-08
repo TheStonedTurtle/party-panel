@@ -230,6 +230,7 @@ public class PartyPanelPlugin extends Plugin
 		if (event.getGameState().equals(GameState.LOGIN_SCREEN))
 		{
 			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
+			wsClient.send(myPlayer);
 		}
 	}
 
