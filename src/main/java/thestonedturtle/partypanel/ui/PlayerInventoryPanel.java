@@ -30,15 +30,16 @@ import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.Border;
-import net.runelite.api.Constants;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.DynamicGridLayout;
+import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.QuantityFormatter;
 import thestonedturtle.partypanel.data.GameItem;
 
 public class PlayerInventoryPanel extends JPanel
 {
-	private final static Dimension INVI_SLOT_SIZE = new Dimension(Constants.ITEM_SPRITE_WIDTH, Constants.ITEM_SPRITE_HEIGHT);
+	private final static Dimension INVI_SLOT_SIZE = new Dimension(50, 42);
+	private static final Dimension PANEL_SIZE = new Dimension(PluginPanel.PANEL_WIDTH - 10, 300);
 	private final static Color INVI_BACKGROUND = new Color(62, 53, 41);
 	private final static Color INVI_BORDER_COLOR = new Color(87, 80, 64);
 	private final static Border INVI_BORDER = BorderFactory.createCompoundBorder(
@@ -57,6 +58,7 @@ public class PlayerInventoryPanel extends JPanel
 		setLayout(new DynamicGridLayout(7, 4, 2, 2));
 		setBackground(INVI_BACKGROUND);
 		setBorder(INVI_BORDER);
+		setPreferredSize(PANEL_SIZE);
 
 		updateInventory(items);
 	}
