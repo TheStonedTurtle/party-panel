@@ -43,6 +43,7 @@ import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
 import thestonedturtle.partypanel.ui.equipment.EquipmentPanelSlot;
 import thestonedturtle.partypanel.ui.equipment.PlayerEquipmentPanel;
+import thestonedturtle.partypanel.ui.prayer.PlayerPrayerPanel;
 import thestonedturtle.partypanel.ui.skills.PlayerSkillsPanel;
 import thestonedturtle.partypanel.ui.skills.SkillPanelSlot;
 
@@ -59,6 +60,7 @@ public class PlayerPanel extends JPanel
 	private final PlayerInventoryPanel inventoryPanel;
 	private final PlayerEquipmentPanel equipmentPanel;
 	private final PlayerSkillsPanel skillsPanel;
+	private final PlayerPrayerPanel prayersPanel;
 
 	public PlayerPanel(final PartyPlayer selectedPlayer, final SpriteManager spriteManager, final ItemManager itemManager)
 	{
@@ -70,6 +72,7 @@ public class PlayerPanel extends JPanel
 		this.inventoryPanel = new PlayerInventoryPanel(selectedPlayer.getInventory(), itemManager);
 		this.equipmentPanel = new PlayerEquipmentPanel(selectedPlayer.getEquipment(), spriteManager, itemManager);
 		this.skillsPanel = new PlayerSkillsPanel(selectedPlayer, spriteManager, itemManager);
+		this.prayersPanel = new PlayerPrayerPanel(selectedPlayer.getPrayers(), spriteManager);
 
 		final JPanel view = new JPanel();
 		final MaterialTabGroup tabGroup = new MaterialTabGroup(view);
@@ -82,6 +85,10 @@ public class PlayerPanel extends JPanel
 		final MaterialTab equipment = new MaterialTab(createImageIcon(spriteManager.getSprite(SpriteID.TAB_EQUIPMENT, 0)), tabGroup, equipmentPanel);
 		equipment.setToolTipText("Equipment");
 		tabGroup.addTab(equipment);
+
+		final MaterialTab prayers = new MaterialTab(createImageIcon(spriteManager.getSprite(SpriteID.TAB_PRAYER, 0)), tabGroup, prayersPanel);
+		prayers.setToolTipText("Prayers");
+		tabGroup.addTab(prayers);
 
 		final MaterialTab skills = new MaterialTab(createImageIcon(spriteManager.getSprite(SpriteID.TAB_STATS, 0)), tabGroup, skillsPanel);
 		skills.setToolTipText("Skills");
