@@ -24,9 +24,11 @@
  */
 package thestonedturtle.partypanel.ui.prayer;
 
+import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import net.runelite.api.Constants;
 import net.runelite.api.SpriteID;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.util.Text;
@@ -35,6 +37,8 @@ import thestonedturtle.partypanel.data.PrayerData;
 
 public class PrayerSlot extends JLabel
 {
+	private static final Dimension SIZE = new Dimension(Constants.ITEM_SPRITE_WIDTH, 45);
+
 	private final BufferedImage unavailableImage;
 	private final BufferedImage availableImage;
 	private final BufferedImage activatedImage;
@@ -51,6 +55,7 @@ public class PrayerSlot extends JLabel
 		setToolTipText(Text.titleCase(sprites.getPrayer()));
 		setVerticalAlignment(JLabel.CENTER);
 		setHorizontalAlignment(JLabel.CENTER);
+		setPreferredSize(SIZE);
 
 		data = new PrayerData(sprites.getPrayer(), false, false);
 		updatePrayerData(data);
