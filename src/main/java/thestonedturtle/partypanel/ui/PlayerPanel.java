@@ -26,11 +26,13 @@ package thestonedturtle.partypanel.ui;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
+import java.util.Map;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import lombok.Getter;
 import net.runelite.api.EquipmentInventorySlot;
+import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
 import net.runelite.client.game.ItemManager;
@@ -42,9 +44,11 @@ import net.runelite.client.util.AsyncBufferedImage;
 import net.runelite.client.util.ImageUtil;
 import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
+import thestonedturtle.partypanel.data.PrayerData;
 import thestonedturtle.partypanel.ui.equipment.EquipmentPanelSlot;
 import thestonedturtle.partypanel.ui.equipment.PlayerEquipmentPanel;
 import thestonedturtle.partypanel.ui.prayer.PlayerPrayerPanel;
+import thestonedturtle.partypanel.ui.prayer.PrayerSlot;
 import thestonedturtle.partypanel.ui.skills.PlayerSkillsPanel;
 import thestonedturtle.partypanel.ui.skills.SkillPanelSlot;
 
@@ -164,6 +168,18 @@ public class PlayerPanel extends JPanel
 				panel.updateBaseLevel(player.getStats().getBaseLevels().get(s));
 			}
 			skillsPanel.getTotalLevelPanel().updateTotalLevel(player.getStats().getTotalLevel());
+		}
+
+		if (player.getPrayers() != null)
+		{
+			for (final Map.Entry<Prayer, PrayerSlot> entry : prayersPanel.getSlotMap().entrySet())
+			{
+				final PrayerData data = player.getPrayers().getPrayerData().get(entry.getKey());
+				if (data != null)
+				{
+					entry.getValue().updatePrayerData(data);
+				}
+			}
 		}
 	}
 }
