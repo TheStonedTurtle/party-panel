@@ -180,6 +180,8 @@ public class PlayerPanel extends JPanel
 					entry.getValue().updatePrayerData(data);
 				}
 			}
+
+			prayersPanel.updatePrayerRemaining(player.getSkillBoostedLevel(Skill.PRAYER), player.getSkillRealLevel(Skill.PRAYER));
 		}
 	}
 }
