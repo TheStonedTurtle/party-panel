@@ -26,11 +26,13 @@ package thestonedturtle.partypanel.ui;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
+import java.util.Map;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import lombok.Getter;
 import net.runelite.api.EquipmentInventorySlot;
+import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
 import net.runelite.client.game.ItemManager;
@@ -38,11 +40,15 @@ import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.DynamicGridLayout;
 import net.runelite.client.ui.components.materialtabs.MaterialTab;
 import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
+import net.runelite.client.util.AsyncBufferedImage;
 import net.runelite.client.util.ImageUtil;
 import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
+import thestonedturtle.partypanel.data.PrayerData;
 import thestonedturtle.partypanel.ui.equipment.EquipmentPanelSlot;
 import thestonedturtle.partypanel.ui.equipment.PlayerEquipmentPanel;
+import thestonedturtle.partypanel.ui.prayer.PlayerPrayerPanel;
+import thestonedturtle.partypanel.ui.prayer.PrayerSlot;
 import thestonedturtle.partypanel.ui.skills.PlayerSkillsPanel;
 import thestonedturtle.partypanel.ui.skills.SkillPanelSlot;
 
@@ -59,6 +65,7 @@ public class PlayerPanel extends JPanel
 	private final PlayerInventoryPanel inventoryPanel;
 	private final PlayerEquipmentPanel equipmentPanel;
 	private final PlayerSkillsPanel skillsPanel;
+	private final PlayerPrayerPanel prayersPanel;
 
 	public PlayerPanel(final PartyPlayer selectedPlayer, final SpriteManager spriteManager, final ItemManager itemManager)
 	{
@@ -70,6 +77,7 @@ public class PlayerPanel extends JPanel
 		this.inventoryPanel = new PlayerInventoryPanel(selectedPlayer.getInventory(), itemManager);
 		this.equipmentPanel = new PlayerEquipmentPanel(selectedPlayer.getEquipment(), spriteManager, itemManager);
 		this.skillsPanel = new PlayerSkillsPanel(selectedPlayer, spriteManager, itemManager);
+		this.prayersPanel = new PlayerPrayerPanel(selectedPlayer, spriteManager);
 
 		final JPanel view = new JPanel();
 		final MaterialTabGroup tabGroup = new MaterialTabGroup(view);
@@ -82,6 +90,10 @@ public class PlayerPanel extends JPanel
 		final MaterialTab equipment = new MaterialTab(createImageIcon(spriteManager.getSprite(SpriteID.TAB_EQUIPMENT, 0)), tabGroup, equipmentPanel);
 		equipment.setToolTipText("Equipment");
 		tabGroup.addTab(equipment);
+
+		final MaterialTab prayers = new MaterialTab(createImageIcon(spriteManager.getSprite(SpriteID.TAB_PRAYER, 0)), tabGroup, prayersPanel);
+		prayers.setToolTipText("Prayers");
+		tabGroup.addTab(prayers);
 
 		final MaterialTab skills = new MaterialTab(createImageIcon(spriteManager.getSprite(SpriteID.TAB_STATS, 0)), tabGroup, skillsPanel);
 		skills.setToolTipText("Skills");
@@ -123,7 +135,12 @@ public class PlayerPanel extends JPanel
 			final EquipmentPanelSlot slot = this.equipmentPanel.getPanelMap().get(equipSlot);
 			if (item != null)
 			{
-				slot.setGameItem(item, itemManager.getImage(item.getId(), item.getQty(), item.isStackable()));
+				final AsyncBufferedImage img = itemManager.getImage(item.getId(), item.getQty(), item.isStackable());
+				slot.setGameItem(item, img);
+
+				// Ensure item is set when image loads
+				final GameItem finalItem = item;
+				img.onLoaded(() -> slot.setGameItem(finalItem, img));
 			}
 			else
 			{
@@ -151,6 +168,20 @@ public class PlayerPanel extends JPanel
 				panel.updateBaseLevel(player.getStats().getBaseLevels().get(s));
 			}
 			skillsPanel.getTotalLevelPanel().updateTotalLevel(player.getStats().getTotalLevel());
+		}
+
+		if (player.getPrayers() != null)
+		{
+			for (final Map.Entry<Prayer, PrayerSlot> entry : prayersPanel.getSlotMap().entrySet())
+			{
+				final PrayerData data = player.getPrayers().getPrayerData().get(entry.getKey());
+				if (data != null)
+				{
+					entry.getValue().updatePrayerData(data);
+				}
+			}
+
+			prayersPanel.updatePrayerRemaining(player.getSkillBoostedLevel(Skill.PRAYER), player.getSkillRealLevel(Skill.PRAYER));
 		}
 	}
 }

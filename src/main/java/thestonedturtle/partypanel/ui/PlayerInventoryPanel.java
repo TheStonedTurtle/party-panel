@@ -38,11 +38,11 @@ import thestonedturtle.partypanel.data.GameItem;
 
 public class PlayerInventoryPanel extends JPanel
 {
-	private final static Dimension INVI_SLOT_SIZE = new Dimension(50, 42);
+	private static final Dimension INVI_SLOT_SIZE = new Dimension(50, 42);
 	private static final Dimension PANEL_SIZE = new Dimension(PluginPanel.PANEL_WIDTH - 10, 300);
-	private final static Color INVI_BACKGROUND = new Color(62, 53, 41);
-	private final static Color INVI_BORDER_COLOR = new Color(87, 80, 64);
-	private final static Border INVI_BORDER = BorderFactory.createCompoundBorder(
+	private static final Color INVI_BACKGROUND = new Color(62, 53, 41);
+	private static final Color INVI_BORDER_COLOR = new Color(87, 80, 64);
+	private static final Border INVI_BORDER = BorderFactory.createCompoundBorder(
 		BorderFactory.createMatteBorder(3, 3, 3, 3, INVI_BORDER_COLOR),
 		BorderFactory.createEmptyBorder(2, 2, 2, 2)
 	);

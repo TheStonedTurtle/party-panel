@@ -44,6 +44,7 @@ public class PartyPlayer extends PartyMemberMessage
 	private Stats stats;
 	private GameItem[] inventory;
 	private GameItem[] equipment;
+	private Prayers prayers;
 
 	public PartyPlayer(final PartyMember member, final Client client, final ItemManager itemManager)
 	{
@@ -53,6 +54,7 @@ public class PartyPlayer extends PartyMemberMessage
 		this.stats = null;
 		this.inventory = new GameItem[28];
 		this.equipment = new GameItem[EquipmentInventorySlot.AMMO.getSlotIdx() + 1];
+		this.prayers = null;
 
 		updatePlayerInfo(client, itemManager);
 	}
@@ -75,6 +77,11 @@ public class PartyPlayer extends PartyMemberMessage
 			if (equip != null)
 			{
 				this.equipment = GameItem.convertItemsToGameItems(equip.getItems(), itemManager);
+			}
+
+			if (this.prayers == null)
+			{
+				prayers = new Prayers(client);
 			}
 		}
 	}

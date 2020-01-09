@@ -40,6 +40,8 @@ import net.runelite.http.api.ws.messages.party.UserPart;
 import net.runelite.http.api.ws.messages.party.UserSync;
 import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
+import thestonedturtle.partypanel.data.Prayers;
+import thestonedturtle.partypanel.ui.prayer.PrayerSprites;
 
 @Slf4j
 @PluginDescriptor(
@@ -47,7 +49,7 @@ import thestonedturtle.partypanel.data.PartyPlayer;
 )
 public class PartyPanelPlugin extends Plugin
 {
-	private final static BufferedImage ICON = ImageUtil.getResourceStreamFromClass(PartyPanelPlugin.class, "icon.png");
+	private static final BufferedImage ICON = ImageUtil.getResourceStreamFromClass(PartyPanelPlugin.class, "icon.png");
 
 	@Inject
 	private Client client;
@@ -242,21 +244,43 @@ public class PartyPanelPlugin extends Plugin
 			return;
 		}
 
+		boolean changed = false;
+
 		if (myPlayer == null)
 		{
 			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
 			// member changed account, send new data to all members
 			wsClient.send(myPlayer);
+			return;
 		}
 
 		if (myPlayer.getStats() == null)
 		{
 			myPlayer.updatePlayerInfo(client, itemManager);
+			changed = true;
 		}
 
 		if (!Objects.equals(client.getLocalPlayer().getName(), myPlayer.getUsername()))
 		{
 			myPlayer.setUsername(client.getLocalPlayer().getName());
+			changed = true;
+		}
+
+		if (myPlayer.getPrayers() == null)
+		{
+			myPlayer.setPrayers(new Prayers(client));
+			changed = true;
+		}
+		else
+		{
+			for (final PrayerSprites prayer : PrayerSprites.values())
+			{
+				changed = myPlayer.getPrayers().updatePrayerState(prayer, client) || changed;
+			}
+		}
+
+		if (changed)
+		{
 			wsClient.send(myPlayer);
 		}
 	}
