@@ -39,11 +39,13 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import lombok.Getter;
 import net.runelite.api.Prayer;
+import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
+import thestonedturtle.partypanel.data.PartyPlayer;
 import thestonedturtle.partypanel.data.PrayerData;
 import thestonedturtle.partypanel.data.Prayers;
 
@@ -63,7 +65,7 @@ public class PlayerPrayerPanel extends JPanel
 	private final Map<Prayer, PrayerSlot> slotMap = new HashMap<>();
 	private final JLabel remainingLabel = new JLabel();
 
-	public PlayerPrayerPanel(final Prayers prayer, final SpriteManager spriteManager)
+	public PlayerPrayerPanel(final PartyPlayer player, final SpriteManager spriteManager)
 	{
 		super();
 
@@ -73,8 +75,9 @@ public class PlayerPrayerPanel extends JPanel
 		setBorder(BORDER);
 		setPreferredSize(PANEL_SIZE);
 
-		add(createPrayerContainer(prayer, spriteManager), BorderLayout.NORTH);
+		add(createPrayerContainer(player.getPrayers(), spriteManager), BorderLayout.NORTH);
 		add(createPrayerRemainingPanel(spriteManager), BorderLayout.SOUTH);
+		updatePrayerRemaining(player.getSkillBoostedLevel(Skill.PRAYER), player.getSkillRealLevel(Skill.PRAYER));
 	}
 
 	private JPanel createPrayerContainer(final Prayers prayer, final SpriteManager spriteManager)

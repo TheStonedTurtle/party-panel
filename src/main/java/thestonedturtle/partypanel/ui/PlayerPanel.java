@@ -77,7 +77,7 @@ public class PlayerPanel extends JPanel
 		this.inventoryPanel = new PlayerInventoryPanel(selectedPlayer.getInventory(), itemManager);
 		this.equipmentPanel = new PlayerEquipmentPanel(selectedPlayer.getEquipment(), spriteManager, itemManager);
 		this.skillsPanel = new PlayerSkillsPanel(selectedPlayer, spriteManager, itemManager);
-		this.prayersPanel = new PlayerPrayerPanel(selectedPlayer.getPrayers(), spriteManager);
+		this.prayersPanel = new PlayerPrayerPanel(selectedPlayer, spriteManager);
 
 		final JPanel view = new JPanel();
 		final MaterialTabGroup tabGroup = new MaterialTabGroup(view);
