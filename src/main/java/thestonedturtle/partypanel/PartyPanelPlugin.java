@@ -23,6 +23,7 @@ import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.account.AccountSession;
 import net.runelite.client.account.SessionManager;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.PartyChanged;
@@ -53,6 +54,9 @@ public class PartyPanelPlugin extends Plugin
 
 	@Inject
 	private Client client;
+
+	@Inject
+	private ClientThread clientThread;
 
 	@Inject
 	private ClientToolbar clientToolbar;
@@ -116,8 +120,11 @@ public class PartyPanelPlugin extends Plugin
 		{
 			clientToolbar.addNavigation(navButton);
 			addedButton = true;
-			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
-			wsClient.send(myPlayer);
+			clientThread.invokeLater(() ->
+			{
+				myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
+				wsClient.send(myPlayer);
+			});
 		}
 	}
 
@@ -179,9 +186,17 @@ public class PartyPanelPlugin extends Plugin
 		{
 			if (myPlayer == null)
 			{
-				myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
+				clientThread.invoke(() ->
+				{
+					myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
+					wsClient.send(myPlayer);
+					return true;
+				});
 			}
-			wsClient.send(myPlayer);
+			else
+			{
+				wsClient.send(myPlayer);
+			}
 		}
 	}
 

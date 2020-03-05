@@ -48,25 +48,35 @@ public class SkillPanelSlot extends JPanel
 
 	private final JLabel boostedLabel = new JLabel();
 	private final JLabel baseLabel = new JLabel();
-	private final BufferedImage background;
+	private BufferedImage background;
+	private BufferedImage skillHalf;
+	private BufferedImage statHalf;
 
 	@Override
 	protected void paintComponent(Graphics g)
 	{
 		super.paintComponent(g);
+		if (background == null)
+		{
+			return;
+		}
+
 		g.drawImage(background, 0, 0, null);
 	}
 
-	SkillPanelSlot(final int boostedLevel, final int baseLevel, final BufferedImage skillIcon, final SpriteManager spriteManager)
+	private void updateBackgroundImage()
+	{
+		if (skillHalf != null && statHalf != null)
+		{
+			background = ImgUtil.combineImages(skillHalf, statHalf);
+			this.repaint();
+		}
+	}
+
+	SkillPanelSlot(final int boostedLevel, final int baseLevel)
 	{
 		super();
 		setOpaque(false);
-
-		final BufferedImage skillHalf = ImgUtil.overlapImages(skillIcon, SkillPanelSlot.resize(spriteManager.getSprite(SpriteID.STATS_TILE_HALF_LEFT, 0)));
-		background = ImgUtil.combineImages(
-			skillHalf,
-			SkillPanelSlot.resize(spriteManager.getSprite(SpriteID.STATS_TILE_HALF_RIGHT_WITH_SLASH, 0))
-		);
 
 		setPreferredSize(PANEL_FULL_SIZE);
 		setLayout(new BorderLayout());
@@ -104,6 +114,20 @@ public class SkillPanelSlot extends JPanel
 		textPanel.add(baseLabel, c);
 
 		add(textPanel, BorderLayout.EAST);
+	}
+
+	void initImages(final BufferedImage skillIcon, final SpriteManager spriteManager)
+	{
+		spriteManager.getSpriteAsync(SpriteID.STATS_TILE_HALF_LEFT, 0, img ->
+		{
+			skillHalf = ImgUtil.overlapImages(skillIcon, SkillPanelSlot.resize(img));
+			updateBackgroundImage();
+		});
+		spriteManager.getSpriteAsync(SpriteID.STATS_TILE_HALF_RIGHT_WITH_SLASH, 0, img ->
+		{
+			statHalf = SkillPanelSlot.resize(img);
+			updateBackgroundImage();
+		});
 	}
 
 	static BufferedImage resize(final BufferedImage img)

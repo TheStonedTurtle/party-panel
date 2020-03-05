@@ -32,7 +32,6 @@ import java.awt.GridBagLayout;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.Border;
@@ -141,7 +140,7 @@ public class PlayerPrayerPanel extends JPanel
 
 		final JLabel iconLabel = new JLabel();
 		iconLabel.setOpaque(false);
-		iconLabel.setIcon(new ImageIcon(spriteManager.getSprite(SpriteID.UNKNOWN_PRAYER_ICON, 0)));
+		spriteManager.addSpriteTo(iconLabel, SpriteID.UNKNOWN_PRAYER_ICON, 0);
 		iconLabel.setHorizontalAlignment(JLabel.RIGHT);
 
 		remainingLabel.setFont(FontManager.getRunescapeSmallFont());

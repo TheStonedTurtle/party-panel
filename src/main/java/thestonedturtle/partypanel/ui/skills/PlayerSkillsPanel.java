@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import lombok.Getter;
 import net.runelite.api.Skill;
@@ -60,7 +61,6 @@ import static net.runelite.api.Skill.STRENGTH;
 import static net.runelite.api.Skill.THIEVING;
 import static net.runelite.api.Skill.WOODCUTTING;
 import net.runelite.api.SpriteID;
-import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.DynamicGridLayout;
 import net.runelite.client.ui.PluginPanel;
@@ -124,7 +124,7 @@ public class PlayerSkillsPanel extends JPanel
 	@Getter
 	private final TotalPanelSlot totalLevelPanel;
 
-	public PlayerSkillsPanel(final PartyPlayer player, final SpriteManager spriteManager, final ItemManager itemManager)
+	public PlayerSkillsPanel(final PartyPlayer player, final SpriteManager spriteManager)
 	{
 		super();
 
@@ -136,10 +136,11 @@ public class PlayerSkillsPanel extends JPanel
 
 		for (final Skill s : SKILLS)
 		{
-			final SkillPanelSlot slot = new SkillPanelSlot(player.getSkillBoostedLevel(s), player.getSkillRealLevel(s), spriteManager.getSprite(SPRITE_MAP.get(s), 0), spriteManager);
+			final SkillPanelSlot slot = new SkillPanelSlot(player.getSkillBoostedLevel(s), player.getSkillRealLevel(s));
 			slot.setToolTipText(s.getName());
 			panelMap.put(s, slot);
 			this.add(slot);
+			spriteManager.getSpriteAsync(SPRITE_MAP.get(s), 0, img -> SwingUtilities.invokeLater(() -> slot.initImages(img, spriteManager)));
 		}
 
 		final int totalLevel = player.getStats() == null ? -1 : player.getStats().getTotalLevel();

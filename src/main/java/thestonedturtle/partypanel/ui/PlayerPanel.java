@@ -29,6 +29,7 @@ import java.awt.image.BufferedImage;
 import java.util.Map;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import lombok.Getter;
 import net.runelite.api.EquipmentInventorySlot;
@@ -76,38 +77,45 @@ public class PlayerPanel extends JPanel
 		this.banner = new PlayerBanner(selectedPlayer, spriteManager);
 		this.inventoryPanel = new PlayerInventoryPanel(selectedPlayer.getInventory(), itemManager);
 		this.equipmentPanel = new PlayerEquipmentPanel(selectedPlayer.getEquipment(), spriteManager, itemManager);
-		this.skillsPanel = new PlayerSkillsPanel(selectedPlayer, spriteManager, itemManager);
+		this.skillsPanel = new PlayerSkillsPanel(selectedPlayer, spriteManager);
 		this.prayersPanel = new PlayerPrayerPanel(selectedPlayer, spriteManager);
 
 		final JPanel view = new JPanel();
 		final MaterialTabGroup tabGroup = new MaterialTabGroup(view);
 		tabGroup.setBorder(new EmptyBorder(10, 0, 10, 0));
 
-		final MaterialTab inventory = new MaterialTab(createImageIcon(spriteManager.getSprite(SpriteID.TAB_INVENTORY, 0)), tabGroup, inventoryPanel);
-		inventory.setToolTipText("Inventory");
-		tabGroup.addTab(inventory);
-
-		final MaterialTab equipment = new MaterialTab(createImageIcon(spriteManager.getSprite(SpriteID.TAB_EQUIPMENT, 0)), tabGroup, equipmentPanel);
-		equipment.setToolTipText("Equipment");
-		tabGroup.addTab(equipment);
-
-		final MaterialTab prayers = new MaterialTab(createImageIcon(spriteManager.getSprite(SpriteID.TAB_PRAYER, 0)), tabGroup, prayersPanel);
-		prayers.setToolTipText("Prayers");
-		tabGroup.addTab(prayers);
-
-		final MaterialTab skills = new MaterialTab(createImageIcon(spriteManager.getSprite(SpriteID.TAB_STATS, 0)), tabGroup, skillsPanel);
-		skills.setToolTipText("Skills");
-		tabGroup.addTab(skills);
+		addTab(tabGroup, SpriteID.TAB_INVENTORY, inventoryPanel, "Inventory");
+		addTab(tabGroup, SpriteID.TAB_EQUIPMENT, equipmentPanel, "Equipment");
+		addTab(tabGroup, SpriteID.TAB_PRAYER, prayersPanel, "Prayers");
+		addTab(tabGroup, SpriteID.TAB_STATS, skillsPanel, "Skills");
 
 		setLayout(new DynamicGridLayout(0, 1));
 		add(banner);
 		add(tabGroup);
 		add(view);
 
-		tabGroup.select(inventory);
-
 		revalidate();
 		repaint();
+	}
+
+	private void addTab(final MaterialTabGroup tabGroup, final int spriteID, final JPanel panel, final String tooltip)
+	{
+		spriteManager.getSpriteAsync(spriteID, 0, img ->
+		{
+			SwingUtilities.invokeLater(() ->
+			{
+				final MaterialTab tab = new MaterialTab(createImageIcon(img), tabGroup, panel);
+				tab.setToolTipText(tooltip);
+				tabGroup.addTab(tab);
+				tabGroup.revalidate();
+				tabGroup.repaint();
+
+				if (spriteID == SpriteID.TAB_INVENTORY)
+				{
+					tabGroup.select(tab);
+				}
+			});
+		});
 	}
 
 	private ImageIcon createImageIcon(BufferedImage image)

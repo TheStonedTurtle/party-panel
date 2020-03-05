@@ -34,6 +34,7 @@ import java.util.Map;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
@@ -53,6 +54,7 @@ public class PlayerBanner extends JPanel
 {
 	private static final Dimension STAT_ICON_SIZE = new Dimension(18, 18);
 	private static final Dimension ICON_SIZE = new Dimension(Constants.ITEM_SPRITE_WIDTH, Constants.ITEM_SPRITE_HEIGHT);
+	private static final String SPECIAL_ATTACK_NAME = "Special Attack";
 
 	private final JPanel statsPanel = new JPanel();
 	private final JLabel iconLabel = new JLabel();
@@ -79,20 +81,14 @@ public class PlayerBanner extends JPanel
 		statsPanel.setLayout(new DynamicGridLayout(1, 3));
 		statsPanel.setOpaque(false);
 
-		final BufferedImage hpIcon = spriteManager.getSprite(SpriteID.SKILL_HITPOINTS, 0);
-		final JPanel hp = createIconTextLabel(Skill.HITPOINTS.getName(), hpIcon, String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS)));
-		hp.setToolTipText("Hitpoints");
-		statsPanel.add(hp);
-
-		final BufferedImage prayIcon = spriteManager.getSprite(SpriteID.SKILL_PRAYER, 0);
-		final JPanel pray = createIconTextLabel(Skill.PRAYER.getName(), prayIcon, String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER)));
-		pray.setToolTipText("Prayer");
-		statsPanel.add(pray);
-
-		final BufferedImage specialAttackIcon = spriteManager.getSprite(SpriteID.MULTI_COMBAT_ZONE_CROSSED_SWORDS, 0);
-		final JPanel special = createIconTextLabel("SPECIAL", specialAttackIcon, player.getStats() == null ? "0%" : String.valueOf(player.getStats().getSpecialPercent()) + "%");
-		special.setToolTipText("Special Attack");
-		statsPanel.add(special);
+		final GridBagConstraints c = new GridBagConstraints();
+		c.gridy = 0;
+		createIconPanel(spriteManager, SpriteID.SKILL_HITPOINTS, Skill.HITPOINTS.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS)), c);
+		c.gridy++;
+		createIconPanel(spriteManager, SpriteID.SKILL_PRAYER, Skill.PRAYER.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER)), c);
+		c.gridy++;
+		createIconPanel(spriteManager, SpriteID.MULTI_COMBAT_ZONE_CROSSED_SWORDS, SPECIAL_ATTACK_NAME, player.getStats() == null ? "0%" : String.valueOf(player.getStats().getSpecialPercent()) + "%", c);
+		c.gridy++;
 
 		recreatePanel();
 	}
@@ -178,12 +174,29 @@ public class PlayerBanner extends JPanel
 			}
 		}
 
-		statLabels.get(Skill.HITPOINTS.getName()).setText(String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS)));
-		statLabels.get(Skill.PRAYER.getName()).setText(String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER)));
-		statLabels.get("SPECIAL").setText(player.getStats() == null ? "0%" : String.valueOf(player.getStats().getSpecialPercent()) + "%");
+		statLabels.getOrDefault(Skill.HITPOINTS.getName(), new JLabel()).setText(String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS)));
+		statLabels.getOrDefault(Skill.PRAYER.getName(), new JLabel()).setText(String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER)));
+		statLabels.getOrDefault(SPECIAL_ATTACK_NAME, new JLabel()).setText(player.getStats() == null ? "0%" : String.valueOf(player.getStats().getSpecialPercent()) + "%");
 
 		statsPanel.revalidate();
 		statsPanel.repaint();
+	}
+
+	private void createIconPanel(final SpriteManager spriteManager, final int spriteID, final String name,
+		final String value, final GridBagConstraints constraints)
+	{
+		// Async support
+		final GridBagConstraints c = (GridBagConstraints) constraints.clone();
+		spriteManager.getSpriteAsync(spriteID, 0, img ->
+		{
+			SwingUtilities.invokeLater(() ->
+			{
+				final JPanel panel = createIconTextLabel(name, img, value);
+				statsPanel.add(panel, c);
+				statsPanel.revalidate();
+				statsPanel.repaint();
+			});
+		});
 	}
 
 	private JPanel createIconTextLabel(final String name, final BufferedImage icon, final String value)
@@ -199,6 +212,7 @@ public class PlayerBanner extends JPanel
 		panel.add(iconLabel);
 		panel.add(textLabel);
 		panel.setOpaque(false);
+		panel.setToolTipText(name);
 
 		return panel;
 	}
