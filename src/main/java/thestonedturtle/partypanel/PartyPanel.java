@@ -25,6 +25,7 @@
 package thestonedturtle.partypanel;
 
 import com.google.inject.Inject;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -37,7 +38,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.border.EmptyBorder;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.DynamicGridLayout;
 import net.runelite.client.ui.PluginPanel;
 import thestonedturtle.partypanel.data.PartyPlayer;
 import thestonedturtle.partypanel.ui.PlayerBanner;
@@ -50,19 +56,34 @@ class PartyPanel extends PluginPanel
 
 	private final PartyPanelPlugin plugin;
 	private final Map<UUID, PlayerBanner> bannerMap = new HashMap<>();
+	private final JPanel panel;
 	private PlayerPanel playerPanel = null;
 	private PartyPlayer selectedPlayer = null;
 
 	@Inject
 	PartyPanel(final PartyPanelPlugin plugin)
 	{
-		super();
+		super(false);
 		this.plugin = plugin;
+		this.setLayout(new BorderLayout());
+
+		panel = new JPanel();
+		panel.setBorder(new EmptyBorder(BORDER_OFFSET, BORDER_OFFSET, BORDER_OFFSET, BORDER_OFFSET));
+		panel.setLayout(new DynamicGridLayout(0, 1, 0, 3));
+
+		// Wrap content to anchor to top and prevent expansion
+		final JPanel northPanel = new JPanel(new BorderLayout());
+		northPanel.add(panel, BorderLayout.NORTH);
+		final JScrollPane scrollPane = new JScrollPane(northPanel);
+		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+		this.add(scrollPane, BorderLayout.CENTER);
+		this.add(createLeaveButton(), BorderLayout.SOUTH);
 	}
 
 	void refreshUI()
 	{
-		this.removeAll();
+		panel.removeAll();
 		if (selectedPlayer == null)
 		{
 			showBannerView();
@@ -84,7 +105,7 @@ class PartyPanel extends PluginPanel
 	void showBannerView()
 	{
 		selectedPlayer = null;
-		removeAll();
+		panel.removeAll();
 
 		final Collection<PartyPlayer> players = plugin.getPartyMembers().values()
 			.stream()
@@ -119,19 +140,17 @@ class PartyPanel extends PluginPanel
 					banner.setBackground(BACKGROUND_COLOR);
 				}
 			});
-			add(banner);
+			panel.add(banner);
 			bannerMap.put(player.getMember().getMemberId(), banner);
 		}
 
 		if (getComponentCount() == 0)
 		{
-			add(new JLabel("There are no members in your party"));
+			panel.add(new JLabel("There are no members in your party"));
 		}
 
-		add(createLeaveButton());
-
-		this.revalidate();
-		this.repaint();
+		panel.revalidate();
+		panel.repaint();
 	}
 
 	void showPlayerView()
@@ -141,8 +160,8 @@ class PartyPanel extends PluginPanel
 			showBannerView();
 		}
 
-		removeAll();
-		add(createReturnButton());
+		panel.removeAll();
+		panel.add(createReturnButton());
 
 		if (playerPanel != null)
 		{
@@ -152,11 +171,10 @@ class PartyPanel extends PluginPanel
 		{
 			playerPanel = new PlayerPanel(selectedPlayer, plugin.spriteManager, plugin.itemManager);
 		}
-		add(playerPanel);
-		add(createLeaveButton());
+		panel.add(playerPanel);
 
-		this.revalidate();
-		this.repaint();
+		panel.revalidate();
+		panel.repaint();
 	}
 
 	private JButton createReturnButton()
