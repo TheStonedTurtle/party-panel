@@ -28,7 +28,6 @@ import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
-import net.runelite.api.Constants;
 import net.runelite.api.SpriteID;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.util.Text;
@@ -37,28 +36,48 @@ import thestonedturtle.partypanel.data.PrayerData;
 
 public class PrayerSlot extends JLabel
 {
-	private static final Dimension SIZE = new Dimension(Constants.ITEM_SPRITE_WIDTH, 45);
+	private static final Dimension SIZE = new Dimension(40, 40);
 
-	private final BufferedImage unavailableImage;
-	private final BufferedImage availableImage;
-	private final BufferedImage activatedImage;
+	private BufferedImage unavailableImage;
+	private BufferedImage availableImage;
+	private BufferedImage activatedImage;
 
 	private PrayerData data;
 
 	public PrayerSlot(final PrayerSprites sprites, final SpriteManager spriteManager)
 	{
-		this.unavailableImage = spriteManager.getSprite(sprites.getUnavailable(), 0);
-		this.availableImage = spriteManager.getSprite(sprites.getAvailable(), 0);
-		final BufferedImage activated = spriteManager.getSprite(SpriteID.ACTIVATED_PRAYER_BACKGROUND, 0);
-		this.activatedImage = ImgUtil.overlapImages(availableImage, activated);
+		data = new PrayerData(sprites.getPrayer(), false, false);
+
+		spriteManager.getSpriteAsync(sprites.getUnavailable(), 0, img -> unavailableImage = img);
+		spriteManager.getSpriteAsync(sprites.getAvailable(), 0, img ->
+		{
+			availableImage = img;
+			updateActivatedImage();
+		});
+
+		spriteManager.getSpriteAsync(SpriteID.ACTIVATED_PRAYER_BACKGROUND, 0, img ->
+		{
+			activatedImage = img;
+			updateActivatedImage();
+		});
 
 		setToolTipText(Text.titleCase(sprites.getPrayer()));
 		setVerticalAlignment(JLabel.CENTER);
 		setHorizontalAlignment(JLabel.CENTER);
 		setPreferredSize(SIZE);
+		setMaximumSize(SIZE);
+		setMinimumSize(SIZE);
 
-		data = new PrayerData(sprites.getPrayer(), false, false);
 		updatePrayerData(data);
+	}
+
+	private void updateActivatedImage()
+	{
+		if (availableImage != null && activatedImage != null)
+		{
+			activatedImage = ImgUtil.overlapImages(availableImage, activatedImage);
+			updatePrayerData(data);
+		}
 	}
 
 	public void updatePrayerData(final PrayerData updatedData)
@@ -76,7 +95,10 @@ public class PrayerSlot extends JLabel
 			icon = activatedImage;
 		}
 
-		setIcon(new ImageIcon(icon));
+		if (icon != null)
+		{
+			setIcon(new ImageIcon(icon));
+		}
 
 		revalidate();
 		repaint();

@@ -186,7 +186,8 @@ public class PartyPanelPlugin extends Plugin
 		{
 			if (myPlayer == null)
 			{
-				clientThread.invoke(() -> {
+				clientThread.invoke(() ->
+				{
 					myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
 					wsClient.send(myPlayer);
 					return true;

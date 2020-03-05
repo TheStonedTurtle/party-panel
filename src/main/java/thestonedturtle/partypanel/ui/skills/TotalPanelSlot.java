@@ -39,13 +39,29 @@ import thestonedturtle.partypanel.ImgUtil;
 public class TotalPanelSlot extends JPanel
 {
 	private final JLabel levelLabel = new JLabel();
-	private final BufferedImage background;
+	private BufferedImage background;
+	private BufferedImage skillHalf;
+	private BufferedImage statHalf;
 
 	@Override
-	protected  void paintComponent(Graphics g)
+	protected void paintComponent(Graphics g)
 	{
 		super.paintComponent(g);
+		if (background == null)
+		{
+			return;
+		}
+
 		g.drawImage(background, 0, 0, null);
+	}
+
+	private void updateBackgroundImage()
+	{
+		if (skillHalf != null && statHalf != null)
+		{
+			background = ImgUtil.combineImages(skillHalf, statHalf);
+			this.repaint();
+		}
 	}
 
 	TotalPanelSlot(final int totalLevel, final SpriteManager spriteManager)
@@ -53,10 +69,16 @@ public class TotalPanelSlot extends JPanel
 		super();
 		setOpaque(false);
 
-		background = ImgUtil.combineImages(
-			SkillPanelSlot.resize(spriteManager.getSprite(SpriteID.STATS_TILE_HALF_LEFT_BLACK, 0)),
-			SkillPanelSlot.resize(spriteManager.getSprite(SpriteID.STATS_TILE_HALF_RIGHT_BLACK, 0))
-		);
+		spriteManager.getSpriteAsync(SpriteID.STATS_TILE_HALF_LEFT_BLACK, 0, img ->
+		{
+			skillHalf = SkillPanelSlot.resize(img);
+			updateBackgroundImage();
+		});
+		spriteManager.getSpriteAsync(SpriteID.STATS_TILE_HALF_RIGHT_BLACK, 0, img ->
+		{
+			statHalf = SkillPanelSlot.resize(img);
+			updateBackgroundImage();
+		});
 
 		setPreferredSize(SkillPanelSlot.PANEL_FULL_SIZE);
 		setLayout(new GridBagLayout());

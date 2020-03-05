@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import lombok.Getter;
@@ -100,58 +101,7 @@ public class PlayerEquipmentPanel extends JPanel
 		this.setLayout(new GridBagLayout());
 		this.setBackground(new Color(62, 53, 41));
 
-		final GridBagConstraints c = new GridBagConstraints();
-		c.gridx = 0;
-		c.gridy = 0;
-		c.ipadx = 4;
-		c.ipady = 3;
-		c.anchor = GridBagConstraints.CENTER;
-
-		// I don't see an iterative way to setup this layout correctly
-		final BufferedImage background = spriteManager.getSprite(SpriteID.EQUIPMENT_SLOT_TILE, 0);
-
-		// First row
-		c.gridx = 1;
-		c.gridy = 0;
-		this.add(createEquipmentPanelSlot(EquipmentInventorySlot.HEAD, items, background), c);
-
-		c.gridx = 0;
-		c.gridy++;
-		c.anchor = GridBagConstraints.EAST;
-		this.add(createEquipmentPanelSlot(EquipmentInventorySlot.CAPE, items, background), c);
-		c.anchor = GridBagConstraints.CENTER;
-		c.gridx++;
-		this.add(createEquipmentPanelSlot(EquipmentInventorySlot.AMULET, items, background), c);
-		c.gridx++;
-		c.anchor = GridBagConstraints.WEST;
-		this.add(createEquipmentPanelSlot(EquipmentInventorySlot.AMMO, items, background), c);
-		c.anchor = GridBagConstraints.CENTER;
-
-		c.gridx = 0;
-		c.gridy++;
-		this.add(createEquipmentPanelSlot(EquipmentInventorySlot.WEAPON, items, background), c);
-		panelMap.get(EquipmentInventorySlot.WEAPON).setBorder(BORDER_RIGHT);
-		c.gridx++;
-		this.add(createEquipmentPanelSlot(EquipmentInventorySlot.BODY, items, background), c);
-		c.gridx++;
-		this.add(createEquipmentPanelSlot(EquipmentInventorySlot.SHIELD, items, background), c);
-		panelMap.get(EquipmentInventorySlot.SHIELD).setBorder(BORDER_LEFT);
-
-		c.gridx = 1;
-		c.gridy++;
-		this.add(createEquipmentPanelSlot(EquipmentInventorySlot.LEGS, items, background), c);
-		c.gridx = 0;
-		c.gridy++;
-		this.add(createEquipmentPanelSlot(EquipmentInventorySlot.GLOVES, items, background), c);
-		panelMap.get(EquipmentInventorySlot.GLOVES).setBorder(BORDER_RIGHT);
-		c.gridx++;
-		this.add(createEquipmentPanelSlot(EquipmentInventorySlot.BOOTS, items, background), c);
-		c.gridx++;
-		this.add(createEquipmentPanelSlot(EquipmentInventorySlot.RING, items, background), c);
-		panelMap.get(EquipmentInventorySlot.RING).setBorder(BORDER_LEFT);
-
-		this.revalidate();
-		this.repaint();
+		spriteManager.getSpriteAsync(SpriteID.EQUIPMENT_SLOT_TILE, 0, img -> SwingUtilities.invokeLater(() -> createPanel(items, img)));
 	}
 
 	@Override
@@ -164,19 +114,88 @@ public class PlayerEquipmentPanel extends JPanel
 		g2d.drawImage(PANEL_BACKGROUND, x, y, null);
 	}
 
-	private EquipmentPanelSlot createEquipmentPanelSlot(final EquipmentInventorySlot slot, final GameItem[] items, final BufferedImage background)
+	private void createPanel(final GameItem[] items, final BufferedImage background)
 	{
+		this.removeAll();
+
+		final GridBagConstraints c = new GridBagConstraints();
+		c.gridx = 0;
+		c.ipadx = 4;
+		c.ipady = 3;
+		c.anchor = GridBagConstraints.CENTER;
+
+		// I don't see an iterative way to setup this layout correctly
+		// First row
+		c.gridx = 1;
+		c.gridy = 0;
+		createEquipmentPanelSlot(EquipmentInventorySlot.HEAD, items, background, c);
+
+		c.gridx = 0;
+		c.gridy++;
+		c.anchor = GridBagConstraints.EAST;
+		createEquipmentPanelSlot(EquipmentInventorySlot.CAPE, items, background, c);
+		c.anchor = GridBagConstraints.CENTER;
+		c.gridx++;
+		createEquipmentPanelSlot(EquipmentInventorySlot.AMULET, items, background, c);
+		c.gridx++;
+		c.anchor = GridBagConstraints.WEST;
+		createEquipmentPanelSlot(EquipmentInventorySlot.AMMO, items, background, c);
+		c.anchor = GridBagConstraints.CENTER;
+
+		c.gridx = 0;
+		c.gridy++;
+		createEquipmentPanelSlot(EquipmentInventorySlot.WEAPON, items, background, c, BORDER_RIGHT);
+		c.gridx++;
+		createEquipmentPanelSlot(EquipmentInventorySlot.BODY, items, background, c);
+		c.gridx++;
+		createEquipmentPanelSlot(EquipmentInventorySlot.SHIELD, items, background, c, BORDER_LEFT);
+
+		c.gridx = 1;
+		c.gridy++;
+		createEquipmentPanelSlot(EquipmentInventorySlot.LEGS, items, background, c);
+		c.gridx = 0;
+		c.gridy++;
+		createEquipmentPanelSlot(EquipmentInventorySlot.GLOVES, items, background, c, BORDER_RIGHT);
+		c.gridx++;
+		createEquipmentPanelSlot(EquipmentInventorySlot.BOOTS, items, background, c);
+		c.gridx++;
+		createEquipmentPanelSlot(EquipmentInventorySlot.RING, items, background, c, BORDER_LEFT);
+
+		this.revalidate();
+		this.repaint();
+	}
+	private void createEquipmentPanelSlot(final EquipmentInventorySlot slot, final GameItem[] items,
+		final BufferedImage background, final GridBagConstraints c)
+	{
+		createEquipmentPanelSlot(slot, items, background, c, null);
+	}
+
+	private void createEquipmentPanelSlot(final EquipmentInventorySlot slot, final GameItem[] items,
+		final BufferedImage background, final GridBagConstraints constraints, final Border border)
+	{
+		// Clone constraints for async support
+		final GridBagConstraints c = (GridBagConstraints) constraints.clone();
 		final GameItem item = items.length > slot.getSlotIdx() ? items[slot.getSlotIdx()] : null;
 		final AsyncBufferedImage image = item == null ? null : itemManager.getImage(item.getId(), item.getQty(), item.isStackable());
 
-		final EquipmentPanelSlot panel = new EquipmentPanelSlot(item, image, background, spriteManager.getSprite(EQUIPMENT_SLOT_SPRITE_MAP.get(slot), 0));
-		panelMap.put(slot, panel);
-
-		if (image != null)
+		spriteManager.getSpriteAsync(EQUIPMENT_SLOT_SPRITE_MAP.get(slot), 0, img ->
 		{
-			image.onLoaded(() -> panel.setGameItem(item, image));
-		}
+			SwingUtilities.invokeLater(() ->
+			{
+				final EquipmentPanelSlot panel = new EquipmentPanelSlot(item, image, background, img);
+				if (border != null)
+				{
+					panel.setBorder(border);
+				}
+				panelMap.put(slot, panel);
 
-		return panel;
+				if (image != null)
+				{
+					image.onLoaded(() -> panel.setGameItem(item, image));
+				}
+
+				add(panel, c);
+			});
+		});
 	}
 }
