@@ -26,6 +26,7 @@ import net.runelite.client.account.SessionManager;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.events.PartyChanged;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
@@ -116,16 +117,44 @@ public class PartyPanelPlugin extends Plugin
 			wsClient.changeSession(uuid);
 		}
 
-		if (isInParty())
+		if (isInParty() || config.alwaysShowIcon())
 		{
 			clientToolbar.addNavigation(navButton);
 			addedButton = true;
+		}
+
+		if (isInParty())
+		{
 			clientThread.invokeLater(() ->
 			{
 				myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
 				wsClient.send(myPlayer);
 			});
 		}
+	}
+
+	@Subscribe
+	protected void onConfigChanged(final ConfigChanged c)
+	{
+		if (!c.getGroup().equals("partypanel"))
+		{
+			return;
+		}
+
+		if (config.alwaysShowIcon())
+		{
+			if (!addedButton)
+			{
+				clientToolbar.addNavigation(navButton);
+				addedButton = true;
+			}
+		}
+		else if (addedButton && !isInParty())
+		{
+			clientToolbar.removeNavigation(navButton);
+			addedButton = false;
+		}
+		addedButton = config.alwaysShowIcon();
 	}
 
 	@Override
@@ -209,7 +238,7 @@ public class PartyPanelPlugin extends Plugin
 			SwingUtilities.invokeLater(() -> panel.removePartyPlayer(removed));
 		}
 
-		if (addedButton && (!isInParty() || partyService.getMembers().size() == 0))
+		if (addedButton && (!isInParty() || partyService.getMembers().size() == 0) && !config.alwaysShowIcon())
 		{
 			clientToolbar.removeNavigation(navButton);
 			addedButton = false;
@@ -229,7 +258,7 @@ public class PartyPanelPlugin extends Plugin
 		SwingUtilities.invokeLater(panel::refreshUI);
 		myPlayer = null;
 
-		if (!isInParty())
+		if (!isInParty() && !config.alwaysShowIcon())
 		{
 			clientToolbar.removeNavigation(navButton);
 			addedButton = false;
