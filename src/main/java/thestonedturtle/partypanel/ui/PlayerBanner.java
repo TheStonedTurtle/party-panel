@@ -45,7 +45,6 @@ import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
-import net.runelite.client.ui.DynamicGridLayout;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.ImageUtil;
 import thestonedturtle.partypanel.data.PartyPlayer;
@@ -55,6 +54,7 @@ public class PlayerBanner extends JPanel
 	private static final Dimension STAT_ICON_SIZE = new Dimension(18, 18);
 	private static final Dimension ICON_SIZE = new Dimension(Constants.ITEM_SPRITE_WIDTH, Constants.ITEM_SPRITE_HEIGHT);
 	private static final String SPECIAL_ATTACK_NAME = "Special Attack";
+	private static final String RUN_ENERGY_NAME = "Run Energy";
 
 	private final JPanel statsPanel = new JPanel();
 	private final JLabel iconLabel = new JLabel();
@@ -78,17 +78,20 @@ public class PlayerBanner extends JPanel
 		));
 
 		statsPanel.setPreferredSize(new Dimension(PluginPanel.PANEL_WIDTH, 30));
-		statsPanel.setLayout(new DynamicGridLayout(1, 3));
+		statsPanel.setLayout(new GridBagLayout());
 		statsPanel.setOpaque(false);
 
 		final GridBagConstraints c = new GridBagConstraints();
+		c.gridx = 0;
 		c.gridy = 0;
 		createIconPanel(spriteManager, SpriteID.SKILL_HITPOINTS, Skill.HITPOINTS.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS)), c);
-		c.gridy++;
+		c.gridx++;
 		createIconPanel(spriteManager, SpriteID.SKILL_PRAYER, Skill.PRAYER.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER)), c);
-		c.gridy++;
+		c.gridx++;
 		createIconPanel(spriteManager, SpriteID.MULTI_COMBAT_ZONE_CROSSED_SWORDS, SPECIAL_ATTACK_NAME, player.getStats() == null ? "0%" : String.valueOf(player.getStats().getSpecialPercent()) + "%", c);
-		c.gridy++;
+		c.gridx++;
+		createIconPanel(spriteManager, SpriteID.MINIMAP_ORB_RUN_ICON, RUN_ENERGY_NAME, player.getStats() == null ? "0%" : String.valueOf(player.getStats().getRunEnergy()) + "%", c);
+		c.gridx++;
 
 		recreatePanel();
 	}
@@ -177,6 +180,7 @@ public class PlayerBanner extends JPanel
 		statLabels.getOrDefault(Skill.HITPOINTS.getName(), new JLabel()).setText(String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS)));
 		statLabels.getOrDefault(Skill.PRAYER.getName(), new JLabel()).setText(String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER)));
 		statLabels.getOrDefault(SPECIAL_ATTACK_NAME, new JLabel()).setText(player.getStats() == null ? "0%" : String.valueOf(player.getStats().getSpecialPercent()) + "%");
+		statLabels.getOrDefault(RUN_ENERGY_NAME, new JLabel()).setText(player.getStats() == null ? "0%" : String.valueOf(player.getStats().getRunEnergy()) + "%");
 
 		statsPanel.revalidate();
 		statsPanel.repaint();

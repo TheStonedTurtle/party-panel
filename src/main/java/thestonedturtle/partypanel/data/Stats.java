@@ -40,6 +40,7 @@ public class Stats
 	private final Map<Skill, Integer> baseLevels = new HashMap<>();
 	private final Map<Skill, Integer> boostedLevels = new HashMap<>();
 	private int specialPercent;
+	private int runEnergy;
 	private int combatLevel;
 	private int totalLevel;
 
@@ -65,5 +66,6 @@ public class Stats
 
 		specialPercent = client.getVar(VarPlayer.SPECIAL_ATTACK_PERCENT) / 10;
 		totalLevel = client.getTotalLevel();
+		runEnergy = client.getEnergy();
 	}
 }

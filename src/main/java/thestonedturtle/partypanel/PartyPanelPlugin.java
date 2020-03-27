@@ -303,6 +303,15 @@ public class PartyPanelPlugin extends Plugin
 			myPlayer.updatePlayerInfo(client, itemManager);
 			changed = true;
 		}
+		else
+		{
+			final int energy = client.getEnergy();
+			if (myPlayer.getStats().getRunEnergy() != energy)
+			{
+				myPlayer.getStats().setRunEnergy(energy);
+				changed = true;
+			}
+		}
 
 		if (!Objects.equals(client.getLocalPlayer().getName(), myPlayer.getUsername()))
 		{
