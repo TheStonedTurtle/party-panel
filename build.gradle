@@ -27,7 +27,7 @@ dependencies {
 }
 
 group = 'thestonedturtle.partypanel'
-version = '1.3'
+version = '1.4'
 sourceCompatibility = '1.8'
 
 tasks.withType(JavaCompile) {
