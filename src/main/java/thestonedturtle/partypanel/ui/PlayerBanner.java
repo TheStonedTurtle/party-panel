@@ -24,6 +24,7 @@
  */
 package thestonedturtle.partypanel.ui;
 
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -78,20 +79,13 @@ public class PlayerBanner extends JPanel
 		));
 
 		statsPanel.setPreferredSize(new Dimension(PluginPanel.PANEL_WIDTH, 30));
-		statsPanel.setLayout(new GridBagLayout());
+		statsPanel.setLayout(new GridLayout(0, 4));
 		statsPanel.setOpaque(false);
 
-		final GridBagConstraints c = new GridBagConstraints();
-		c.gridx = 0;
-		c.gridy = 0;
-		createIconPanel(spriteManager, SpriteID.SKILL_HITPOINTS, Skill.HITPOINTS.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS)), c);
-		c.gridx++;
-		createIconPanel(spriteManager, SpriteID.SKILL_PRAYER, Skill.PRAYER.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER)), c);
-		c.gridx++;
-		createIconPanel(spriteManager, SpriteID.MULTI_COMBAT_ZONE_CROSSED_SWORDS, SPECIAL_ATTACK_NAME, player.getStats() == null ? "0%" : String.valueOf(player.getStats().getSpecialPercent()) + "%", c);
-		c.gridx++;
-		createIconPanel(spriteManager, SpriteID.MINIMAP_ORB_RUN_ICON, RUN_ENERGY_NAME, player.getStats() == null ? "0%" : String.valueOf(player.getStats().getRunEnergy()) + "%", c);
-		c.gridx++;
+		statsPanel.add(createIconPanel(spriteManager, SpriteID.SKILL_HITPOINTS, Skill.HITPOINTS.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS))));
+		statsPanel.add(createIconPanel(spriteManager, SpriteID.SKILL_PRAYER, Skill.PRAYER.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER))));
+		statsPanel.add(createIconPanel(spriteManager, SpriteID.MULTI_COMBAT_ZONE_CROSSED_SWORDS, SPECIAL_ATTACK_NAME, player.getStats() == null ? "0%" : String.valueOf(player.getStats().getSpecialPercent()) + "%"));
+		statsPanel.add(createIconPanel(spriteManager, SpriteID.MINIMAP_ORB_RUN_ICON, RUN_ENERGY_NAME, player.getStats() == null ? "0%" : String.valueOf(player.getStats().getRunEnergy()) + "%"));
 
 		recreatePanel();
 	}
@@ -186,35 +180,30 @@ public class PlayerBanner extends JPanel
 		statsPanel.repaint();
 	}
 
-	private void createIconPanel(final SpriteManager spriteManager, final int spriteID, final String name,
-		final String value, final GridBagConstraints constraints)
+	private JPanel createIconPanel(final SpriteManager spriteManager, final int spriteID, final String name,
+		final String value)
 	{
-		// Async support
-		final GridBagConstraints c = (GridBagConstraints) constraints.clone();
+		final JLabel iconLabel = new JLabel();
+		iconLabel.setPreferredSize(STAT_ICON_SIZE);
 		spriteManager.getSpriteAsync(spriteID, 0, img ->
 		{
 			SwingUtilities.invokeLater(() ->
 			{
-				final JPanel panel = createIconTextLabel(name, img, value);
-				statsPanel.add(panel, c);
-				statsPanel.revalidate();
-				statsPanel.repaint();
+				iconLabel.setIcon(new ImageIcon(ImageUtil.resizeImage(img, STAT_ICON_SIZE.width, STAT_ICON_SIZE.height)));
+				iconLabel.revalidate();
+				iconLabel.repaint();
 			});
 		});
-	}
-
-	private JPanel createIconTextLabel(final String name, final BufferedImage icon, final String value)
-	{
-		final JLabel iconLabel = new JLabel();
-		iconLabel.setPreferredSize(STAT_ICON_SIZE);
-		iconLabel.setIcon(new ImageIcon(ImageUtil.resizeImage(icon, STAT_ICON_SIZE.width, STAT_ICON_SIZE.height)));
 
 		final JLabel textLabel = new JLabel(value);
+		textLabel.setHorizontalAlignment(JLabel.CENTER);
+		textLabel.setHorizontalTextPosition(JLabel.CENTER);
 		statLabels.put(name, textLabel);
 
 		final JPanel panel = new JPanel();
-		panel.add(iconLabel);
-		panel.add(textLabel);
+		panel.setLayout(new BorderLayout());
+		panel.add(iconLabel, BorderLayout.WEST);
+		panel.add(textLabel, BorderLayout.CENTER);
 		panel.setOpaque(false);
 		panel.setToolTipText(name);
 
