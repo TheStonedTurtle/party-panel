@@ -1,4 +1,4 @@
-# Party Panel [![Plugin Installs](http://img.shields.io/endpoint?url=https://i.pluginhub.info/shields/installs/plugin/crab-solver)](https://runelite.net/plugin-hub/TheStonedTurtle) [![Plugin Rank](http://img.shields.io/endpoint?url=https://i.pluginhub.info/shields/rank/plugin/crab-solver)](https://runelite.net/plugin-hub)
+# Party Panel [![Plugin Installs](http://img.shields.io/endpoint?url=https://i.pluginhub.info/shields/installs/plugin/party-panel)](https://runelite.net/plugin-hub/TheStonedTurtle) [![Plugin Rank](http://img.shields.io/endpoint?url=https://i.pluginhub.info/shields/rank/plugin/party-panel)](https://runelite.net/plugin-hub)
 Adds a side panel that displays useful information about your discord party members who are also using this plugin.
 
 # Using the plugin
