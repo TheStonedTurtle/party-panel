@@ -47,7 +47,7 @@ import thestonedturtle.partypanel.ui.prayer.PrayerSprites;
 
 @Slf4j
 @PluginDescriptor(
-	name = "Party Panel"
+	name = "Discord Party Panel"
 )
 public class PartyPanelPlugin extends Plugin
 {
