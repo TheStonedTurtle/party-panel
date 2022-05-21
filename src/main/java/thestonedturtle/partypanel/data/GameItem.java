@@ -34,11 +34,11 @@ import net.runelite.client.game.ItemManager;
 @AllArgsConstructor
 public class GameItem
 {
-	final int id;
-	final int qty;
-	final String name;
-	final boolean stackable;
-	final int price;
+	int id;
+	int qty;
+	String name;
+	boolean stackable;
+	int price;
 
 	public GameItem(final Item item, final ItemManager itemManager)
 	{

@@ -52,7 +52,7 @@ public class ImgUtil
 	 * @param background image to overlap
 	 * @return overlapped image
 	 */
-	public static BufferedImage overlapImages(final BufferedImage foreground, final BufferedImage background)
+	public static BufferedImage overlapImages(final BufferedImage foreground, final BufferedImage background, boolean isEquipment)
 	{
 		final int centeredX = background.getWidth() / 2 - foreground.getWidth() / 2;
 		final int centeredY = background.getHeight() / 2 - foreground.getHeight() / 2;
@@ -60,7 +60,16 @@ public class ImgUtil
 		BufferedImage combined = new BufferedImage(background.getWidth(), background.getHeight(), BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2d = combined.createGraphics();
 		g2d.drawImage(background, 0, 0, null);
-		g2d.drawImage(foreground, centeredX, centeredY, null);
+
+		// For some reason equipment icons are offset and need to be adjusted
+		if (isEquipment){
+			g2d.drawImage(foreground, centeredX+2, centeredY, null);
+		}
+		else
+		{
+			g2d.drawImage(foreground, centeredX, centeredY, null);
+		}
+
 		g2d.dispose();
 
 		return combined;

@@ -62,7 +62,7 @@ public class Prayers
 
 	public boolean updatePrayerState(final PrayerSprites p, final Client client)
 	{
-		boolean changed = false;
+		boolean changed;
 
 		client.runScript(PRAYER_IS_AVAILABLE, p.getScriptIndex());
 		final boolean available = client.getIntStack()[0] > 0;

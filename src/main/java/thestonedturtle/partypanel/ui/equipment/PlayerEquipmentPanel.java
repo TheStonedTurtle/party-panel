@@ -34,7 +34,6 @@ import java.awt.GridBagLayout;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
-import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
@@ -70,13 +69,8 @@ public class PlayerEquipmentPanel extends JPanel
 		EQUIPMENT_SLOT_SPRITE_MAP = sprites.build();
 	}
 
-	private static final BufferedImage PANEL_BACKGROUND = ImageUtil.getResourceStreamFromClass(PlayerEquipmentPanel.class, "equipment-bars.png");
-	private static final Dimension PANEL_SIZE = new Dimension(PluginPanel.PANEL_WIDTH - 10, 300);
-	private static final Color PANEL_BORDER_COLOR = new Color(87, 80, 64);
-	private static final Border PANEL_BORDER = BorderFactory.createCompoundBorder(
-		BorderFactory.createMatteBorder(3, 3, 3, 3, PANEL_BORDER_COLOR),
-		BorderFactory.createEmptyBorder(2, 2, 2, 2)
-	);
+	private static final BufferedImage PANEL_BACKGROUND = ImageUtil.loadImageResource(PlayerEquipmentPanel.class, "equipment-bars.png");
+	private static final Dimension PANEL_SIZE = new Dimension(PluginPanel.PANEL_WIDTH - 14, 296);
 
 	// Used to offset the weapon/shield and glove/ring slots
 	private static final Border BORDER_LEFT = new EmptyBorder(0, 15, 0, 0);
@@ -97,7 +91,6 @@ public class PlayerEquipmentPanel extends JPanel
 
 		this.setMinimumSize(PANEL_SIZE);
 		this.setPreferredSize(PANEL_SIZE);
-		this.setBorder(PANEL_BORDER);
 		this.setLayout(new GridBagLayout());
 		this.setBackground(new Color(62, 53, 41));
 
@@ -119,12 +112,11 @@ public class PlayerEquipmentPanel extends JPanel
 		this.removeAll();
 
 		final GridBagConstraints c = new GridBagConstraints();
-		c.gridx = 0;
 		c.ipadx = 4;
 		c.ipady = 3;
 		c.anchor = GridBagConstraints.CENTER;
 
-		// I don't see an iterative way to setup this layout correctly
+		// I don't see an iterative way to set up this layout correctly
 		// First row
 		c.gridx = 1;
 		c.gridy = 0;
@@ -179,7 +171,6 @@ public class PlayerEquipmentPanel extends JPanel
 		final AsyncBufferedImage image = item == null ? null : itemManager.getImage(item.getId(), item.getQty(), item.isStackable());
 
 		spriteManager.getSpriteAsync(EQUIPMENT_SLOT_SPRITE_MAP.get(slot), 0, img ->
-		{
 			SwingUtilities.invokeLater(() ->
 			{
 				final EquipmentPanelSlot panel = new EquipmentPanelSlot(item, image, background, img);
@@ -195,7 +186,6 @@ public class PlayerEquipmentPanel extends JPanel
 				}
 
 				add(panel, c);
-			});
-		});
+			}));
 	}
 }

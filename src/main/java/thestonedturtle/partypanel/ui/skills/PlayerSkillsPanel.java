@@ -28,13 +28,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import javax.swing.border.Border;
 import lombok.Getter;
 import net.runelite.api.Skill;
 import static net.runelite.api.Skill.AGILITY;
@@ -112,12 +111,7 @@ public class PlayerSkillsPanel extends JPanel
 		SPRITE_MAP = map.build();
 	}
 
-	private static final Dimension PANEL_SIZE = new Dimension(PluginPanel.PANEL_WIDTH - 10, 300);
-	private static final Color PANEL_BORDER_COLOR = new Color(87, 80, 64);
-	private static final Border PANEL_BORDER = BorderFactory.createCompoundBorder(
-		BorderFactory.createMatteBorder(3, 3, 3, 3, PANEL_BORDER_COLOR),
-		BorderFactory.createEmptyBorder(2, 2, 2, 2)
-	);
+	private static final Dimension PANEL_SIZE = new Dimension(PluginPanel.PANEL_WIDTH - 14, 296);
 
 	@Getter
 	private final Map<Skill, SkillPanelSlot> panelMap = new HashMap<>();
@@ -130,14 +124,14 @@ public class PlayerSkillsPanel extends JPanel
 
 		this.setMinimumSize(PANEL_SIZE);
 		this.setPreferredSize(PANEL_SIZE);
-		this.setBorder(PANEL_BORDER);
 		this.setBackground(new Color(62, 53, 41));
 		this.setLayout(new DynamicGridLayout(8, 3, 0, 0));
 
 		for (final Skill s : SKILLS)
 		{
-			final SkillPanelSlot slot = new SkillPanelSlot(player.getSkillBoostedLevel(s), player.getSkillRealLevel(s));
-			slot.setToolTipText(s.getName());
+			final SkillPanelSlot slot = new SkillPanelSlot(player.getSkillBoostedLevel(s), player.getSkillRealLevel(s), player.getSkillExperience(s));
+			String exp = NumberFormat.getNumberInstance().format(slot.getSkillEXP());
+			slot.setToolTipText(exp);
 			panelMap.put(s, slot);
 			this.add(slot);
 			spriteManager.getSpriteAsync(SPRITE_MAP.get(s), 0, img -> SwingUtilities.invokeLater(() -> slot.initImages(img, spriteManager)));
