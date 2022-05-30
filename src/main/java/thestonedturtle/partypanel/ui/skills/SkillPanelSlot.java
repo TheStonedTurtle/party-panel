@@ -34,6 +34,9 @@ import java.awt.image.BufferedImage;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+
+import lombok.Getter;
+import lombok.Setter;
 import net.runelite.api.Constants;
 import net.runelite.api.SpriteID;
 import net.runelite.client.game.SpriteManager;
@@ -51,6 +54,9 @@ public class SkillPanelSlot extends JPanel
 	private BufferedImage background;
 	private BufferedImage skillHalf;
 	private BufferedImage statHalf;
+
+	@Getter
+	@Setter
 	private int skillEXP;
 
 	@Override
@@ -148,15 +154,5 @@ public class SkillPanelSlot extends JPanel
 	{
 		boostedLabel.setText(String.valueOf(boostedLevel));
 		boostedLabel.repaint();
-	}
-
-	public void updateSkillEXP(final int exp)
-	{
-		skillEXP = exp;
-	}
-
-	public int getSkillEXP()
-	{
-		return skillEXP;
 	}
 }

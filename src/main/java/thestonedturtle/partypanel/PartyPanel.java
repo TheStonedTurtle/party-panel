@@ -57,7 +57,7 @@ class PartyPanel extends PluginPanel
 
 		basePanel = new JPanel();
 		basePanel.setBorder(new EmptyBorder(BORDER_OFFSET, BORDER_OFFSET, BORDER_OFFSET, BORDER_OFFSET));
-		basePanel.setLayout(new DynamicGridLayout(0, 1, 0, 3));
+		basePanel.setLayout(new DynamicGridLayout(0, 1, 0, 5));
 
 		// Wrap content to anchor to top and prevent expansion
 		final JPanel northPanel = new JPanel(new BorderLayout());
@@ -84,13 +84,6 @@ class PartyPanel extends PluginPanel
 		for (final PartyPlayer player : players)
 		{
 			drawPlayerPanel(player);
-
-			if (player != players.get(players.size()-1))
-			{
-				final JPanel spacer = new JPanel();
-				spacer.setBorder(new EmptyBorder(0, 0, 0, 0));
-				basePanel.add(spacer);
-			}
 		}
 
 		if (getComponentCount() == 0)
@@ -104,17 +97,8 @@ class PartyPanel extends PluginPanel
 
 	void drawPlayerPanel(PartyPlayer player)
 	{
-		PlayerPanel playerPanel = playerPanelMap.get(player.getMemberId());
-
-		if (playerPanel != null)
-		{
-			playerPanel.updatePlayerData(player);
-		}
-		else
-		{
-			playerPanelMap.put(player.getMemberId(), new PlayerPanel(player, plugin.spriteManager, plugin.itemManager));
-		}
-
+		playerPanelMap.computeIfAbsent(player.getMemberId(), (k) ->
+				new PlayerPanel(player, plugin.spriteManager, plugin.itemManager)).updatePlayerData(player);
 		basePanel.add(playerPanelMap.get(player.getMemberId()));
 		basePanel.revalidate();
 		basePanel.repaint();

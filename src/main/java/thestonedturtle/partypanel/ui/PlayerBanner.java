@@ -133,7 +133,7 @@ public class PlayerBanner extends JPanel
 		}
 		else
 		{
-			final String levelText = player.getStats() == null ? "" : " (Lvl " + player.getStats().getCombatLevel() + ")";
+			final String levelText = player.getStats() == null ? "" : " (lvl-" + player.getStats().getCombatLevel() + ")";
 			usernameLabel.setText(player.getUsername() + levelText);
 		}
 
@@ -192,19 +192,19 @@ public class PlayerBanner extends JPanel
 		final JLabel iconLabel = new JLabel();
 		iconLabel.setPreferredSize(STAT_ICON_SIZE);
 		spriteManager.getSpriteAsync(spriteID, 0, img ->
-				SwingUtilities.invokeLater(() ->
+			SwingUtilities.invokeLater(() ->
+			{
+				if (spriteID == SpriteID.SKILL_PRAYER)
 				{
-					if (spriteID == SpriteID.SKILL_PRAYER)
-					{
-						iconLabel.setIcon(new ImageIcon(ImageUtil.resizeImage(img, STAT_ICON_SIZE.width+2, STAT_ICON_SIZE.height+2)));
-					}
-					else
-					{
-						iconLabel.setIcon(new ImageIcon(ImageUtil.resizeImage(img, STAT_ICON_SIZE.width, STAT_ICON_SIZE.height)));
-					}
-					iconLabel.revalidate();
-					iconLabel.repaint();
-				}));
+					iconLabel.setIcon(new ImageIcon(ImageUtil.resizeImage(img, STAT_ICON_SIZE.width+2, STAT_ICON_SIZE.height+2)));
+				}
+				else
+				{
+					iconLabel.setIcon(new ImageIcon(ImageUtil.resizeImage(img, STAT_ICON_SIZE.width, STAT_ICON_SIZE.height)));
+				}
+				iconLabel.revalidate();
+				iconLabel.repaint();
+			}));
 
 		final JLabel textLabel = new JLabel(value);
 		textLabel.setHorizontalAlignment(JLabel.CENTER);

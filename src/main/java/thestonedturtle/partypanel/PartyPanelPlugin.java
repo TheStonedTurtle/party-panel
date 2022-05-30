@@ -90,9 +90,6 @@ public class PartyPanelPlugin extends Plugin
 	private final Map<UUID, PartyPlayer> partyMembers = new HashMap<>();
 
 	@Getter
-	private final HashMap<UUID, Boolean> hideMap = new HashMap<>();
-
-	@Getter
 	private PartyPlayer myPlayer = null;
 
 	private NavigationButton navButton;

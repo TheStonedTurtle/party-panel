@@ -77,14 +77,13 @@ public class PlayerPanel extends JPanel
 	private final PlayerSkillsPanel skillsPanel;
 	private final PlayerPrayerPanel prayersPanel;
 
-	private boolean showInfo = true;
+	private boolean showInfo;
 
 	public PlayerPanel(final PartyPlayer selectedPlayer, final SpriteManager spriteManager, final ItemManager itemManager)
 	{
 		this.player = selectedPlayer;
 		this.spriteManager = spriteManager;
 		this.itemManager = itemManager;
-
 		this.banner = new PlayerBanner(selectedPlayer, spriteManager);
 		this.inventoryPanel = new PlayerInventoryPanel(selectedPlayer.getInventory(), itemManager);
 		this.equipmentPanel = new PlayerEquipmentPanel(selectedPlayer.getEquipment(), spriteManager, itemManager);
@@ -215,15 +214,19 @@ public class PlayerPanel extends JPanel
 
 				final SkillPanelSlot panel = skillsPanel.getPanelMap().get(s);
 				int newExp = player.getStats().getSkillEXPs().get(s);
-				int nextLevelExp = Experience.getXpForLevel(player.getStats().getBaseLevels().get(s)+1);
 
 				panel.updateBoostedLevel(player.getStats().getBoostedLevels().get(s));
 				panel.updateBaseLevel(player.getStats().getBaseLevels().get(s));
-				panel.updateSkillEXP(newExp);
+				panel.setSkillEXP(newExp);
 
 				String tooltipExp = "<html>" + s.getName() + "<br/>";
 				tooltipExp += "XP: " + NumberFormat.getNumberInstance().format(newExp) + "<br/>";
-				tooltipExp += "Level in: " + NumberFormat.getNumberInstance().format(nextLevelExp - newExp) + "</html>";
+				int currLevel = player.getStats().getBaseLevels().get(s);
+				if (currLevel > 0 && currLevel < 126)
+				{
+					int nextLevelExp = Experience.getXpForLevel(player.getStats().getBaseLevels().get(s)+1);
+					tooltipExp += "Level in: " + NumberFormat.getNumberInstance().format(nextLevelExp - newExp) + "</html>";
+				}
 
 				panel.setToolTipText(tooltipExp);
 			}
@@ -248,11 +251,17 @@ public class PlayerPanel extends JPanel
 	private void updatePanel()
 	{
 		this.removeAll();
-
-		this.setBorder(new CompoundBorder(
-				new MatteBorder(2, 2, 2, 2, new Color(87, 80, 64)),
-				new EmptyBorder(0, 0, 5,  0)
-		));
+		if (showInfo)
+		{
+			this.setBorder(new CompoundBorder(
+					new MatteBorder(2, 2, 2, 2, new Color(87, 80, 64)),
+					new EmptyBorder(0, 0, 5,  0)
+			));
+		}
+		else
+		{
+			this.setBorder(new MatteBorder(2, 2, 2, 2, new Color(87, 80, 64)));
+		}
 
 		final JPanel view = new JPanel();
 		view.setBorder(new EmptyBorder(5, 5, 0,  5));
@@ -266,15 +275,11 @@ public class PlayerPanel extends JPanel
 
 		setLayout(new DynamicGridLayout(0, 1));
 
+		add(banner);
 		if (this.showInfo)
 		{
-			add(banner);
 			add(tabGroup);
 			add(view);
-		}
-		else
-		{
-			add(banner);
 		}
 
 		revalidate();
