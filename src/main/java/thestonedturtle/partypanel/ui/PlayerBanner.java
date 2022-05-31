@@ -66,12 +66,15 @@ public class PlayerBanner extends JPanel
 	@Getter
 	private final JLabel expandIcon = new JLabel();
 
+	private ImageIcon expandIconUp;
+	private ImageIcon expandIconDown;
+
 	@Setter
 	@Getter
 	private PartyPlayer player;
 	private boolean checkIcon;
 
-	public PlayerBanner(final PartyPlayer player, SpriteManager spriteManager)
+	public PlayerBanner(final PartyPlayer player, boolean expanded, SpriteManager spriteManager)
 	{
 		super();
 		this.player = player;
@@ -85,7 +88,16 @@ public class PlayerBanner extends JPanel
 		statsPanel.setBorder(new EmptyBorder(5, 0, 0, 0));
 		statsPanel.setOpaque(true);
 
-		this.expandIcon.setIcon(new ImageIcon(EXPAND_ICON));
+		expandIconDown = new ImageIcon(EXPAND_ICON);
+		expandIconUp = new ImageIcon(ImageUtil.rotateImage(EXPAND_ICON, Math.PI));
+		if (expanded)
+		{
+			expandIcon.setIcon(expandIconUp);
+		}
+		else
+		{
+			expandIcon.setIcon(expandIconDown);
+		}
 
 		statsPanel.add(createIconPanel(spriteManager, SpriteID.SKILL_HITPOINTS, Skill.HITPOINTS.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS))));
 		statsPanel.add(createIconPanel(spriteManager, SpriteID.SKILL_PRAYER, Skill.PRAYER.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER))));
@@ -93,6 +105,19 @@ public class PlayerBanner extends JPanel
 		statsPanel.add(createIconPanel(spriteManager, SpriteID.MINIMAP_ORB_RUN_ICON, RUN_ENERGY_NAME, player.getStats() == null ? "0" : String.valueOf(player.getStats().getRunEnergy())));
 
 		recreatePanel();
+	}
+
+	// True = arrow up; False = arrow down
+	public void setExpandIcon(boolean direction)
+	{
+		if (direction)
+		{
+			expandIcon.setIcon(expandIconUp);
+		}
+		else
+		{
+			expandIcon.setIcon(expandIconDown);
+		}
 	}
 
 	public void recreatePanel()

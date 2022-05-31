@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.swing.SwingUtilities;
 import lombok.Getter;
@@ -94,6 +93,9 @@ public class PartyPanelPlugin extends Plugin
 
 	private NavigationButton navButton;
 	private boolean addedButton = false;
+
+	@Getter
+	private boolean autoExpandButton = false;
 	private PartyPanel panel;
 
 	@Override
@@ -123,6 +125,8 @@ public class PartyPanelPlugin extends Plugin
 			clientToolbar.addNavigation(navButton);
 			addedButton = true;
 		}
+
+		autoExpandButton = config.autoExpandMembers();
 
 		if (isInParty())
 		{
@@ -156,6 +160,17 @@ public class PartyPanelPlugin extends Plugin
 			addedButton = false;
 		}
 		addedButton = config.alwaysShowIcon();
+
+		if (config.autoExpandMembers())
+		{
+			panel.updatePartyMembersExpand(true);
+			autoExpandButton = true;
+		}
+		else
+		{
+			panel.updatePartyMembersExpand(false);
+			autoExpandButton = false;
+		}
 	}
 
 	@Override

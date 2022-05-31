@@ -69,7 +69,7 @@ class PartyPanel extends PluginPanel
 	}
 
 	/**
-	 * Shows all members of the party, excluding the local player, in banner view. See {@link PlayerBanner)
+	 * Shows all members of the party, excluding the local player. See {@link PlayerBanner)
 	 */
 	void renderSidebar()
 	{
@@ -98,7 +98,7 @@ class PartyPanel extends PluginPanel
 	void drawPlayerPanel(PartyPlayer player)
 	{
 		playerPanelMap.computeIfAbsent(player.getMemberId(), (k) ->
-				new PlayerPanel(player, plugin.spriteManager, plugin.itemManager)).updatePlayerData(player);
+				new PlayerPanel(player, plugin.isAutoExpandButton(), plugin.spriteManager, plugin.itemManager)).updatePlayerData(player);
 		basePanel.add(playerPanelMap.get(player.getMemberId()));
 		basePanel.revalidate();
 		basePanel.repaint();
@@ -110,6 +110,23 @@ class PartyPanel extends PluginPanel
 		{
 			playerPanelMap.remove(player.getMemberId());
 			renderSidebar();
+		}
+	}
+
+	void updatePartyMembersExpand(boolean expand)
+	{
+		for (PlayerPanel panel : playerPanelMap.values())
+		{
+			panel.setShowInfo(expand);
+			if (expand)
+			{
+				panel.getBanner().setExpandIcon(true);
+			}
+			else
+			{
+				panel.getBanner().setExpandIcon(false);
+			}
+			panel.updatePanel();
 		}
 	}
 }

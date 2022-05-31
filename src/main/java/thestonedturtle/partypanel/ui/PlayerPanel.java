@@ -40,6 +40,7 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 import lombok.Getter;
+import lombok.Setter;
 import net.runelite.api.*;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
@@ -77,14 +78,16 @@ public class PlayerPanel extends JPanel
 	private final PlayerSkillsPanel skillsPanel;
 	private final PlayerPrayerPanel prayersPanel;
 
+	@Setter
 	private boolean showInfo;
 
-	public PlayerPanel(final PartyPlayer selectedPlayer, final SpriteManager spriteManager, final ItemManager itemManager)
+	public PlayerPanel(final PartyPlayer selectedPlayer, boolean expanded, final SpriteManager spriteManager, final ItemManager itemManager)
 	{
 		this.player = selectedPlayer;
+		this.showInfo = expanded;
 		this.spriteManager = spriteManager;
 		this.itemManager = itemManager;
-		this.banner = new PlayerBanner(selectedPlayer, spriteManager);
+		this.banner = new PlayerBanner(selectedPlayer, expanded, spriteManager);
 		this.inventoryPanel = new PlayerInventoryPanel(selectedPlayer.getInventory(), itemManager);
 		this.equipmentPanel = new PlayerEquipmentPanel(selectedPlayer.getEquipment(), spriteManager, itemManager);
 		this.skillsPanel = new PlayerSkillsPanel(selectedPlayer, spriteManager);
@@ -248,7 +251,7 @@ public class PlayerPanel extends JPanel
 		}
 	}
 
-	private void updatePanel()
+	public void updatePanel()
 	{
 		this.removeAll();
 		if (showInfo)
