@@ -98,7 +98,7 @@ class PartyPanel extends PluginPanel
 	void drawPlayerPanel(PartyPlayer player)
 	{
 		playerPanelMap.computeIfAbsent(player.getMemberId(), (k) ->
-				new PlayerPanel(player, plugin.isAutoExpandButton(), plugin.spriteManager, plugin.itemManager)).updatePlayerData(player);
+				new PlayerPanel(player, plugin.getConfig().autoExpandMembers(), plugin.spriteManager, plugin.itemManager)).updatePlayerData(player);
 		basePanel.add(playerPanelMap.get(player.getMemberId()));
 		basePanel.revalidate();
 		basePanel.repaint();
@@ -118,14 +118,7 @@ class PartyPanel extends PluginPanel
 		for (PlayerPanel panel : playerPanelMap.values())
 		{
 			panel.setShowInfo(expand);
-			if (expand)
-			{
-				panel.getBanner().setExpandIcon(true);
-			}
-			else
-			{
-				panel.getBanner().setExpandIcon(false);
-			}
+			panel.getBanner().setExpandIcon(expand);
 			panel.updatePanel();
 		}
 	}

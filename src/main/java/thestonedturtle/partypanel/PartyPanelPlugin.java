@@ -61,6 +61,7 @@ public class PartyPanelPlugin extends Plugin
 	@Inject
 	private ClientToolbar clientToolbar;
 
+	@Getter
 	@Inject
 	private PartyPanelConfig config;
 
@@ -94,8 +95,6 @@ public class PartyPanelPlugin extends Plugin
 	private NavigationButton navButton;
 	private boolean addedButton = false;
 
-	@Getter
-	private boolean autoExpandButton = false;
 	private PartyPanel panel;
 
 	@Override
@@ -125,8 +124,6 @@ public class PartyPanelPlugin extends Plugin
 			clientToolbar.addNavigation(navButton);
 			addedButton = true;
 		}
-
-		autoExpandButton = config.autoExpandMembers();
 
 		if (isInParty())
 		{
@@ -161,15 +158,9 @@ public class PartyPanelPlugin extends Plugin
 		}
 		addedButton = config.alwaysShowIcon();
 
-		if (config.autoExpandMembers())
+		if (c.getKey().equals("autoExpandMembers"))
 		{
-			panel.updatePartyMembersExpand(true);
-			autoExpandButton = true;
-		}
-		else
-		{
-			panel.updatePartyMembersExpand(false);
-			autoExpandButton = false;
+			panel.updatePartyMembersExpand(config.autoExpandMembers());
 		}
 	}
 

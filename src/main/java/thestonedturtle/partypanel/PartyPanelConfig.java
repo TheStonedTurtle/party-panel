@@ -18,9 +18,9 @@ public interface PartyPanelConfig extends Config
 	}
 
 	@ConfigItem(
-			keyName = "autoExpandMembers",
-			name = "Expand members by default",
-			description = "<html>Controls whether party member details are automatically expanded (checked) or collapsed into banners (unchecked)</html>"
+		keyName = "autoExpandMembers",
+		name = "Expand members by default",
+		description = "<html>Controls whether party member details are automatically expanded (checked) or collapsed into banners (unchecked)</html>"
 	)
 	default boolean autoExpandMembers()
 	{
