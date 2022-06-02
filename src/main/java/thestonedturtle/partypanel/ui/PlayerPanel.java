@@ -222,13 +222,13 @@ public class PlayerPanel extends JPanel
 				panel.updateBaseLevel(player.getStats().getBaseLevels().get(s));
 				panel.setSkillEXP(newExp);
 
-				String tooltipExp = "<html>" + s.getName() + "<br/>";
-				tooltipExp += "XP: " + NumberFormat.getNumberInstance().format(newExp) + "<br/>";
+				String tooltipExp = "<html>" + s.getName() + " XP: " + NumberFormat.getNumberInstance().format(newExp) + "<br/>";
 				int currLevel = player.getStats().getBaseLevels().get(s);
 				if (currLevel > 0 && currLevel < 126)
 				{
 					int nextLevelExp = Experience.getXpForLevel(player.getStats().getBaseLevels().get(s)+1);
-					tooltipExp += "Level in: " + NumberFormat.getNumberInstance().format(nextLevelExp - newExp) + "</html>";
+					tooltipExp += "Next level at: " + NumberFormat.getNumberInstance().format(nextLevelExp) + "<br/>";
+					tooltipExp += "Remaining XP: " + NumberFormat.getNumberInstance().format(nextLevelExp - newExp) + "<br/>";
 				}
 
 				panel.setToolTipText(tooltipExp);
