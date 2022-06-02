@@ -54,7 +54,7 @@ import thestonedturtle.partypanel.data.PartyPlayer;
 public class PlayerBanner extends JPanel
 {
 	private static final Dimension STAT_ICON_SIZE = new Dimension(18, 18);
-	private static final Dimension ICON_SIZE = new Dimension(Constants.ITEM_SPRITE_WIDTH, Constants.ITEM_SPRITE_HEIGHT);
+	private static final Dimension ICON_SIZE = new Dimension(Constants.ITEM_SPRITE_WIDTH-6, Constants.ITEM_SPRITE_HEIGHT-4);
 	private static final BufferedImage EXPAND_ICON = ImageUtil.loadImageResource(PlayerPanel.class, "expand.png");
 	private static final String SPECIAL_ATTACK_NAME = "Special Attack";
 	private static final String RUN_ENERGY_NAME = "Run Energy";
@@ -146,7 +146,7 @@ public class PlayerBanner extends JPanel
 		c.gridx++;
 
 		final JPanel nameContainer = new JPanel(new GridLayout(2, 1));
-		nameContainer.setBorder(new EmptyBorder(0, 10, 0, 0));
+		nameContainer.setBorder(new EmptyBorder(0, 5, 0, 0));
 		nameContainer.setOpaque(false);
 
 		final JLabel usernameLabel = new JLabel();
@@ -158,7 +158,7 @@ public class PlayerBanner extends JPanel
 		}
 		else
 		{
-			final String levelText = player.getStats() == null ? "" : " (lvl-" + player.getStats().getCombatLevel() + ")";
+			final String levelText = player.getStats() == null ? "" : " (level-" + player.getStats().getCombatLevel() + ")";
 			usernameLabel.setText(player.getUsername() + levelText);
 		}
 
@@ -187,7 +187,7 @@ public class PlayerBanner extends JPanel
 
 	private void addIcon()
 	{
-		final BufferedImage resized = ImageUtil.resizeImage(player.getMember().getAvatar(), Constants.ITEM_SPRITE_WIDTH, Constants.ITEM_SPRITE_HEIGHT);
+		final BufferedImage resized = ImageUtil.resizeImage(player.getMember().getAvatar(), Constants.ITEM_SPRITE_WIDTH-8, Constants.ITEM_SPRITE_HEIGHT-4);
 		iconLabel.setIcon(new ImageIcon(resized));
 	}
 
