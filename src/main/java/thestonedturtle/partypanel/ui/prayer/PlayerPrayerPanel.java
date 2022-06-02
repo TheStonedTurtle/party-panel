@@ -31,10 +31,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.HashMap;
 import java.util.Map;
-import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import lombok.Getter;
 import net.runelite.api.Prayer;
@@ -50,13 +48,8 @@ import thestonedturtle.partypanel.data.Prayers;
 
 public class PlayerPrayerPanel extends JPanel
 {
-	private static final Dimension PANEL_SIZE = new Dimension(PluginPanel.PANEL_WIDTH - 10, 300);
+	private static final Dimension PANEL_SIZE = new Dimension(PluginPanel.PANEL_WIDTH - 14, 296);
 	private static final Color BACKGROUND = new Color(62, 53, 41);
-	private static final Color BORDER_COLOR = new Color(87, 80, 64);
-	private static final Border BORDER = BorderFactory.createCompoundBorder(
-		BorderFactory.createMatteBorder(3, 3, 3, 3, BORDER_COLOR),
-		BorderFactory.createEmptyBorder(2, 2, 2, 2)
-	);
 
 	private static final int MAX_COLUMNS = 5;
 
@@ -71,7 +64,6 @@ public class PlayerPrayerPanel extends JPanel
 		setLayout(new BorderLayout());
 
 		setBackground(BACKGROUND);
-		setBorder(BORDER);
 		setPreferredSize(PANEL_SIZE);
 
 		add(createPrayerContainer(player.getPrayers(), spriteManager), BorderLayout.NORTH);

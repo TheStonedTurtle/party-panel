@@ -39,6 +39,7 @@ public class Stats
 {
 	private final Map<Skill, Integer> baseLevels = new HashMap<>();
 	private final Map<Skill, Integer> boostedLevels = new HashMap<>();
+	private final Map<Skill, Integer> skillEXPs = new HashMap<>();
 	private int specialPercent;
 	private int runEnergy;
 	private int combatLevel;
@@ -52,6 +53,7 @@ public class Stats
 		{
 			baseLevels.put(s, bases[s.ordinal()]);
 			boostedLevels.put(s, boosts[s.ordinal()]);
+			skillEXPs.put(s, client.getSkillExperience(s));
 		}
 
 		combatLevel = Experience.getCombatLevel(

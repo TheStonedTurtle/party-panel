@@ -24,19 +24,20 @@
  */
 package thestonedturtle.partypanel.ui;
 
-import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.GridBagConstraints;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JLabel;
+import javax.swing.ImageIcon;
+import javax.swing.OverlayLayout;
 import javax.swing.SwingUtilities;
-import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 import lombok.Getter;
@@ -53,47 +54,74 @@ import thestonedturtle.partypanel.data.PartyPlayer;
 public class PlayerBanner extends JPanel
 {
 	private static final Dimension STAT_ICON_SIZE = new Dimension(18, 18);
-	private static final Dimension ICON_SIZE = new Dimension(Constants.ITEM_SPRITE_WIDTH, Constants.ITEM_SPRITE_HEIGHT);
+	private static final Dimension ICON_SIZE = new Dimension(Constants.ITEM_SPRITE_WIDTH-6, Constants.ITEM_SPRITE_HEIGHT-4);
+	private static final BufferedImage EXPAND_ICON = ImageUtil.loadImageResource(PlayerPanel.class, "expand.png");
 	private static final String SPECIAL_ATTACK_NAME = "Special Attack";
 	private static final String RUN_ENERGY_NAME = "Run Energy";
 
+	@Getter
 	private final JPanel statsPanel = new JPanel();
 	private final JLabel iconLabel = new JLabel();
 	private final Map<String, JLabel> statLabels = new HashMap<>();
+	@Getter
+	private final JLabel expandIcon = new JLabel();
+
+	private ImageIcon expandIconUp;
+	private ImageIcon expandIconDown;
 
 	@Setter
 	@Getter
 	private PartyPlayer player;
 	private boolean checkIcon;
 
-	public PlayerBanner(final PartyPlayer player, SpriteManager spriteManager)
+	public PlayerBanner(final PartyPlayer player, boolean expanded, SpriteManager spriteManager)
 	{
 		super();
 		this.player = player;
 
 		this.setLayout(new GridBagLayout());
-		this.setPreferredSize(new Dimension(PluginPanel.PANEL_WIDTH, 75));
-		this.setBorder(new CompoundBorder(
-			new MatteBorder(2, 2, 2, 2, ColorScheme.DARK_GRAY_HOVER_COLOR),
-			new EmptyBorder(5, 5, 5,  5)
-		));
+		this.setPreferredSize(new Dimension(PluginPanel.PANEL_WIDTH - 14, 68));
+		this.setBorder(new EmptyBorder(5, 5, 0,  5));
 
-		statsPanel.setPreferredSize(new Dimension(PluginPanel.PANEL_WIDTH, 30));
+		statsPanel.setPreferredSize(new Dimension(PluginPanel.PANEL_WIDTH, 25));
 		statsPanel.setLayout(new GridLayout(0, 4));
-		statsPanel.setOpaque(false);
+		statsPanel.setBorder(new EmptyBorder(5, 0, 0, 0));
+		statsPanel.setOpaque(true);
+
+		expandIconDown = new ImageIcon(EXPAND_ICON);
+		expandIconUp = new ImageIcon(ImageUtil.rotateImage(EXPAND_ICON, Math.PI));
+		if (expanded)
+		{
+			expandIcon.setIcon(expandIconUp);
+		}
+		else
+		{
+			expandIcon.setIcon(expandIconDown);
+		}
 
 		statsPanel.add(createIconPanel(spriteManager, SpriteID.SKILL_HITPOINTS, Skill.HITPOINTS.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS))));
 		statsPanel.add(createIconPanel(spriteManager, SpriteID.SKILL_PRAYER, Skill.PRAYER.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER))));
-		statsPanel.add(createIconPanel(spriteManager, SpriteID.MULTI_COMBAT_ZONE_CROSSED_SWORDS, SPECIAL_ATTACK_NAME, player.getStats() == null ? "0%" : String.valueOf(player.getStats().getSpecialPercent()) + "%"));
-		statsPanel.add(createIconPanel(spriteManager, SpriteID.MINIMAP_ORB_RUN_ICON, RUN_ENERGY_NAME, player.getStats() == null ? "0%" : String.valueOf(player.getStats().getRunEnergy()) + "%"));
+		statsPanel.add(createIconPanel(spriteManager, SpriteID.MULTI_COMBAT_ZONE_CROSSED_SWORDS, SPECIAL_ATTACK_NAME, player.getStats() == null ? "0" : String.valueOf(player.getStats().getSpecialPercent())));
+		statsPanel.add(createIconPanel(spriteManager, SpriteID.MINIMAP_ORB_RUN_ICON, RUN_ENERGY_NAME, player.getStats() == null ? "0" : String.valueOf(player.getStats().getRunEnergy())));
 
 		recreatePanel();
 	}
 
+	// True = arrow up; False = arrow down
+	public void setExpandIcon(boolean direction)
+	{
+		if (direction)
+		{
+			expandIcon.setIcon(expandIconUp);
+		}
+		else
+		{
+			expandIcon.setIcon(expandIconDown);
+		}
+	}
+
 	public void recreatePanel()
 	{
-		removeAll();
-
 		final GridBagConstraints c = new GridBagConstraints();
 		c.anchor = GridBagConstraints.NORTHWEST;
 		c.gridx = 0;
@@ -118,10 +146,11 @@ public class PlayerBanner extends JPanel
 		c.gridx++;
 
 		final JPanel nameContainer = new JPanel(new GridLayout(2, 1));
-		nameContainer.setBorder(new EmptyBorder(0, 10, 0, 0));
+		nameContainer.setBorder(new EmptyBorder(0, 5, 0, 0));
 		nameContainer.setOpaque(false);
 
 		final JLabel usernameLabel = new JLabel();
+		usernameLabel.setLayout(new OverlayLayout(usernameLabel));
 		usernameLabel.setHorizontalTextPosition(JLabel.LEFT);
 		if (player.getUsername() == null)
 		{
@@ -129,13 +158,15 @@ public class PlayerBanner extends JPanel
 		}
 		else
 		{
-			final String levelText = player.getStats() == null ? "" : " (Lvl - " + player.getStats().getCombatLevel() + ")";
+			final String levelText = player.getStats() == null ? "" : " (level-" + player.getStats().getCombatLevel() + ")";
 			usernameLabel.setText(player.getUsername() + levelText);
 		}
 
 		final JLabel discordNameLabel = new JLabel(player.getMember().getName());
 		discordNameLabel.setHorizontalTextPosition(JLabel.LEFT);
 
+		expandIcon.setAlignmentX(Component.RIGHT_ALIGNMENT);
+		usernameLabel.add(expandIcon, BorderLayout.EAST);
 		nameContainer.add(usernameLabel);
 		nameContainer.add(discordNameLabel);
 
@@ -156,7 +187,7 @@ public class PlayerBanner extends JPanel
 
 	private void addIcon()
 	{
-		final BufferedImage resized = ImageUtil.resizeImage(player.getMember().getAvatar(), Constants.ITEM_SPRITE_WIDTH, Constants.ITEM_SPRITE_HEIGHT);
+		final BufferedImage resized = ImageUtil.resizeImage(player.getMember().getAvatar(), Constants.ITEM_SPRITE_WIDTH-8, Constants.ITEM_SPRITE_HEIGHT-4);
 		iconLabel.setIcon(new ImageIcon(resized));
 	}
 
@@ -173,8 +204,8 @@ public class PlayerBanner extends JPanel
 
 		statLabels.getOrDefault(Skill.HITPOINTS.getName(), new JLabel()).setText(String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS)));
 		statLabels.getOrDefault(Skill.PRAYER.getName(), new JLabel()).setText(String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER)));
-		statLabels.getOrDefault(SPECIAL_ATTACK_NAME, new JLabel()).setText(player.getStats() == null ? "0%" : String.valueOf(player.getStats().getSpecialPercent()) + "%");
-		statLabels.getOrDefault(RUN_ENERGY_NAME, new JLabel()).setText(player.getStats() == null ? "0%" : String.valueOf(player.getStats().getRunEnergy()) + "%");
+		statLabels.getOrDefault(SPECIAL_ATTACK_NAME, new JLabel()).setText(player.getStats() == null ? "0" : String.valueOf(player.getStats().getSpecialPercent()));
+		statLabels.getOrDefault(RUN_ENERGY_NAME, new JLabel()).setText(player.getStats() == null ? "0" : String.valueOf(player.getStats().getRunEnergy()));
 
 		statsPanel.revalidate();
 		statsPanel.repaint();
@@ -186,14 +217,19 @@ public class PlayerBanner extends JPanel
 		final JLabel iconLabel = new JLabel();
 		iconLabel.setPreferredSize(STAT_ICON_SIZE);
 		spriteManager.getSpriteAsync(spriteID, 0, img ->
-		{
 			SwingUtilities.invokeLater(() ->
 			{
-				iconLabel.setIcon(new ImageIcon(ImageUtil.resizeImage(img, STAT_ICON_SIZE.width, STAT_ICON_SIZE.height)));
+				if (spriteID == SpriteID.SKILL_PRAYER)
+				{
+					iconLabel.setIcon(new ImageIcon(ImageUtil.resizeImage(img, STAT_ICON_SIZE.width+2, STAT_ICON_SIZE.height+2)));
+				}
+				else
+				{
+					iconLabel.setIcon(new ImageIcon(ImageUtil.resizeImage(img, STAT_ICON_SIZE.width, STAT_ICON_SIZE.height)));
+				}
 				iconLabel.revalidate();
 				iconLabel.repaint();
-			});
-		});
+			}));
 
 		final JLabel textLabel = new JLabel(value);
 		textLabel.setHorizontalAlignment(JLabel.CENTER);

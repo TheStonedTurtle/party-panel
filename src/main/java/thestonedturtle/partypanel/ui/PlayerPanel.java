@@ -25,19 +25,26 @@
 package thestonedturtle.partypanel.ui;
 
 import java.awt.Dimension;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.text.NumberFormat;
 import java.util.Map;
 import javax.swing.ImageIcon;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.MatteBorder;
 import lombok.Getter;
-import net.runelite.api.EquipmentInventorySlot;
-import net.runelite.api.Prayer;
-import net.runelite.api.Skill;
-import net.runelite.api.SpriteID;
+import lombok.Setter;
+import net.runelite.api.*;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
+import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.DynamicGridLayout;
 import net.runelite.client.ui.components.materialtabs.MaterialTab;
 import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
@@ -57,6 +64,9 @@ import thestonedturtle.partypanel.ui.skills.SkillPanelSlot;
 public class PlayerPanel extends JPanel
 {
 	private static final Dimension IMAGE_SIZE = new Dimension(24, 24);
+	private static final Color BACKGROUND_COLOR = ColorScheme.DARK_GRAY_COLOR;
+	private static final Color BACKGROUND_HOVER_COLOR = ColorScheme.DARKER_GRAY_COLOR;
+	private static final BufferedImage EXPAND_ICON = ImageUtil.loadImageResource(PlayerPanel.class, "expand.png");
 
 	private PartyPlayer player;
 	private final SpriteManager spriteManager;
@@ -68,31 +78,67 @@ public class PlayerPanel extends JPanel
 	private final PlayerSkillsPanel skillsPanel;
 	private final PlayerPrayerPanel prayersPanel;
 
-	public PlayerPanel(final PartyPlayer selectedPlayer, final SpriteManager spriteManager, final ItemManager itemManager)
+	@Setter
+	private boolean showInfo;
+
+	public PlayerPanel(final PartyPlayer selectedPlayer, boolean expanded, final SpriteManager spriteManager, final ItemManager itemManager)
 	{
 		this.player = selectedPlayer;
+		this.showInfo = expanded;
 		this.spriteManager = spriteManager;
 		this.itemManager = itemManager;
-
-		this.banner = new PlayerBanner(selectedPlayer, spriteManager);
+		this.banner = new PlayerBanner(selectedPlayer, expanded, spriteManager);
 		this.inventoryPanel = new PlayerInventoryPanel(selectedPlayer.getInventory(), itemManager);
 		this.equipmentPanel = new PlayerEquipmentPanel(selectedPlayer.getEquipment(), spriteManager, itemManager);
 		this.skillsPanel = new PlayerSkillsPanel(selectedPlayer, spriteManager);
 		this.prayersPanel = new PlayerPrayerPanel(selectedPlayer, spriteManager);
 
-		final JPanel view = new JPanel();
-		final MaterialTabGroup tabGroup = new MaterialTabGroup(view);
-		tabGroup.setBorder(new EmptyBorder(10, 0, 10, 0));
+		// Non-optimal way to attach a mouse listener to
+		// the entire panel, but easy to implement
+		JPanel statsPanel = this.banner.getStatsPanel();
+		JLabel expandIcon = this.banner.getExpandIcon();
+		Component[] list = new Component[statsPanel.getComponentCount()+1];
+		System.arraycopy(statsPanel.getComponents(), 0, list, 0, list.length-1);
+		list[list.length-1] = banner;
 
-		addTab(tabGroup, SpriteID.TAB_INVENTORY, inventoryPanel, "Inventory");
-		addTab(tabGroup, SpriteID.TAB_EQUIPMENT, equipmentPanel, "Equipment");
-		addTab(tabGroup, SpriteID.TAB_PRAYER, prayersPanel, "Prayers");
-		addTab(tabGroup, SpriteID.TAB_STATS, skillsPanel, "Skills");
+		for (Component comp : list)
+		{
+			if (comp instanceof JPanel)
+			{
+				comp.addMouseListener(new MouseAdapter()
+				{
+					@Override
+					public void mousePressed(MouseEvent e)
+					{
+						if (e.getButton() == MouseEvent.BUTTON1)
+						{
+							ImageIcon retrieve = (ImageIcon)expandIcon.getIcon();
+							BufferedImage buffered = (BufferedImage)retrieve.getImage();
 
-		setLayout(new DynamicGridLayout(0, 1));
-		add(banner);
-		add(tabGroup);
-		add(view);
+							showInfo = !showInfo;
+							expandIcon.setIcon(new ImageIcon(ImageUtil.rotateImage(buffered, Math.PI)));
+							updatePanel();
+						}
+					}
+
+					@Override
+					public void mouseEntered(MouseEvent e)
+					{
+						banner.setBackground(BACKGROUND_HOVER_COLOR);
+						statsPanel.setBackground(BACKGROUND_HOVER_COLOR);
+					}
+
+					@Override
+					public void mouseExited(MouseEvent e)
+					{
+						banner.setBackground(BACKGROUND_COLOR);
+						statsPanel.setBackground(BACKGROUND_COLOR);
+					}
+				});
+			}
+		}
+
+		updatePanel();
 
 		revalidate();
 		repaint();
@@ -101,7 +147,6 @@ public class PlayerPanel extends JPanel
 	private void addTab(final MaterialTabGroup tabGroup, final int spriteID, final JPanel panel, final String tooltip)
 	{
 		spriteManager.getSpriteAsync(spriteID, 0, img ->
-		{
 			SwingUtilities.invokeLater(() ->
 			{
 				final MaterialTab tab = new MaterialTab(createImageIcon(img), tabGroup, panel);
@@ -114,8 +159,7 @@ public class PlayerPanel extends JPanel
 				{
 					tabGroup.select(tab);
 				}
-			});
-		});
+			}));
 	}
 
 	private ImageIcon createImageIcon(BufferedImage image)
@@ -124,7 +168,7 @@ public class PlayerPanel extends JPanel
 	}
 
 	// TODO add smarter ways to update data
-	public void changePlayer(final PartyPlayer newPlayer)
+	public void updatePlayerData(final PartyPlayer newPlayer)
 	{
 		final boolean newUser = !newPlayer.getMemberId().equals(player.getMemberId());
 
@@ -141,7 +185,7 @@ public class PlayerPanel extends JPanel
 			}
 
 			final EquipmentPanelSlot slot = this.equipmentPanel.getPanelMap().get(equipSlot);
-			if (item != null)
+			if (item != null && slot != null)
 			{
 				final AsyncBufferedImage img = itemManager.getImage(item.getId(), item.getQty(), item.isStackable());
 				slot.setGameItem(item, img);
@@ -150,7 +194,7 @@ public class PlayerPanel extends JPanel
 				final GameItem finalItem = item;
 				img.onLoaded(() -> slot.setGameItem(finalItem, img));
 			}
-			else
+			else if (slot != null)
 			{
 				slot.setGameItem(null, null);
 			}
@@ -172,8 +216,22 @@ public class PlayerPanel extends JPanel
 				}
 
 				final SkillPanelSlot panel = skillsPanel.getPanelMap().get(s);
+				int newExp = player.getStats().getSkillEXPs().get(s);
+
 				panel.updateBoostedLevel(player.getStats().getBoostedLevels().get(s));
 				panel.updateBaseLevel(player.getStats().getBaseLevels().get(s));
+				panel.setSkillEXP(newExp);
+
+				String tooltipExp = "<html>" + s.getName() + " XP: " + NumberFormat.getNumberInstance().format(newExp) + "<br/>";
+				int currLevel = player.getStats().getBaseLevels().get(s);
+				if (currLevel > 0 && currLevel < 126)
+				{
+					int nextLevelExp = Experience.getXpForLevel(player.getStats().getBaseLevels().get(s)+1);
+					tooltipExp += "Next level at: " + NumberFormat.getNumberInstance().format(nextLevelExp) + "<br/>";
+					tooltipExp += "Remaining XP: " + NumberFormat.getNumberInstance().format(nextLevelExp - newExp) + "<br/>";
+				}
+
+				panel.setToolTipText(tooltipExp);
 			}
 			skillsPanel.getTotalLevelPanel().updateTotalLevel(player.getStats().getTotalLevel());
 		}
@@ -191,5 +249,43 @@ public class PlayerPanel extends JPanel
 
 			prayersPanel.updatePrayerRemaining(player.getSkillBoostedLevel(Skill.PRAYER), player.getSkillRealLevel(Skill.PRAYER));
 		}
+	}
+
+	public void updatePanel()
+	{
+		this.removeAll();
+		if (showInfo)
+		{
+			this.setBorder(new CompoundBorder(
+					new MatteBorder(2, 2, 2, 2, new Color(87, 80, 64)),
+					new EmptyBorder(0, 0, 5,  0)
+			));
+		}
+		else
+		{
+			this.setBorder(new MatteBorder(2, 2, 2, 2, new Color(87, 80, 64)));
+		}
+
+		final JPanel view = new JPanel();
+		view.setBorder(new EmptyBorder(5, 5, 0,  5));
+		final MaterialTabGroup tabGroup = new MaterialTabGroup(view);
+		tabGroup.setBorder(new EmptyBorder(10, 0, 4, 0));
+
+		addTab(tabGroup, SpriteID.TAB_INVENTORY, inventoryPanel, "Inventory");
+		addTab(tabGroup, SpriteID.TAB_EQUIPMENT, equipmentPanel, "Equipment");
+		addTab(tabGroup, SpriteID.TAB_PRAYER, prayersPanel, "Prayers");
+		addTab(tabGroup, SpriteID.TAB_STATS, skillsPanel, "Skills");
+
+		setLayout(new DynamicGridLayout(0, 1));
+
+		add(banner);
+		if (this.showInfo)
+		{
+			add(tabGroup);
+			add(view);
+		}
+
+		revalidate();
+		repaint();
 	}
 }

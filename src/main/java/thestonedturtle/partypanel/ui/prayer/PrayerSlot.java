@@ -75,7 +75,7 @@ public class PrayerSlot extends JLabel
 	{
 		if (availableImage != null && activatedImage != null)
 		{
-			activatedImage = ImgUtil.overlapImages(availableImage, activatedImage);
+			activatedImage = ImgUtil.overlapImages(availableImage, activatedImage, false);
 			updatePrayerData(data);
 		}
 	}

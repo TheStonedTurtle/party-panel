@@ -34,6 +34,9 @@ import java.awt.image.BufferedImage;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+
+import lombok.Getter;
+import lombok.Setter;
 import net.runelite.api.Constants;
 import net.runelite.api.SpriteID;
 import net.runelite.client.game.SpriteManager;
@@ -51,6 +54,10 @@ public class SkillPanelSlot extends JPanel
 	private BufferedImage background;
 	private BufferedImage skillHalf;
 	private BufferedImage statHalf;
+
+	@Getter
+	@Setter
+	private int skillEXP;
 
 	@Override
 	protected void paintComponent(Graphics g)
@@ -73,7 +80,7 @@ public class SkillPanelSlot extends JPanel
 		}
 	}
 
-	SkillPanelSlot(final int boostedLevel, final int baseLevel)
+	SkillPanelSlot(final int boostedLevel, final int baseLevel, final int exp)
 	{
 		super();
 		setOpaque(false);
@@ -109,6 +116,8 @@ public class SkillPanelSlot extends JPanel
 		baseLabel.setFont(FontManager.getRunescapeSmallFont());
 		baseLabel.setForeground(Color.YELLOW);
 
+		skillEXP = exp;
+
 		c.anchor = GridBagConstraints.SOUTHEAST;
 		c.gridy++;
 		textPanel.add(baseLabel, c);
@@ -120,7 +129,7 @@ public class SkillPanelSlot extends JPanel
 	{
 		spriteManager.getSpriteAsync(SpriteID.STATS_TILE_HALF_LEFT, 0, img ->
 		{
-			skillHalf = ImgUtil.overlapImages(skillIcon, SkillPanelSlot.resize(img));
+			skillHalf = ImgUtil.overlapImages(skillIcon, SkillPanelSlot.resize(img), false);
 			updateBackgroundImage();
 		});
 		spriteManager.getSpriteAsync(SpriteID.STATS_TILE_HALF_RIGHT_WITH_SLASH, 0, img ->

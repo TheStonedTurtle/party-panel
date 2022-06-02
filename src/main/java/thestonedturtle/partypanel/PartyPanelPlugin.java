@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.swing.SwingUtilities;
 import lombok.Getter;
@@ -51,7 +50,7 @@ import thestonedturtle.partypanel.ui.prayer.PrayerSprites;
 )
 public class PartyPanelPlugin extends Plugin
 {
-	private static final BufferedImage ICON = ImageUtil.getResourceStreamFromClass(PartyPanelPlugin.class, "icon.png");
+	private static final BufferedImage ICON = ImageUtil.loadImageResource(PartyPanelPlugin.class, "icon.png");
 
 	@Inject
 	private Client client;
@@ -62,6 +61,7 @@ public class PartyPanelPlugin extends Plugin
 	@Inject
 	private ClientToolbar clientToolbar;
 
+	@Getter
 	@Inject
 	private PartyPanelConfig config;
 
@@ -89,18 +89,20 @@ public class PartyPanelPlugin extends Plugin
 	@Getter
 	private final Map<UUID, PartyPlayer> partyMembers = new HashMap<>();
 
-	private NavigationButton navButton;
-	private boolean addedButton = false;
-	private PartyPanel panel;
 	@Getter
 	private PartyPlayer myPlayer = null;
+
+	private NavigationButton navButton;
+	private boolean addedButton = false;
+
+	private PartyPanel panel;
 
 	@Override
 	protected void startUp() throws Exception
 	{
 		panel = new PartyPanel(this);
 		navButton = NavigationButton.builder()
-			.tooltip("Party Panel")
+			.tooltip("Discord Party Panel")
 			.icon(ICON)
 			.priority(7)
 			.panel(panel)
@@ -155,6 +157,11 @@ public class PartyPanelPlugin extends Plugin
 			addedButton = false;
 		}
 		addedButton = config.alwaysShowIcon();
+
+		if (c.getKey().equals("autoExpandMembers"))
+		{
+			panel.updatePartyMembersExpand(config.autoExpandMembers());
+		}
 	}
 
 	@Override
@@ -192,7 +199,7 @@ public class PartyPanelPlugin extends Plugin
 		}
 
 		partyMembers.put(player.getMemberId(), player);
-		SwingUtilities.invokeLater(() -> panel.updatePartyPlayer(player));
+		SwingUtilities.invokeLater(() -> panel.renderSidebar());
 	}
 
 	@Subscribe
@@ -255,7 +262,7 @@ public class PartyPanelPlugin extends Plugin
 	public void onPartyChanged(final PartyChanged event)
 	{
 		partyMembers.clear();
-		SwingUtilities.invokeLater(panel::refreshUI);
+		SwingUtilities.invokeLater(panel::renderSidebar);
 		myPlayer = null;
 
 		if (!isInParty() && !config.alwaysShowIcon())
@@ -347,11 +354,14 @@ public class PartyPanelPlugin extends Plugin
 		}
 
 		final Skill s = event.getSkill();
-		if (myPlayer.getSkillBoostedLevel(s) == event.getBoostedLevel() && myPlayer.getSkillRealLevel(s) == event.getLevel())
+		if (myPlayer.getSkillBoostedLevel(s) == event.getBoostedLevel() &&
+				myPlayer.getSkillRealLevel(s) == event.getLevel() &&
+				myPlayer.getSkillExperience(s) == event.getXp())
 		{
 			return;
 		}
 
+		myPlayer.setSkillExperience(event.getSkill(), event.getXp());
 		myPlayer.setSkillsBoostedLevel(event.getSkill(), event.getBoostedLevel());
 		myPlayer.setSkillsRealLevel(event.getSkill(), event.getLevel());
 		myPlayer.getStats().setTotalLevel(client.getTotalLevel());
@@ -396,26 +406,5 @@ public class PartyPanelPlugin extends Plugin
 			myPlayer.getStats().setSpecialPercent(specialPercent);
 			wsClient.send(myPlayer);
 		}
-	}
-
-	@Nullable
-	PartyPlayer getPartyPlayerData(final UUID uuid)
-	{
-		if (!isInParty())
-		{
-			return null;
-		}
-
-		if (uuid.equals(myPlayer.getMemberId()))
-		{
-			return myPlayer;
-		}
-
-		return partyMembers.get(uuid);
-	}
-
-	public void leaveParty()
-	{
-		partyService.changeParty(null);
 	}
 }
