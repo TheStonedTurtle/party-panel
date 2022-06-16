@@ -145,7 +145,7 @@ public class PlayerBanner extends JPanel
 		add(iconLabel, c);
 		c.gridx++;
 
-		final JPanel nameContainer = new JPanel(new GridLayout(2, 1));
+		final JPanel nameContainer = new JPanel(new GridLayout(1, 1));
 		nameContainer.setBorder(new EmptyBorder(0, 5, 0, 0));
 		nameContainer.setOpaque(false);
 
@@ -162,13 +162,9 @@ public class PlayerBanner extends JPanel
 			usernameLabel.setText(player.getUsername() + levelText);
 		}
 
-		final JLabel discordNameLabel = new JLabel(player.getMember().getName());
-		discordNameLabel.setHorizontalTextPosition(JLabel.LEFT);
-
 		expandIcon.setAlignmentX(Component.RIGHT_ALIGNMENT);
 		usernameLabel.add(expandIcon, BorderLayout.EAST);
 		nameContainer.add(usernameLabel);
-		nameContainer.add(discordNameLabel);
 
 		c.weightx = 1.0;
 		c.fill = GridBagConstraints.HORIZONTAL;
