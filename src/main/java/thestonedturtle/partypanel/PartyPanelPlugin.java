@@ -46,7 +46,7 @@ import thestonedturtle.partypanel.ui.prayer.PrayerSprites;
 
 @Slf4j
 @PluginDescriptor(
-	name = "Discord Party Panel"
+	name = "Hub Party Panel"
 )
 public class PartyPanelPlugin extends Plugin
 {
@@ -102,7 +102,7 @@ public class PartyPanelPlugin extends Plugin
 	{
 		panel = new PartyPanel(this);
 		navButton = NavigationButton.builder()
-			.tooltip("Discord Party Panel")
+			.tooltip("Hub Party Panel")
 			.icon(ICON)
 			.priority(7)
 			.panel(panel)
