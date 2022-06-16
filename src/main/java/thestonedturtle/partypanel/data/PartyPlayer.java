@@ -32,8 +32,8 @@ import net.runelite.api.InventoryID;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.Skill;
 import net.runelite.client.game.ItemManager;
-import net.runelite.client.ws.PartyMember;
-import net.runelite.http.api.ws.messages.party.PartyMemberMessage;
+import net.runelite.client.party.PartyMember;
+import net.runelite.client.party.messages.PartyMemberMessage;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
