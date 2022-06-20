@@ -380,7 +380,7 @@ public class PartyPanelPlugin extends Plugin
 	@Subscribe
 	public void onItemContainerChanged(final ItemContainerChanged c)
 	{
-		if (!isInParty())
+		if (myPlayer == null || !isInParty())
 		{
 			return;
 		}
