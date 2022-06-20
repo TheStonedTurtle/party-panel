@@ -171,9 +171,19 @@ public class PartyPanelPlugin extends Plugin
 		{
 			panel.updatePartyMembersExpand(config.autoExpandMembers());
 		}
+
+		if (c.getKey().equals("showPartyControls"))
+		{
+			panel.updatePartyControls(config.showPartyControls());
+		}
+
+		if (c.getKey().equals("showPartyPassphrase"))
+		{
+			panel.setPartyPassphraseVisibility(config.showPartyPassphrase());
+		}
 	}
 
-	boolean isInParty()
+	public boolean isInParty()
 	{
 		return partyService.isInParty();
 	}
@@ -241,7 +251,14 @@ public class PartyPanelPlugin extends Plugin
 		SwingUtilities.invokeLater(panel::renderSidebar);
 		myPlayer = null;
 
-		if (!isInParty() && !config.alwaysShowIcon())
+		if (!isInParty())
+		{
+			return;
+		}
+
+		config.setPreviousPartyId(event.getPassphrase());
+
+		if (!config.alwaysShowIcon())
 		{
 			clientToolbar.removeNavigation(navButton);
 			addedButton = false;
@@ -434,6 +451,29 @@ public class PartyPanelPlugin extends Plugin
 		final PartyPlayer player = partyMembers.get(e.getMemberId());
 		player.getMember().setAvatar(e.getImage());
 		SwingUtilities.invokeLater(() -> panel.getPlayerPanelMap().get(e.getMemberId()).getBanner().refreshStats());
+	}
+
+	public void changeParty(String passphrase)
+	{
+		partyService.changeParty(passphrase);
+		panel.updateParty();
+	}
+
+	public void createParty()
+	{
+		// Create party
+		clientThread.invokeLater(() -> changeParty(partyService.generatePassphrase()));
+	}
+
+	public String getPartyPassphrase()
+	{
+		return partyService.getPartyPassphrase();
+	}
+
+	public void leaveParty()
+	{
+		partyService.changeParty(null);
+		panel.updateParty();
 	}
 
 	private int[][] convertItemsToArrays(Item[] items)
