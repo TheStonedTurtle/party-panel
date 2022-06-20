@@ -536,4 +536,18 @@ public class PartyPanelPlugin extends Plugin
 			panel.getPlayerPanelMap().get(e.getMemberId()).updatePlayerData(player);
 		}
 	}
+
+	@Subscribe
+	public void onPartyMemberAvatar(PartyMemberAvatar e)
+	{
+		if (e.getMemberId().equals(partyService.getLocalMember().getMemberId()))
+		{
+			return;
+		}
+
+		final PartyPlayer player = partyMembers.get(e.getMemberId());
+		player.getMember().setAvatar(e.getImage());
+		panel.getPlayerPanelMap().get(e.getMemberId()).getBanner().refreshStats();
+	}
+
 }
