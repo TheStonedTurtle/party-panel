@@ -200,8 +200,7 @@ public class PartyPanelPlugin extends Plugin
 
 	boolean isInParty()
 	{
-		// TODO: Determine if this is the correct way to check if we are in a party
-		return wsClient.sessionExists() && partyService.getLocalMember() != null;
+		return partyService.isInParty();
 	}
 
 	@Subscribe
