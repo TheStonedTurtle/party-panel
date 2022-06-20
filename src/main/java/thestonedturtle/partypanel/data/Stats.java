@@ -70,4 +70,19 @@ public class Stats
 		totalLevel = client.getTotalLevel();
 		runEnergy = client.getEnergy();
 	}
+
+	public int recalculateCombatLevel()
+	{
+		combatLevel = Experience.getCombatLevel(
+			baseLevels.get(Skill.ATTACK),
+			baseLevels.get(Skill.STRENGTH),
+			baseLevels.get(Skill.DEFENCE),
+			baseLevels.get(Skill.HITPOINTS),
+			baseLevels.get(Skill.MAGIC),
+			baseLevels.get(Skill.RANGED),
+			baseLevels.get(Skill.PRAYER)
+		);
+
+		return combatLevel;
+	}
 }

@@ -36,6 +36,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.EmptyBorder;
+import lombok.Getter;
 import net.runelite.client.ui.DynamicGridLayout;
 import net.runelite.client.ui.PluginPanel;
 import thestonedturtle.partypanel.data.PartyPlayer;
@@ -45,6 +46,7 @@ import thestonedturtle.partypanel.ui.PlayerPanel;
 class PartyPanel extends PluginPanel
 {
 	private final PartyPanelPlugin plugin;
+	@Getter
 	private final HashMap<UUID, PlayerPanel> playerPanelMap = new HashMap<>();
 	private final JPanel basePanel;
 
