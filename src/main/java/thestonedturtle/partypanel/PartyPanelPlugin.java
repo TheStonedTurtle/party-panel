@@ -525,7 +525,15 @@ public class PartyPanelPlugin extends Plugin
 		else if (e instanceof PartyProcessItemManager)
 		{
 			// ItemManger stuff needs to be on clientThread
-			clientThread.invoke(() -> ((PartyProcessItemManager) e).process(player, itemManager));
+			clientThread.invoke(() -> {
+				((PartyProcessItemManager) e).process(player, itemManager);
+
+				// We need to call update here as the update below can trigger before the clientThread has been invoked
+				if (update) {
+					SwingUtilities.invokeLater(() -> panel.getPlayerPanelMap().get(e.getMemberId()).updatePlayerData(player));
+				}
+			});
+			return;
 		}
 		else
 		{
