@@ -501,7 +501,7 @@ public class PartyPanelPlugin extends Plugin
 
 		final PartyPlayer player = partyMembers.get(e.getMemberId());
 		e.getMessages().forEach(msg -> processPartyMemberMessage(msg, false));
-		panel.getPlayerPanelMap().get(e.getMemberId()).updatePlayerData(player);
+		SwingUtilities.invokeLater(() -> panel.getPlayerPanelMap().get(e.getMemberId()).updatePlayerData(player));
 	}
 
 	private void processPartyMemberMessage(PartyMemberMessage e)
@@ -524,7 +524,8 @@ public class PartyPanelPlugin extends Plugin
 		}
 		else if (e instanceof PartyProcessItemManager)
 		{
-			((PartyProcessItemManager) e).process(player, itemManager);
+			// ItemManger stuff needs to be on clientThread
+			clientThread.invoke(() -> ((PartyProcessItemManager) e).process(player, itemManager));
 		}
 		else
 		{
@@ -533,7 +534,7 @@ public class PartyPanelPlugin extends Plugin
 
 		if (update)
 		{
-			panel.getPlayerPanelMap().get(e.getMemberId()).updatePlayerData(player);
+			SwingUtilities.invokeLater(() -> panel.getPlayerPanelMap().get(e.getMemberId()).updatePlayerData(player));
 		}
 	}
 
@@ -547,7 +548,7 @@ public class PartyPanelPlugin extends Plugin
 
 		final PartyPlayer player = partyMembers.get(e.getMemberId());
 		player.getMember().setAvatar(e.getImage());
-		panel.getPlayerPanelMap().get(e.getMemberId()).getBanner().refreshStats();
+		SwingUtilities.invokeLater(() -> panel.getPlayerPanelMap().get(e.getMemberId()).getBanner().refreshStats());
 	}
 
 }
