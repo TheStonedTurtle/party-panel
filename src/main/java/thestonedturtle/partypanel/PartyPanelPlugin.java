@@ -29,16 +29,16 @@ import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.events.PartyChanged;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
-import net.runelite.client.plugins.Plugin;
-import net.runelite.client.plugins.PluginDescriptor;
-import net.runelite.client.ui.ClientToolbar;
-import net.runelite.client.ui.NavigationButton;
-import net.runelite.client.util.ImageUtil;
 import net.runelite.client.party.PartyService;
 import net.runelite.client.party.WSClient;
 import net.runelite.client.party.messages.UserJoin;
 import net.runelite.client.party.messages.UserPart;
 import net.runelite.client.party.messages.UserSync;
+import net.runelite.client.plugins.Plugin;
+import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.ui.ClientToolbar;
+import net.runelite.client.ui.NavigationButton;
+import net.runelite.client.util.ImageUtil;
 import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
 import thestonedturtle.partypanel.data.Prayers;
@@ -135,6 +135,15 @@ public class PartyPanelPlugin extends Plugin
 		}
 	}
 
+	@Override
+	protected void shutDown() throws Exception
+	{
+		clientToolbar.removeNavigation(navButton);
+		addedButton = false;
+		partyMembers.clear();
+		wsClient.unregisterMessage(PartyPlayer.class);
+	}
+
 	@Subscribe
 	protected void onConfigChanged(final ConfigChanged c)
 	{
@@ -162,15 +171,6 @@ public class PartyPanelPlugin extends Plugin
 		{
 			panel.updatePartyMembersExpand(config.autoExpandMembers());
 		}
-	}
-
-	@Override
-	protected void shutDown() throws Exception
-	{
-		clientToolbar.removeNavigation(navButton);
-		addedButton = false;
-		partyMembers.clear();
-		wsClient.unregisterMessage(PartyPlayer.class);
 	}
 
 	boolean isInParty()
