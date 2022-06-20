@@ -24,13 +24,17 @@
  */
 package thestonedturtle.partypanel.data.events;
 
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.Value;
 import net.runelite.client.party.messages.PartyMemberMessage;
 import thestonedturtle.partypanel.data.PartyPlayer;
 import thestonedturtle.partypanel.data.PrayerData;
 
 @Value
+@AllArgsConstructor
+@NoArgsConstructor(force = true)
 @EqualsAndHashCode(callSuper = true)
 public class PartyPrayerChange extends PartyMemberMessage implements PartyProcess
 {
@@ -39,6 +43,11 @@ public class PartyPrayerChange extends PartyMemberMessage implements PartyProces
 	@Override
 	public void process(PartyPlayer p)
 	{
+		if (prayerData == null)
+		{
+			return;
+		}
+
 		p.getPrayers().getPrayerData().put(prayerData.getPrayer(), prayerData);
 	}
 }

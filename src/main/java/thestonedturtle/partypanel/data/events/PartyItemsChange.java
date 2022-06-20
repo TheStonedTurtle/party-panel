@@ -24,7 +24,9 @@
  */
 package thestonedturtle.partypanel.data.events;
 
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Item;
@@ -35,6 +37,8 @@ import thestonedturtle.partypanel.data.PartyPlayer;
 
 // Just send the entire GameItem array since diffing can be complex.
 @Value
+@AllArgsConstructor
+@NoArgsConstructor(force = true)
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
 public class PartyItemsChange extends PartyMemberMessage implements PartyProcessItemManager
@@ -51,6 +55,11 @@ public class PartyItemsChange extends PartyMemberMessage implements PartyProcess
 	@Override
 	public void process(PartyPlayer p, ItemManager itemManager)
 	{
+		if (changeType == null)
+		{
+			return;
+		}
+
 		final GameItem[] gameItems = GameItem.convertItemsToGameItems(this.items, itemManager);
 		switch (changeType)
 		{

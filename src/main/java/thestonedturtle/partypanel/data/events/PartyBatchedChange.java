@@ -25,12 +25,16 @@
 package thestonedturtle.partypanel.data.events;
 
 import java.util.Collection;
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.Value;
 import net.runelite.client.party.messages.PartyMemberMessage;
 
 // Batching multiple requests together that would otherwise be sent separately at the same time
 @Value
+@AllArgsConstructor
+@NoArgsConstructor(force = true)
 @EqualsAndHashCode(callSuper = true)
 public class PartyBatchedChange extends PartyMemberMessage
 {

@@ -24,13 +24,17 @@
  */
 package thestonedturtle.partypanel.data.events;
 
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.Value;
 import net.runelite.api.Skill;
 import net.runelite.client.party.messages.PartyMemberMessage;
 import thestonedturtle.partypanel.data.PartyPlayer;
 
 @Value
+@AllArgsConstructor
+@NoArgsConstructor(force = true)
 @EqualsAndHashCode(callSuper = true)
 public class PartyStatChange extends PartyMemberMessage implements PartyProcess
 {
@@ -42,6 +46,11 @@ public class PartyStatChange extends PartyMemberMessage implements PartyProcess
 	@Override
 	public void process(PartyPlayer p)
 	{
+		if (skill == null)
+		{
+			return;
+		}
+
 		p.getStats().getBaseLevels().put(skill, baseLevel);
 		p.getStats().getBoostedLevels().put(skill, boostedLevel);
 		p.getStats().getSkillEXPs().put(skill, exp);

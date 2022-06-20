@@ -24,7 +24,9 @@
  */
 package thestonedturtle.partypanel.data.events;
 
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.Value;
 import net.runelite.client.party.messages.PartyMemberMessage;
 import thestonedturtle.partypanel.data.PartyPlayer;
@@ -32,6 +34,8 @@ import thestonedturtle.partypanel.data.Stats;
 
 // Bulk updating of stats
 @Value
+@AllArgsConstructor
+@NoArgsConstructor(force = true)
 @EqualsAndHashCode(callSuper = true)
 public class PartyStatsChange extends PartyMemberMessage implements PartyProcess
 {
@@ -40,6 +44,11 @@ public class PartyStatsChange extends PartyMemberMessage implements PartyProcess
 	@Override
 	public void process(PartyPlayer p)
 	{
+		if (stats == null)
+		{
+			return;
+		}
+
 		p.setStats(stats);
 	}
 }

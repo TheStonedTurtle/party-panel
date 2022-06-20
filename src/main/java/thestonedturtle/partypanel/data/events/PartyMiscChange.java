@@ -24,7 +24,9 @@
  */
 package thestonedturtle.partypanel.data.events;
 
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.party.messages.PartyMemberMessage;
@@ -32,6 +34,8 @@ import thestonedturtle.partypanel.data.PartyPlayer;
 
 // Used for updating stuff that is just a single integer value and doesn't fit into the other classes
 @Value
+@AllArgsConstructor
+@NoArgsConstructor(force = true)
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
 public class PartyMiscChange extends PartyMemberMessage implements PartyProcess
@@ -49,6 +53,11 @@ public class PartyMiscChange extends PartyMemberMessage implements PartyProcess
 	@Override
 	public void process(PartyPlayer p)
 	{
+		if (changeType == null)
+		{
+			return;
+		}
+
 		switch (changeType)
 		{
 			case SPECIAL:
