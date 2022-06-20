@@ -177,39 +177,38 @@ public class PartyPanelPlugin extends Plugin
 		return partyService.isInParty();
 	}
 
+	public boolean isLocalPlayer(long id)
+	{
+		return partyService.getLocalMember() != null && partyService.getLocalMember().getMemberId() == id;
+	}
+
 	@Subscribe
 	public void onUserJoin(final UserJoin event)
 	{
 		// TODO: Figure out how to support people not using the plugin
-		if (partyService.getLocalMember() == null)
-		{
-			return;
-		}
-
 		if (!addedButton)
 		{
 			clientToolbar.addNavigation(navButton);
 			addedButton = true;
 		}
 
-		// Self joined
-		if (event.getMemberId() == partyService.getLocalMember().getMemberId())
+		// We care about self joined
+		if (!isLocalPlayer(event.getMemberId()))
 		{
-			if (myPlayer == null)
-			{
-				clientThread.invoke(() ->
-				{
-					myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
-					partyService.send(myPlayer);
-					return true;
-				});
-			}
-			else
-			{
-				// Send the entire player object to new members
-				partyService.send(myPlayer);
-			}
+			return;
 		}
+
+		if (myPlayer != null)
+		{
+			partyService.send(myPlayer);
+			return;
+		}
+
+		clientThread.invoke(() ->
+		{
+			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
+			partyService.send(myPlayer);
+		});
 	}
 
 	@Subscribe
@@ -390,12 +389,7 @@ public class PartyPanelPlugin extends Plugin
 	@Subscribe
 	public void onPartyPlayer(final PartyPlayer player)
 	{
-		if (!isInParty())
-		{
-			return;
-		}
-
-		if (player.getMemberId() == partyService.getLocalMember().getMemberId())
+		if (!isInParty() || isLocalPlayer(player.getMemberId()))
 		{
 			return;
 		}
@@ -413,9 +407,8 @@ public class PartyPanelPlugin extends Plugin
 	@Subscribe
 	public void onPartyBatchedChange(PartyBatchedChange e)
 	{
-		if (e.getMemberId() == partyService.getLocalMember().getMemberId())
+		if (isLocalPlayer(e.getMemberId()))
 		{
-			// Ignore self
 			return;
 		}
 
@@ -430,7 +423,7 @@ public class PartyPanelPlugin extends Plugin
 	@Subscribe
 	public void onPartyMemberAvatar(PartyMemberAvatar e)
 	{
-		if (e.getMemberId() == partyService.getLocalMember().getMemberId())
+		if (isLocalPlayer(e.getMemberId()) || partyMembers.get(e.getMemberId()) == null)
 		{
 			return;
 		}
