@@ -322,6 +322,11 @@ public class PartyPanelPlugin extends Plugin
 			}
 		}
 
+		if (changes.size() == 0)
+		{
+			return;
+		}
+
 		if (changes.size() == 1)
 		{
 			partyService.send(changes.get(0));
