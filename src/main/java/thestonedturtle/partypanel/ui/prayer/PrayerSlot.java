@@ -90,7 +90,7 @@ public class PrayerSlot extends JLabel
 		data = updatedData;
 
 		BufferedImage icon = data.isAvailable() ? availableImage : unavailableImage;
-		if (data.isActivated())
+		if (data.isEnabled())
 		{
 			icon = activatedImage;
 		}

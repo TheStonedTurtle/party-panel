@@ -24,19 +24,60 @@
  */
 package thestonedturtle.partypanel.data.events;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.Value;
+import net.runelite.client.game.ItemManager;
 import net.runelite.client.party.messages.PartyMemberMessage;
+import thestonedturtle.partypanel.data.PartyPlayer;
 
-// Batching multiple requests together that would otherwise be sent separately at the same time
-@Value
-@AllArgsConstructor
-@NoArgsConstructor(force = true)
+@Data
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class PartyBatchedChange extends PartyMemberMessage
 {
-	Collection<PartyMemberMessage> messages;
+	PartyItemsChange i; // Inventory
+	PartyItemsChange e; // equipment
+	Collection<PartyPrayerChange> p = new ArrayList<>(); // Prayer Changes
+	Collection<PartyStatChange> s = new ArrayList<>(); // Stat Changes
+	Collection<PartyMiscChange> m = new ArrayList<>(); // Misc Changes
+
+	public boolean isValid()
+	{
+		return i != null
+			|| e != null
+			|| (p != null && p.size() > 0)
+			|| (s != null && s.size() > 0)
+			|| (m != null && m.size() > 0);
+	}
+
+	public void process(PartyPlayer player, ItemManager itemManager)
+	{
+		if (i != null)
+		{
+			i.process(player, itemManager);
+		}
+
+		if (e != null)
+		{
+			e.process(player, itemManager);
+		}
+
+		if (p != null)
+		{
+			p.forEach(change -> change.process(player));
+		}
+
+		if (s != null)
+		{
+			s.forEach(change -> change.process(player));
+		}
+
+		if (m != null)
+		{
+			m.forEach(change -> change.process(player));
+		}
+	}
 }

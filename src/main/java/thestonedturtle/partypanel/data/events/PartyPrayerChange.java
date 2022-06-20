@@ -24,30 +24,28 @@
  */
 package thestonedturtle.partypanel.data.events;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import lombok.Value;
-import net.runelite.client.party.messages.PartyMemberMessage;
+import net.runelite.api.Prayer;
 import thestonedturtle.partypanel.data.PartyPlayer;
 import thestonedturtle.partypanel.data.PrayerData;
 
 @Value
-@AllArgsConstructor
-@NoArgsConstructor(force = true)
-@EqualsAndHashCode(callSuper = true)
-public class PartyPrayerChange extends PartyMemberMessage implements PartyProcess
+public class PartyPrayerChange implements PartyProcess
 {
-	PrayerData prayerData;
+	Prayer p;
+	boolean a; // Available
+	boolean e; // Enabled
+
+	public PartyPrayerChange(PrayerData data)
+	{
+		p = data.getPrayer();
+		a = data.isAvailable();
+		e = data.isEnabled();
+	}
 
 	@Override
-	public void process(PartyPlayer p)
+	public void process(PartyPlayer player)
 	{
-		if (prayerData == null)
-		{
-			return;
-		}
-
-		p.getPrayers().getPrayerData().put(prayerData.getPrayer(), prayerData);
+		player.getPrayers().getPrayerData().put(p, new PrayerData(p, a, e));
 	}
 }

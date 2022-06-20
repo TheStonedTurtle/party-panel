@@ -32,6 +32,7 @@ import net.runelite.api.Client;
 import net.runelite.api.Experience;
 import net.runelite.api.Skill;
 import net.runelite.api.VarPlayer;
+import thestonedturtle.partypanel.data.events.PartyStatChange;
 
 @Getter
 @Setter
@@ -84,5 +85,10 @@ public class Stats
 		);
 
 		return combatLevel;
+	}
+
+	public PartyStatChange createPartyStatChangeForSkill(Skill s)
+	{
+		return new PartyStatChange(s, baseLevels.get(s), boostedLevels.get(s), skillEXPs.get(s));
 	}
 }

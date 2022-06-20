@@ -34,5 +34,5 @@ public class PrayerData
 {
 	private final Prayer prayer;
 	private boolean available;
-	private boolean activated;
+	private boolean enabled;
 }

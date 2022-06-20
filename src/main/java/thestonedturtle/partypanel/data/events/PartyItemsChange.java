@@ -24,49 +24,36 @@
  */
 package thestonedturtle.partypanel.data.events;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.Item;
 import net.runelite.client.game.ItemManager;
-import net.runelite.client.party.messages.PartyMemberMessage;
 import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
 
-// Just send the entire GameItem array since diffing can be complex.
 @Value
-@AllArgsConstructor
-@NoArgsConstructor(force = true)
-@EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class PartyItemsChange extends PartyMemberMessage implements PartyProcessItemManager
+public class PartyItemsChange implements PartyProcessItemManager
 {
-	PartyItemContainer changeType;
-	Item[] items;
+	PartyItemContainer t; // Type
+	int[] i; // Items
+	int[] q; // Quantity
 
 	public enum PartyItemContainer
 	{
-		INVENTORY,
-		EQUIPMENT
+		I, // Inventory
+		E, // Equipment
 	}
 
 	@Override
 	public void process(PartyPlayer p, ItemManager itemManager)
 	{
-		if (changeType == null)
+		final GameItem[] gameItems = GameItem.convertItemsToGameItems(this.i, this.q, itemManager);
+		switch (t)
 		{
-			return;
-		}
-
-		final GameItem[] gameItems = GameItem.convertItemsToGameItems(this.items, itemManager);
-		switch (changeType)
-		{
-			case EQUIPMENT:
+			case E:
 				p.setEquipment(gameItems);
 				break;
-			case INVENTORY:
+			case I:
 				p.setInventory(gameItems);
 				break;
 			default:

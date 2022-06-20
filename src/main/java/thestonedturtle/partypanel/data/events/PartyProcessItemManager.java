@@ -29,5 +29,5 @@ import thestonedturtle.partypanel.data.PartyPlayer;
 
 public interface PartyProcessItemManager
 {
-	void process(PartyPlayer p, ItemManager itemManager);
+	void process(PartyPlayer player, ItemManager itemManager);
 }

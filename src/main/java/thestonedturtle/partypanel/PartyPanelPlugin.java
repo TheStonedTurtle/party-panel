@@ -2,9 +2,7 @@ package thestonedturtle.partypanel;
 
 import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import javax.inject.Inject;
@@ -13,6 +11,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.InventoryID;
+import net.runelite.api.Item;
 import net.runelite.api.Skill;
 import net.runelite.api.VarPlayer;
 import net.runelite.api.events.GameTick;
@@ -32,7 +31,6 @@ import net.runelite.client.party.PartyService;
 import net.runelite.client.party.WSClient;
 import net.runelite.client.party.events.UserJoin;
 import net.runelite.client.party.events.UserPart;
-import net.runelite.client.party.messages.PartyMemberMessage;
 import net.runelite.client.party.messages.UserSync;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -46,11 +44,7 @@ import thestonedturtle.partypanel.data.events.PartyBatchedChange;
 import thestonedturtle.partypanel.data.events.PartyItemsChange;
 import thestonedturtle.partypanel.data.events.PartyMiscChange;
 import thestonedturtle.partypanel.data.events.PartyPrayerChange;
-import thestonedturtle.partypanel.data.events.PartyPrayersChange;
-import thestonedturtle.partypanel.data.events.PartyProcess;
-import thestonedturtle.partypanel.data.events.PartyProcessItemManager;
 import thestonedturtle.partypanel.data.events.PartyStatChange;
-import thestonedturtle.partypanel.data.events.PartyStatsChange;
 import thestonedturtle.partypanel.ui.prayer.PrayerSprites;
 
 @Slf4j
@@ -106,6 +100,9 @@ public class PartyPanelPlugin extends Plugin
 
 	private PartyPanel panel;
 
+	// All events should be deferred to the next game tick
+	private PartyBatchedChange currentChange = new PartyBatchedChange();
+
 	@Override
 	protected void startUp() throws Exception
 	{
@@ -119,12 +116,6 @@ public class PartyPanelPlugin extends Plugin
 
 		wsClient.registerMessage(PartyPlayer.class);
 		wsClient.registerMessage(PartyBatchedChange.class);
-		wsClient.registerMessage(PartyItemsChange.class);
-		wsClient.registerMessage(PartyMiscChange.class);
-		wsClient.registerMessage(PartyPrayerChange.class);
-		wsClient.registerMessage(PartyPrayersChange.class);
-		wsClient.registerMessage(PartyStatChange.class);
-		wsClient.registerMessage(PartyStatsChange.class);
 
 		if (isInParty() || config.alwaysShowIcon())
 		{
@@ -150,12 +141,6 @@ public class PartyPanelPlugin extends Plugin
 		partyMembers.clear();
 		wsClient.unregisterMessage(PartyPlayer.class);
 		wsClient.unregisterMessage(PartyBatchedChange.class);
-		wsClient.unregisterMessage(PartyItemsChange.class);
-		wsClient.unregisterMessage(PartyMiscChange.class);
-		wsClient.unregisterMessage(PartyPrayerChange.class);
-		wsClient.unregisterMessage(PartyPrayersChange.class);
-		wsClient.unregisterMessage(PartyStatChange.class);
-		wsClient.unregisterMessage(PartyStatsChange.class);
 	}
 
 	@Subscribe
@@ -279,15 +264,14 @@ public class PartyPanelPlugin extends Plugin
 			return;
 		}
 
-		// Batch all messages together per tick
-		final List<PartyMemberMessage> changes = new ArrayList<>();
-
 		if (myPlayer.getStats() == null)
 		{
 			myPlayer.updatePlayerInfo(client, itemManager);
-			final PartyStatsChange change = new PartyStatsChange(myPlayer.getStats());
-			change.setMemberId(partyService.getLocalMember().getMemberId());
-			changes.add(change);
+
+			for (final Skill s : Skill.values())
+			{
+				currentChange.getS().add(myPlayer.getStats().createPartyStatChangeForSkill(s));
+			}
 		}
 		else
 		{
@@ -296,18 +280,17 @@ public class PartyPanelPlugin extends Plugin
 			if (myPlayer.getStats().getRunEnergy() != energy)
 			{
 				myPlayer.getStats().setRunEnergy(energy);
-				final PartyMiscChange change = new PartyMiscChange(PartyMiscChange.PartyMisc.RUN, energy);
-				change.setMemberId(partyService.getLocalMember().getMemberId());
-				changes.add(change);
+				currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.R, energy));
 			}
 		}
 
 		if (myPlayer.getPrayers() == null)
 		{
 			myPlayer.setPrayers(new Prayers(client));
-			final PartyPrayersChange change = new PartyPrayersChange(myPlayer.getPrayers());
-			change.setMemberId(partyService.getLocalMember().getMemberId());
-			changes.add(change);
+			for (final PrayerSprites p : PrayerSprites.values())
+			{
+				currentChange.getP().add(new PartyPrayerChange(myPlayer.getPrayers().getPrayerData().get(p.getPrayer())));
+			}
 		}
 		else
 		{
@@ -315,27 +298,17 @@ public class PartyPanelPlugin extends Plugin
 			{
 				if (myPlayer.getPrayers().updatePrayerState(prayer, client))
 				{
-					final PartyPrayerChange change = new PartyPrayerChange(myPlayer.getPrayers().getPrayerData().get(prayer.getPrayer()));
-					change.setMemberId(partyService.getLocalMember().getMemberId());
-					changes.add(change);
+					currentChange.getP().add(new PartyPrayerChange(myPlayer.getPrayers().getPrayerData().get(prayer.getPrayer())));
 				}
 			}
 		}
 
-		if (changes.size() == 0)
-		{
-			return;
-		}
+		if (currentChange.isValid()) {
+			currentChange.setMemberId(partyService.getLocalMember().getMemberId()); // Add member ID before sending
+			partyService.send(currentChange);
 
-		if (changes.size() == 1)
-		{
-			partyService.send(changes.get(0));
-			return;
+			currentChange = new PartyBatchedChange();
 		}
-
-		final PartyBatchedChange change = new PartyBatchedChange(changes);
-		change.setMemberId(partyService.getLocalMember().getMemberId());
-		partyService.send(change);
 	}
 
 	@Subscribe
@@ -358,17 +331,13 @@ public class PartyPanelPlugin extends Plugin
 		myPlayer.setSkillsRealLevel(event.getSkill(), event.getLevel());
 		myPlayer.setSkillExperience(event.getSkill(), event.getXp());
 
-		final PartyStatChange statChange = new PartyStatChange(event.getSkill(), event.getLevel(), event.getBoostedLevel(), event.getXp());
-		statChange.setMemberId(partyService.getLocalMember().getMemberId());
-		partyService.send(statChange);
+		currentChange.getS().add(new PartyStatChange(event.getSkill(), event.getLevel(), event.getBoostedLevel(), event.getXp()));
 
 		// Total level change
 		if (myPlayer.getStats().getTotalLevel() != client.getTotalLevel())
 		{
 			myPlayer.getStats().setTotalLevel(client.getTotalLevel());
-			final PartyMiscChange change = new PartyMiscChange(PartyMiscChange.PartyMisc.TOTAL, myPlayer.getStats().getTotalLevel());
-			change.setMemberId(partyService.getLocalMember().getMemberId());
-			partyService.send(change);
+			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.T, myPlayer.getStats().getTotalLevel()));
 		}
 
 		// Combat level change
@@ -376,9 +345,7 @@ public class PartyPanelPlugin extends Plugin
 		myPlayer.getStats().recalculateCombatLevel();
 		if (myPlayer.getStats().getCombatLevel() != oldCombatLevel)
 		{
-			final PartyMiscChange change = new PartyMiscChange(PartyMiscChange.PartyMisc.COMBAT, myPlayer.getStats().getCombatLevel());
-			change.setMemberId(partyService.getLocalMember().getMemberId());
-			partyService.send(change);
+			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.C, myPlayer.getStats().getCombatLevel()));
 		}
 	}
 
@@ -393,16 +360,14 @@ public class PartyPanelPlugin extends Plugin
 		if (c.getContainerId() == InventoryID.INVENTORY.getId())
 		{
 			myPlayer.setInventory(GameItem.convertItemsToGameItems(c.getItemContainer().getItems(), itemManager));
-			final PartyItemsChange change = new PartyItemsChange(PartyItemsChange.PartyItemContainer.INVENTORY, c.getItemContainer().getItems());
-			change.setMemberId(partyService.getLocalMember().getMemberId());
-			partyService.send(change);
+			int[][] items = convertItemsToArrays(c.getItemContainer().getItems());
+			currentChange.setI(new PartyItemsChange(PartyItemsChange.PartyItemContainer.I, items[0], items[1]));
 		}
 		else if (c.getContainerId() == InventoryID.EQUIPMENT.getId())
 		{
 			myPlayer.setEquipment(GameItem.convertItemsToGameItems(c.getItemContainer().getItems(), itemManager));
-			final PartyItemsChange change = new PartyItemsChange(PartyItemsChange.PartyItemContainer.EQUIPMENT, c.getItemContainer().getItems());
-			change.setMemberId(partyService.getLocalMember().getMemberId());
-			partyService.send(change);
+			int[][] items = convertItemsToArrays(c.getItemContainer().getItems());
+			currentChange.setE(new PartyItemsChange(PartyItemsChange.PartyItemContainer.E, items[0], items[1]));
 		}
 	}
 
@@ -418,9 +383,7 @@ public class PartyPanelPlugin extends Plugin
 		if (specialPercent != myPlayer.getStats().getSpecialPercent())
 		{
 			myPlayer.getStats().setSpecialPercent(specialPercent);
-			final PartyMiscChange change = new PartyMiscChange(PartyMiscChange.PartyMisc.SPECIAL, specialPercent);
-			change.setMemberId(partyService.getLocalMember().getMemberId());
-			partyService.send(change);
+			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.S, specialPercent));
 		}
 	}
 
@@ -448,42 +411,6 @@ public class PartyPanelPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onPartyItemsChange(PartyItemsChange e)
-	{
-		processPartyMemberMessage(e);
-	}
-
-	@Subscribe
-	public void onPartyMiscChange(PartyMiscChange e)
-	{
-		processPartyMemberMessage(e);
-	}
-
-	@Subscribe
-	public void onPartyPrayersChange(PartyPrayersChange e)
-	{
-		processPartyMemberMessage(e);
-	}
-
-	@Subscribe
-	public void onPartyPrayerChange(PartyPrayerChange e)
-	{
-		processPartyMemberMessage(e);
-	}
-
-	@Subscribe
-	public void onPartyStatsChange(PartyStatsChange e)
-	{
-		processPartyMemberMessage(e);
-	}
-
-	@Subscribe
-	public void onPartyStatChange(PartyStatChange e)
-	{
-		processPartyMemberMessage(e);
-	}
-
-	@Subscribe
 	public void onPartyBatchedChange(PartyBatchedChange e)
 	{
 		if (e.getMemberId() == partyService.getLocalMember().getMemberId())
@@ -493,51 +420,11 @@ public class PartyPanelPlugin extends Plugin
 		}
 
 		final PartyPlayer player = partyMembers.get(e.getMemberId());
-		e.getMessages().forEach(msg -> processPartyMemberMessage(msg, false));
-		SwingUtilities.invokeLater(() -> panel.getPlayerPanelMap().get(e.getMemberId()).updatePlayerData(player));
-	}
+		clientThread.invoke(() -> {
+			e.process(player, itemManager);
 
-	private void processPartyMemberMessage(PartyMemberMessage e)
-	{
-		processPartyMemberMessage(e, true);
-	}
-
-	private void processPartyMemberMessage(PartyMemberMessage e, boolean update)
-	{
-		if (e.getMemberId() == partyService.getLocalMember().getMemberId())
-		{
-			// Ignore self
-			return;
-		}
-
-		final PartyPlayer player = partyMembers.get(e.getMemberId());
-		if (e instanceof PartyProcess)
-		{
-			((PartyProcess) e).process(player);
-		}
-		else if (e instanceof PartyProcessItemManager)
-		{
-			// ItemManger stuff needs to be on clientThread
-			clientThread.invoke(() -> {
-				((PartyProcessItemManager) e).process(player, itemManager);
-
-				// We need to call update here as the update below can trigger before the clientThread has been invoked
-				if (update)
-				{
-					SwingUtilities.invokeLater(() -> panel.getPlayerPanelMap().get(e.getMemberId()).updatePlayerData(player));
-				}
-			});
-			return;
-		}
-		else
-		{
-			log.warn("Unhandled party member message: {}", e);
-		}
-
-		if (update)
-		{
 			SwingUtilities.invokeLater(() -> panel.getPlayerPanelMap().get(e.getMemberId()).updatePlayerData(player));
-		}
+		});
 	}
 
 	@Subscribe
@@ -553,4 +440,18 @@ public class PartyPanelPlugin extends Plugin
 		SwingUtilities.invokeLater(() -> panel.getPlayerPanelMap().get(e.getMemberId()).getBanner().refreshStats());
 	}
 
+	private int[][] convertItemsToArrays(Item[] items)
+	{
+		int[] ids = new int[items.length];
+		int[] qtys = new int[items.length];
+		for (int i = 0; i < items.length; i++)
+		{
+			ids[i] = items[i].getId();
+			qtys[i] = items[i].getQuantity();
+		}
+
+		return new int[][]{
+			ids, qtys
+		};
+	}
 }

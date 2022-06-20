@@ -57,6 +57,24 @@ public class GameItem
 		this.price = itemManager.getItemPrice(c.getNote() != -1 ? c.getLinkedNoteId() : id);
 	}
 
+	public static GameItem[] convertItemsToGameItems(final int[] ids, final int[] qtys, final ItemManager itemManager)
+	{
+		GameItem[] output = new GameItem[ids.length];
+		for (int i = 0; i < ids.length; i++)
+		{
+			if (ids[i] == -1 || qtys[i] <= 0)
+			{
+				output[i] = null;
+			}
+			else
+			{
+				output[i] = new GameItem(ids[i], qtys[i], itemManager);
+			}
+		}
+
+		return output;
+	}
+
 	public static GameItem[] convertItemsToGameItems(final Item[] items, final ItemManager itemManager)
 	{
 		final GameItem[] output = new GameItem[items.length];
