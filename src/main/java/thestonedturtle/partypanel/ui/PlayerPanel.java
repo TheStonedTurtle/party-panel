@@ -226,7 +226,8 @@ public class PlayerPanel extends JPanel
 				int currLevel = player.getStats().getBaseLevels().get(s);
 				if (currLevel > 0 && currLevel < 126)
 				{
-					int nextLevelExp = Experience.getXpForLevel(player.getStats().getBaseLevels().get(s)+1);
+					int virtualLevel = Experience.getLevelForXp(player.getStats().getSkillEXPs().get(s));
+					int nextLevelExp = Experience.getXpForLevel(virtualLevel+1);
 					tooltipExp += "Next level at: " + NumberFormat.getNumberInstance().format(nextLevelExp) + "<br/>";
 					tooltipExp += "Remaining XP: " + NumberFormat.getNumberInstance().format(nextLevelExp - newExp) + "<br/>";
 				}
