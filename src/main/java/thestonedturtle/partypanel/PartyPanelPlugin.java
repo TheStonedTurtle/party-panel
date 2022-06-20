@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 import javax.inject.Inject;
 import javax.swing.SwingUtilities;
 import lombok.Getter;
@@ -20,7 +19,6 @@ import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
-import net.runelite.client.account.AccountSession;
 import net.runelite.client.account.SessionManager;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
@@ -32,9 +30,9 @@ import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.party.PartyService;
 import net.runelite.client.party.WSClient;
+import net.runelite.client.party.events.UserJoin;
+import net.runelite.client.party.events.UserPart;
 import net.runelite.client.party.messages.PartyMemberMessage;
-import net.runelite.client.party.messages.UserJoin;
-import net.runelite.client.party.messages.UserPart;
 import net.runelite.client.party.messages.UserSync;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -98,7 +96,7 @@ public class PartyPanelPlugin extends Plugin
 	}
 
 	@Getter
-	private final Map<UUID, PartyPlayer> partyMembers = new HashMap<>();
+	private final Map<Long, PartyPlayer> partyMembers = new HashMap<>();
 
 	@Getter
 	private PartyPlayer myPlayer = null;
@@ -128,15 +126,6 @@ public class PartyPanelPlugin extends Plugin
 		wsClient.registerMessage(PartyStatChange.class);
 		wsClient.registerMessage(PartyStatsChange.class);
 
-		// If there isn't already a session open, open one
-		if (!wsClient.sessionExists())
-		{
-			AccountSession accountSession = sessionManager.getAccountSession();
-			// Use the existing account session, if it exists, otherwise generate a new session id
-			UUID uuid = accountSession != null ? accountSession.getUuid() : UUID.randomUUID();
-			wsClient.changeSession(uuid);
-		}
-
 		if (isInParty() || config.alwaysShowIcon())
 		{
 			clientToolbar.addNavigation(navButton);
@@ -148,7 +137,7 @@ public class PartyPanelPlugin extends Plugin
 			clientThread.invokeLater(() ->
 			{
 				myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
-				wsClient.send(myPlayer);
+				partyService.send(myPlayer);
 			});
 		}
 	}
@@ -219,21 +208,21 @@ public class PartyPanelPlugin extends Plugin
 		}
 
 		// Self joined
-		if (event.getMemberId().equals(partyService.getLocalMember().getMemberId()))
+		if (event.getMemberId() == partyService.getLocalMember().getMemberId())
 		{
 			if (myPlayer == null)
 			{
 				clientThread.invoke(() ->
 				{
 					myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
-					wsClient.send(myPlayer);
+					partyService.send(myPlayer);
 					return true;
 				});
 			}
 			else
 			{
 				// Send the entire player object to new members
-				wsClient.send(myPlayer);
+				partyService.send(myPlayer);
 			}
 		}
 	}
@@ -257,7 +246,7 @@ public class PartyPanelPlugin extends Plugin
 	@Subscribe
 	public void onUserSync(final UserSync event)
 	{
-		wsClient.send(myPlayer);
+		partyService.send(myPlayer);
 	}
 
 	@Subscribe
@@ -286,7 +275,7 @@ public class PartyPanelPlugin extends Plugin
 		if (myPlayer == null || !Objects.equals(client.getLocalPlayer().getName(), myPlayer.getUsername()))
 		{
 			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
-			wsClient.send(myPlayer);
+			partyService.send(myPlayer);
 			return;
 		}
 
@@ -335,13 +324,13 @@ public class PartyPanelPlugin extends Plugin
 
 		if (changes.size() == 1)
 		{
-			wsClient.send(changes.get(0));
+			partyService.send(changes.get(0));
 			return;
 		}
 
 		final PartyBatchedChange change = new PartyBatchedChange(changes);
 		change.setMemberId(partyService.getLocalMember().getMemberId());
-		wsClient.send(change);
+		partyService.send(change);
 	}
 
 	@Subscribe
@@ -354,8 +343,8 @@ public class PartyPanelPlugin extends Plugin
 
 		final Skill s = event.getSkill();
 		if (myPlayer.getSkillBoostedLevel(s) == event.getBoostedLevel() &&
-				myPlayer.getSkillRealLevel(s) == event.getLevel() &&
-				myPlayer.getSkillExperience(s) == event.getXp())
+			myPlayer.getSkillRealLevel(s) == event.getLevel() &&
+			myPlayer.getSkillExperience(s) == event.getXp())
 		{
 			return;
 		}
@@ -366,7 +355,7 @@ public class PartyPanelPlugin extends Plugin
 
 		final PartyStatChange statChange = new PartyStatChange(event.getSkill(), event.getLevel(), event.getBoostedLevel(), event.getXp());
 		statChange.setMemberId(partyService.getLocalMember().getMemberId());
-		wsClient.send(statChange);
+		partyService.send(statChange);
 
 		// Total level change
 		if (myPlayer.getStats().getTotalLevel() != client.getTotalLevel())
@@ -374,7 +363,7 @@ public class PartyPanelPlugin extends Plugin
 			myPlayer.getStats().setTotalLevel(client.getTotalLevel());
 			final PartyMiscChange change = new PartyMiscChange(PartyMiscChange.PartyMisc.TOTAL, myPlayer.getStats().getTotalLevel());
 			change.setMemberId(partyService.getLocalMember().getMemberId());
-			wsClient.send(change);
+			partyService.send(change);
 		}
 
 		// Combat level change
@@ -384,7 +373,7 @@ public class PartyPanelPlugin extends Plugin
 		{
 			final PartyMiscChange change = new PartyMiscChange(PartyMiscChange.PartyMisc.COMBAT, myPlayer.getStats().getCombatLevel());
 			change.setMemberId(partyService.getLocalMember().getMemberId());
-			wsClient.send(change);
+			partyService.send(change);
 		}
 	}
 
@@ -401,14 +390,14 @@ public class PartyPanelPlugin extends Plugin
 			myPlayer.setInventory(GameItem.convertItemsToGameItems(c.getItemContainer().getItems(), itemManager));
 			final PartyItemsChange change = new PartyItemsChange(PartyItemsChange.PartyItemContainer.INVENTORY, c.getItemContainer().getItems());
 			change.setMemberId(partyService.getLocalMember().getMemberId());
-			wsClient.send(change);
+			partyService.send(change);
 		}
 		else if (c.getContainerId() == InventoryID.EQUIPMENT.getId())
 		{
 			myPlayer.setEquipment(GameItem.convertItemsToGameItems(c.getItemContainer().getItems(), itemManager));
 			final PartyItemsChange change = new PartyItemsChange(PartyItemsChange.PartyItemContainer.EQUIPMENT, c.getItemContainer().getItems());
 			change.setMemberId(partyService.getLocalMember().getMemberId());
-			wsClient.send(change);
+			partyService.send(change);
 		}
 	}
 
@@ -426,7 +415,7 @@ public class PartyPanelPlugin extends Plugin
 			myPlayer.getStats().setSpecialPercent(specialPercent);
 			final PartyMiscChange change = new PartyMiscChange(PartyMiscChange.PartyMisc.SPECIAL, specialPercent);
 			change.setMemberId(partyService.getLocalMember().getMemberId());
-			wsClient.send(change);
+			partyService.send(change);
 		}
 	}
 
@@ -438,7 +427,7 @@ public class PartyPanelPlugin extends Plugin
 			return;
 		}
 
-		if (player.getMemberId().equals(partyService.getLocalMember().getMemberId()))
+		if (player.getMemberId() == partyService.getLocalMember().getMemberId())
 		{
 			return;
 		}
@@ -492,7 +481,7 @@ public class PartyPanelPlugin extends Plugin
 	@Subscribe
 	public void onPartyBatchedChange(PartyBatchedChange e)
 	{
-		if (e.getMemberId().equals(partyService.getLocalMember().getMemberId()))
+		if (e.getMemberId() == partyService.getLocalMember().getMemberId())
 		{
 			// Ignore self
 			return;
@@ -510,7 +499,7 @@ public class PartyPanelPlugin extends Plugin
 
 	private void processPartyMemberMessage(PartyMemberMessage e, boolean update)
 	{
-		if (e.getMemberId().equals(partyService.getLocalMember().getMemberId()))
+		if (e.getMemberId() == partyService.getLocalMember().getMemberId())
 		{
 			// Ignore self
 			return;
@@ -528,7 +517,8 @@ public class PartyPanelPlugin extends Plugin
 				((PartyProcessItemManager) e).process(player, itemManager);
 
 				// We need to call update here as the update below can trigger before the clientThread has been invoked
-				if (update) {
+				if (update)
+				{
 					SwingUtilities.invokeLater(() -> panel.getPlayerPanelMap().get(e.getMemberId()).updatePlayerData(player));
 				}
 			});
@@ -548,7 +538,7 @@ public class PartyPanelPlugin extends Plugin
 	@Subscribe
 	public void onPartyMemberAvatar(PartyMemberAvatar e)
 	{
-		if (e.getMemberId().equals(partyService.getLocalMember().getMemberId()))
+		if (e.getMemberId() == partyService.getLocalMember().getMemberId())
 		{
 			return;
 		}

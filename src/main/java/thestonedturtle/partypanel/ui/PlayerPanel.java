@@ -170,7 +170,7 @@ public class PlayerPanel extends JPanel
 	// TODO add smarter ways to update data
 	public void updatePlayerData(final PartyPlayer newPlayer)
 	{
-		final boolean newUser = !newPlayer.getMemberId().equals(player.getMemberId());
+		final boolean newUser = newPlayer.getMemberId() != player.getMemberId();
 
 		player = newPlayer;
 		banner.setPlayer(player);

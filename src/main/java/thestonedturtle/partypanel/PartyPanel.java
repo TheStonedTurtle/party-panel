@@ -29,7 +29,6 @@ import java.awt.BorderLayout;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -47,7 +46,7 @@ class PartyPanel extends PluginPanel
 {
 	private final PartyPanelPlugin plugin;
 	@Getter
-	private final HashMap<UUID, PlayerPanel> playerPanelMap = new HashMap<>();
+	private final HashMap<Long, PlayerPanel> playerPanelMap = new HashMap<>();
 	private final JPanel basePanel;
 
 	@Inject
@@ -80,7 +79,7 @@ class PartyPanel extends PluginPanel
 		// Sort by their RSN first; If it doesn't exist sort by their Discord name instead
 		final List<PartyPlayer> players = plugin.getPartyMembers().values()
 			.stream()
-			.sorted(Comparator.comparing(o -> o.getUsername() == null ? o.getMember().getName() : o.getUsername()))
+			.sorted(Comparator.comparing(o -> o.getUsername() == null ? o.getMember().getDisplayName() : o.getUsername()))
 			.collect(Collectors.toList());
 
 		for (final PartyPlayer player : players)
