@@ -36,7 +36,7 @@ import thestonedturtle.partypanel.data.PartyPlayer;
 @Slf4j
 public class PartyMiscChange extends PartyMemberMessage implements PartyProcess
 {
-	PartyMisc type;
+	PartyMisc changeType;
 	int value;
 
 	public enum PartyMisc {
@@ -49,7 +49,7 @@ public class PartyMiscChange extends PartyMemberMessage implements PartyProcess
 	@Override
 	public void process(PartyPlayer p)
 	{
-		switch (type)
+		switch (changeType)
 		{
 			case SPECIAL:
 				p.getStats().setSpecialPercent(value);

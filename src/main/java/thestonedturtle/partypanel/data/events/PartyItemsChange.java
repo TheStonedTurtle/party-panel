@@ -39,7 +39,7 @@ import thestonedturtle.partypanel.data.PartyPlayer;
 @Slf4j
 public class PartyItemsChange extends PartyMemberMessage implements PartyProcessItemManager
 {
-	PartyItemContainer type;
+	PartyItemContainer changeType;
 	Item[] items;
 
 	public enum PartyItemContainer
@@ -52,7 +52,7 @@ public class PartyItemsChange extends PartyMemberMessage implements PartyProcess
 	public void process(PartyPlayer p, ItemManager itemManager)
 	{
 		final GameItem[] gameItems = GameItem.convertItemsToGameItems(this.items, itemManager);
-		switch (type)
+		switch (changeType)
 		{
 			case EQUIPMENT:
 				p.setEquipment(gameItems);
