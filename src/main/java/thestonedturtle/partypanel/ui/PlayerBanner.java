@@ -24,18 +24,19 @@
  */
 package thestonedturtle.partypanel.ui;
 
-import java.awt.Dimension;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.GridBagConstraints;
+import com.google.common.base.Strings;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
-import javax.swing.JPanel;
-import javax.swing.JLabel;
 import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.OverlayLayout;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
@@ -122,6 +123,8 @@ public class PlayerBanner extends JPanel
 
 	public void recreatePanel()
 	{
+		removeAll();
+		
 		final GridBagConstraints c = new GridBagConstraints();
 		c.anchor = GridBagConstraints.NORTHWEST;
 		c.gridx = 0;
@@ -152,7 +155,7 @@ public class PlayerBanner extends JPanel
 		final JLabel usernameLabel = new JLabel();
 		usernameLabel.setLayout(new OverlayLayout(usernameLabel));
 		usernameLabel.setHorizontalTextPosition(JLabel.LEFT);
-		if (player.getUsername() == null)
+		if (Strings.isNullOrEmpty(player.getUsername()))
 		{
 			usernameLabel.setText("Not logged in");
 		}

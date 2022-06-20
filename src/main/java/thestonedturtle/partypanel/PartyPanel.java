@@ -24,6 +24,7 @@
  */
 package thestonedturtle.partypanel;
 
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import java.awt.BorderLayout;
 import java.util.Comparator;
@@ -79,7 +80,7 @@ class PartyPanel extends PluginPanel
 		// Sort by their RSN first; If it doesn't exist sort by their Discord name instead
 		final List<PartyPlayer> players = plugin.getPartyMembers().values()
 			.stream()
-			.sorted(Comparator.comparing(o -> o.getUsername() == null ? o.getMember().getDisplayName() : o.getUsername()))
+			.sorted(Comparator.comparing(o -> Strings.isNullOrEmpty(o.getUsername()) ? o.getMember().getDisplayName() : o.getUsername()))
 			.collect(Collectors.toList());
 
 		for (final PartyPlayer player : players)

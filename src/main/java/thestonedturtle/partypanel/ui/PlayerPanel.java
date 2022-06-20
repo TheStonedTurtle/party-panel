@@ -170,8 +170,6 @@ public class PlayerPanel extends JPanel
 	// TODO add smarter ways to update data
 	public void updatePlayerData(final PartyPlayer newPlayer)
 	{
-		final boolean newUser = newPlayer.getMemberId() != player.getMemberId();
-
 		player = newPlayer;
 		banner.setPlayer(player);
 		inventoryPanel.updateInventory(player.getInventory());
@@ -200,7 +198,10 @@ public class PlayerPanel extends JPanel
 			}
 		}
 
-		if (newUser)
+		// recreate banner if Combat level, Display Name, or Party Member ID changed
+		if (newPlayer.getMemberId() != player.getMemberId()
+			|| newPlayer.getStats().getCombatLevel() != player.getStats().getCombatLevel()
+			|| !newPlayer.getUsername().equals(player.getUsername()))
 		{
 			banner.recreatePanel();
 		}
