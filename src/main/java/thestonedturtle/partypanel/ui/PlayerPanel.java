@@ -24,13 +24,12 @@
  */
 package thestonedturtle.partypanel.ui;
 
-import java.awt.Dimension;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.text.NumberFormat;
 import java.util.Map;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -41,7 +40,12 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 import lombok.Getter;
 import lombok.Setter;
-import net.runelite.api.*;
+import net.runelite.api.EquipmentInventorySlot;
+import net.runelite.api.Experience;
+import net.runelite.api.Prayer;
+import net.runelite.api.Skill;
+import net.runelite.api.SpriteID;
+import net.runelite.client.game.AlternateSprites;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
@@ -50,6 +54,7 @@ import net.runelite.client.ui.components.materialtabs.MaterialTab;
 import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
 import net.runelite.client.util.AsyncBufferedImage;
 import net.runelite.client.util.ImageUtil;
+import thestonedturtle.partypanel.PartyPanelConfig;
 import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
 import thestonedturtle.partypanel.data.PrayerData;
@@ -58,7 +63,6 @@ import thestonedturtle.partypanel.ui.equipment.PlayerEquipmentPanel;
 import thestonedturtle.partypanel.ui.prayer.PlayerPrayerPanel;
 import thestonedturtle.partypanel.ui.prayer.PrayerSlot;
 import thestonedturtle.partypanel.ui.skills.PlayerSkillsPanel;
-import thestonedturtle.partypanel.ui.skills.SkillPanelSlot;
 
 @Getter
 public class PlayerPanel extends JPanel
@@ -67,6 +71,18 @@ public class PlayerPanel extends JPanel
 	private static final Color BACKGROUND_COLOR = ColorScheme.DARK_GRAY_COLOR;
 	private static final Color BACKGROUND_HOVER_COLOR = ColorScheme.DARKER_GRAY_COLOR;
 	private static final BufferedImage EXPAND_ICON = ImageUtil.loadImageResource(PlayerPanel.class, "expand.png");
+
+	private static final int VENOM_THRESHOLD = 1000000;
+	private static final BufferedImage HEART_DISEASE;
+	private static final BufferedImage HEART_POISON;
+	private static final BufferedImage HEART_VENOM;
+
+	static
+	{
+		HEART_DISEASE = ImageUtil.loadImageResource(AlternateSprites.class, AlternateSprites.DISEASE_HEART);
+		HEART_POISON = ImageUtil.loadImageResource(AlternateSprites.class, AlternateSprites.POISON_HEART);
+		HEART_VENOM = ImageUtil.loadImageResource(AlternateSprites.class, AlternateSprites.VENOM_HEART);
+	}
 
 	private PartyPlayer player;
 	private final SpriteManager spriteManager;
@@ -78,28 +94,32 @@ public class PlayerPanel extends JPanel
 	private final PlayerSkillsPanel skillsPanel;
 	private final PlayerPrayerPanel prayersPanel;
 
+	private final PartyPanelConfig config;
+
 	@Setter
 	private boolean showInfo;
 
-	public PlayerPanel(final PartyPlayer selectedPlayer, boolean expanded, final SpriteManager spriteManager, final ItemManager itemManager)
+	public PlayerPanel(final PartyPlayer selectedPlayer, final PartyPanelConfig config,
+						final SpriteManager spriteManager, final ItemManager itemManager)
 	{
 		this.player = selectedPlayer;
-		this.showInfo = expanded;
+		this.config = config;
 		this.spriteManager = spriteManager;
 		this.itemManager = itemManager;
-		this.banner = new PlayerBanner(selectedPlayer, expanded, spriteManager);
+		this.showInfo = config.autoExpandMembers();
+		this.banner = new PlayerBanner(selectedPlayer, showInfo, config.displayPlayerWorlds(), spriteManager);
 		this.inventoryPanel = new PlayerInventoryPanel(selectedPlayer.getInventory(), itemManager);
 		this.equipmentPanel = new PlayerEquipmentPanel(selectedPlayer.getEquipment(), spriteManager, itemManager);
-		this.skillsPanel = new PlayerSkillsPanel(selectedPlayer, spriteManager);
+		this.skillsPanel = new PlayerSkillsPanel(selectedPlayer, config.displayVirtualLevels(), spriteManager);
 		this.prayersPanel = new PlayerPrayerPanel(selectedPlayer, spriteManager);
 
 		// Non-optimal way to attach a mouse listener to
 		// the entire panel, but easy to implement
 		JPanel statsPanel = this.banner.getStatsPanel();
 		JLabel expandIcon = this.banner.getExpandIcon();
-		Component[] list = new Component[statsPanel.getComponentCount()+1];
-		System.arraycopy(statsPanel.getComponents(), 0, list, 0, list.length-1);
-		list[list.length-1] = banner;
+		Component[] list = new Component[statsPanel.getComponentCount() + 1];
+		System.arraycopy(statsPanel.getComponents(), 0, list, 0, list.length - 1);
+		list[list.length - 1] = banner;
 
 		for (Component comp : list)
 		{
@@ -207,6 +227,8 @@ public class PlayerPanel extends JPanel
 		if (player.getStats() != null)
 		{
 			banner.refreshStats();
+			int totalLevel = 0;
+			long totalXp = 0;
 			for (final Skill s : Skill.values())
 			{
 				if (s.equals(Skill.OVERALL))
@@ -214,26 +236,13 @@ public class PlayerPanel extends JPanel
 					continue;
 				}
 
-				final SkillPanelSlot panel = skillsPanel.getPanelMap().get(s);
-				int newExp = player.getStats().getSkillEXPs().get(s);
+				int xp = player.getSkillExperience(s);
+				totalLevel += Experience.getLevelForXp(xp);
+				totalXp += xp;
 
-				panel.updateBoostedLevel(player.getStats().getBoostedLevels().get(s));
-				panel.updateBaseLevel(player.getStats().getBaseLevels().get(s));
-				panel.setSkillEXP(newExp);
-
-				String tooltipExp = "<html>" + s.getName() + " XP: " + NumberFormat.getNumberInstance().format(newExp) + "<br/>";
-				int currLevel = player.getStats().getBaseLevels().get(s);
-				if (currLevel > 0 && currLevel < 126)
-				{
-					int virtualLevel = Experience.getLevelForXp(player.getStats().getSkillEXPs().get(s));
-					int nextLevelExp = Experience.getXpForLevel(virtualLevel+1);
-					tooltipExp += "Next level at: " + NumberFormat.getNumberInstance().format(nextLevelExp) + "<br/>";
-					tooltipExp += "Remaining XP: " + NumberFormat.getNumberInstance().format(nextLevelExp - newExp) + "<br/>";
-				}
-
-				panel.setToolTipText(tooltipExp);
+				updateSkill(s);
 			}
-			skillsPanel.getTotalLevelPanel().updateTotalLevel(player.getStats().getTotalLevel());
+			skillsPanel.getTotalLevelPanel().updateTotalLevel(config.displayVirtualLevels() ? totalLevel : player.getStats().getTotalLevel(), totalXp);
 		}
 
 		if (player.getPrayers() != null)
@@ -249,6 +258,23 @@ public class PlayerPanel extends JPanel
 
 			prayersPanel.updatePrayerRemaining(player.getSkillBoostedLevel(Skill.PRAYER), player.getSkillRealLevel(Skill.PRAYER));
 		}
+
+		BufferedImage heart = null;
+		if (player.getPoison() >= VENOM_THRESHOLD)
+		{
+			heart = HEART_VENOM;
+		}
+		else if (player.getPoison() > 0)
+		{
+			heart = HEART_POISON;
+		}
+		else if (player.getDisease() > 0)
+		{
+			heart = HEART_DISEASE;
+		}
+		banner.setCurrentHeart(heart, spriteManager);
+
+		banner.setUsingStamIcon(player.getStamina() > 0, spriteManager);
 	}
 
 	public void updatePanel()
@@ -287,5 +313,36 @@ public class PlayerPanel extends JPanel
 
 		revalidate();
 		repaint();
+	}
+
+	public void updateSkill(Skill s)
+	{
+		skillsPanel.updateSkill(player, s, config.displayVirtualLevels());
+	}
+
+	public void updateDisplayVirtualLevels()
+	{
+		int totalLevel = 0;
+		long totalXp = 0;
+		for (final Skill s : Skill.values())
+		{
+			if (s.equals(Skill.OVERALL))
+			{
+				continue;
+			}
+
+			int xp = player.getSkillExperience(s);
+			totalLevel += Experience.getLevelForXp(xp);
+			totalXp += xp;
+
+			updateSkill(s);
+		}
+
+		skillsPanel.getTotalLevelPanel().updateTotalLevel(config.displayVirtualLevels() ? totalLevel : player.getStats().getTotalLevel(), totalXp);
+	}
+
+	public void updateDisplayPlayerWorlds()
+	{
+		banner.updateWorld(player.getWorld(), config.displayPlayerWorlds());
 	}
 }

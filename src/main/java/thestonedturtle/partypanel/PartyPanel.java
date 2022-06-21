@@ -27,12 +27,19 @@ package thestonedturtle.partypanel;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.swing.BoxLayout;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.EmptyBorder;
@@ -40,7 +47,7 @@ import lombok.Getter;
 import net.runelite.client.ui.DynamicGridLayout;
 import net.runelite.client.ui.PluginPanel;
 import thestonedturtle.partypanel.data.PartyPlayer;
-import thestonedturtle.partypanel.ui.PlayerBanner;
+import thestonedturtle.partypanel.ui.ControlsPanel;
 import thestonedturtle.partypanel.ui.PlayerPanel;
 
 class PartyPanel extends PluginPanel
@@ -48,7 +55,10 @@ class PartyPanel extends PluginPanel
 	private final PartyPanelPlugin plugin;
 	@Getter
 	private final HashMap<Long, PlayerPanel> playerPanelMap = new HashMap<>();
-	private final JPanel basePanel;
+	private final JPanel basePanel = new JPanel();
+	private final JPanel passphrasePanel = new JPanel();
+	private final JLabel passphraseLabel = new JLabel();
+	private final ControlsPanel controlsPanel;
 
 	@Inject
 	PartyPanel(final PartyPanelPlugin plugin)
@@ -57,9 +67,46 @@ class PartyPanel extends PluginPanel
 		this.plugin = plugin;
 		this.setLayout(new BorderLayout());
 
-		basePanel = new JPanel();
 		basePanel.setBorder(new EmptyBorder(BORDER_OFFSET, BORDER_OFFSET, BORDER_OFFSET, BORDER_OFFSET));
 		basePanel.setLayout(new DynamicGridLayout(0, 1, 0, 5));
+
+		final JPanel topPanel = new JPanel();
+		topPanel.setBorder(new EmptyBorder(BORDER_OFFSET, 2, BORDER_OFFSET, 2));
+		topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
+
+		passphrasePanel.setBorder(new EmptyBorder(4, 0, 0, 0));
+		passphrasePanel.setLayout(new DynamicGridLayout(0, 1, 0, 5));
+
+		final JLabel passphraseTopLabel = new JLabel("Party Passphrase");
+		passphraseTopLabel.setForeground(Color.WHITE);
+		passphraseTopLabel.setHorizontalTextPosition(JLabel.CENTER);
+		passphraseTopLabel.setHorizontalAlignment(JLabel.CENTER);
+
+		final JMenuItem copyOpt = new JMenuItem("Copy Passphrase");
+		copyOpt.addActionListener(e ->
+		{
+			final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+			clipboard.setContents(new StringSelection(passphraseLabel.getText()), null);
+		});
+
+		final JPopupMenu copyPopup = new JPopupMenu();
+		copyPopup.setBorder(new EmptyBorder(5, 5, 5, 5));
+		copyPopup.add(copyOpt);
+
+		passphraseLabel.setText(plugin.getPartyPassphrase());
+		passphraseLabel.setHorizontalTextPosition(JLabel.CENTER);
+		passphraseLabel.setHorizontalAlignment(JLabel.CENTER);
+		passphraseLabel.setComponentPopupMenu(copyPopup);
+
+		passphrasePanel.add(passphraseTopLabel);
+		passphrasePanel.add(passphraseLabel);
+		syncPartyPassphraseVisibility();
+
+		controlsPanel = new ControlsPanel(plugin);
+		topPanel.add(controlsPanel);
+		topPanel.add(passphrasePanel);
+
+		this.add(topPanel, BorderLayout.NORTH);
 
 		// Wrap content to anchor to top and prevent expansion
 		final JPanel northPanel = new JPanel(new BorderLayout());
@@ -71,7 +118,7 @@ class PartyPanel extends PluginPanel
 	}
 
 	/**
-	 * Shows all members of the party, excluding the local player. See {@link PlayerBanner)
+	 * Shows all members of the party, excluding the local player. See {@link thestonedturtle.partypanel.ui.PlayerBanner )
 	 */
 	void renderSidebar()
 	{
@@ -100,7 +147,7 @@ class PartyPanel extends PluginPanel
 	void drawPlayerPanel(PartyPlayer player)
 	{
 		final PlayerPanel panel = playerPanelMap.computeIfAbsent(player.getMemberId(),
-			(k) -> new PlayerPanel(player, plugin.getConfig().autoExpandMembers(), plugin.spriteManager, plugin.itemManager));
+			(k) -> new PlayerPanel(player, plugin.getConfig(), plugin.spriteManager, plugin.itemManager));
 
 		final String playerName = player.getUsername() == null ? "" : player.getUsername();
 		panel.updatePlayerData(player, panel.getPlayer().getMemberId() != player.getMemberId() || !playerName.equals(panel.getPlayer().getUsername()));
@@ -126,5 +173,32 @@ class PartyPanel extends PluginPanel
 			panel.getBanner().setExpandIcon(expand);
 			panel.updatePanel();
 		}
+	}
+
+	public void updatePartyControls()
+	{
+		controlsPanel.setVisible(plugin.getConfig().showPartyControls());
+	}
+
+	public void syncPartyPassphraseVisibility()
+	{
+		passphraseLabel.setText(plugin.getPartyPassphrase());
+		passphrasePanel.setVisible(plugin.getConfig().showPartyPassphrase() && plugin.isInParty());
+	}
+
+	public void updateParty()
+	{
+		controlsPanel.updateControls();
+		syncPartyPassphraseVisibility();
+	}
+
+	public void updateDisplayVirtualLevels()
+	{
+		playerPanelMap.values().forEach(PlayerPanel::updateDisplayVirtualLevels);
+	}
+
+	public void updateDisplayPlayerWorlds()
+	{
+		playerPanelMap.values().forEach(PlayerPanel::updateDisplayPlayerWorlds);
 	}
 }

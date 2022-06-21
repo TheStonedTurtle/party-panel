@@ -36,11 +36,16 @@ public class PartyMiscChange implements PartyProcess
 	PartyMisc t;
 	int v;
 
-	public enum PartyMisc {
+	public enum PartyMisc
+	{
 		S, // Special
 		R, // RUN
 		C, // Combat
 		T, // Total
+		ST, // Stamina duration
+		P, // Poison
+		D, // Disease
+		W, // World
 	}
 
 	@Override
@@ -59,6 +64,18 @@ public class PartyMiscChange implements PartyProcess
 				break;
 			case R:
 				p.getStats().setRunEnergy(v);
+				break;
+			case ST:
+				p.setStamina(v);
+				break;
+			case P:
+				p.setPoison(v);
+				break;
+			case D:
+				p.setDisease(v);
+				break;
+			case W:
+				p.setWorld(v);
 				break;
 			default:
 				log.warn("Unhandled misc change type for event: {}", this);

@@ -10,10 +10,13 @@ import javax.swing.SwingUtilities;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
+import net.runelite.api.GameState;
 import net.runelite.api.InventoryID;
 import net.runelite.api.Item;
 import net.runelite.api.Skill;
 import net.runelite.api.VarPlayer;
+import net.runelite.api.Varbits;
+import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.StatChanged;
@@ -167,13 +170,59 @@ public class PartyPanelPlugin extends Plugin
 		}
 		addedButton = config.alwaysShowIcon();
 
-		if (c.getKey().equals("autoExpandMembers"))
+		switch (c.getKey())
 		{
-			panel.updatePartyMembersExpand(config.autoExpandMembers());
+			case "autoExpandMembers":
+				panel.updatePartyMembersExpand(config.autoExpandMembers());
+				break;
+			case "showPartyControls":
+				panel.updatePartyControls();
+				break;
+			case "showPartyPassphrase":
+				panel.syncPartyPassphraseVisibility();
+				break;
+			case "displayVirtualLevels":
+				panel.updateDisplayVirtualLevels();
+				break;
+			case "displayPlayerWorlds":
+				panel.updateDisplayPlayerWorlds();
+				break;
 		}
 	}
 
-	boolean isInParty()
+	@Subscribe
+	public void onGameStateChanged(GameStateChanged c)
+	{
+		if (!isInParty())
+		{
+			return;
+		}
+
+		if (c.getGameState() == GameState.LOGGED_IN)
+		{
+			PartyMiscChange e = new PartyMiscChange(PartyMiscChange.PartyMisc.W, client.getWorld());
+			if (myPlayer.getWorld() == e.getV())
+			{
+				return;
+			}
+
+			myPlayer.setWorld(e.getV());
+			currentChange.getM().add(e);
+		}
+
+		if (c.getGameState() == GameState.LOGIN_SCREEN)
+		{
+			if (myPlayer.getWorld() == 0)
+			{
+				return;
+			}
+
+			myPlayer.setWorld(0);
+			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.W, 0));
+		}
+	}
+
+	public boolean isInParty()
 	{
 		return partyService.isInParty();
 	}
@@ -241,7 +290,16 @@ public class PartyPanelPlugin extends Plugin
 		SwingUtilities.invokeLater(panel::renderSidebar);
 		myPlayer = null;
 
-		if (!isInParty() && !config.alwaysShowIcon())
+		panel.updateParty();
+
+		if (!isInParty())
+		{
+			return;
+		}
+
+		config.setPreviousPartyId(event.getPassphrase());
+
+		if (!config.alwaysShowIcon())
 		{
 			clientToolbar.removeNavigation(navButton);
 			addedButton = false;
@@ -303,7 +361,8 @@ public class PartyPanelPlugin extends Plugin
 			}
 		}
 
-		if (currentChange.isValid()) {
+		if (currentChange.isValid())
+		{
 			currentChange.setMemberId(partyService.getLocalMember().getMemberId()); // Add member ID before sending
 			currentChange.removeDefaults();
 			partyService.send(currentChange);
@@ -386,6 +445,27 @@ public class PartyPanelPlugin extends Plugin
 			myPlayer.getStats().setSpecialPercent(specialPercent);
 			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.S, specialPercent));
 		}
+
+		final int stamina = client.getVarbitValue(Varbits.STAMINA_EFFECT);
+		if (stamina != myPlayer.getStamina())
+		{
+			myPlayer.setStamina(stamina);
+			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.ST, stamina));
+		}
+
+		final int poison = client.getVar(VarPlayer.POISON);
+		if (poison != myPlayer.getPoison())
+		{
+			myPlayer.setPoison(poison);
+			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.P, poison));
+		}
+
+		final int disease = client.getVar(VarPlayer.DISEASE_VALUE);
+		if (disease != myPlayer.getDisease())
+		{
+			myPlayer.setDisease(disease);
+			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.D, disease));
+		}
 	}
 
 	@Subscribe
@@ -415,7 +495,8 @@ public class PartyPanelPlugin extends Plugin
 		}
 
 		final PartyPlayer player = partyMembers.get(e.getMemberId());
-		clientThread.invoke(() -> {
+		clientThread.invoke(() ->
+		{
 			e.process(player, itemManager);
 
 			// We need to call update here as the update below can trigger before the clientThread has been invoked
@@ -434,6 +515,29 @@ public class PartyPanelPlugin extends Plugin
 		final PartyPlayer player = partyMembers.get(e.getMemberId());
 		player.getMember().setAvatar(e.getImage());
 		SwingUtilities.invokeLater(() -> panel.getPlayerPanelMap().get(e.getMemberId()).getBanner().refreshStats());
+	}
+
+	public void changeParty(String passphrase)
+	{
+		partyService.changeParty(passphrase);
+		panel.updateParty();
+	}
+
+	public void createParty()
+	{
+		// Create party
+		clientThread.invokeLater(() -> changeParty(partyService.generatePasspharse()));
+	}
+
+	public String getPartyPassphrase()
+	{
+		return partyService.getPartyPassphrase();
+	}
+
+	public void leaveParty()
+	{
+		partyService.changeParty(null);
+		panel.updateParty();
 	}
 
 	private int[][] convertItemsToArrays(Item[] items)

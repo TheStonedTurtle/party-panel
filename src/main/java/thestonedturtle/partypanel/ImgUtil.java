@@ -62,8 +62,9 @@ public class ImgUtil
 		g2d.drawImage(background, 0, 0, null);
 
 		// For some reason equipment icons are offset and need to be adjusted
-		if (isEquipment){
-			g2d.drawImage(foreground, centeredX+2, centeredY, null);
+		if (isEquipment)
+		{
+			g2d.drawImage(foreground, centeredX + 2, centeredY, null);
 		}
 		else
 		{
