@@ -106,7 +106,8 @@ public class PlayerPanel extends JPanel
 		this.config = config;
 		this.spriteManager = spriteManager;
 		this.itemManager = itemManager;
-		this.banner = new PlayerBanner(selectedPlayer, config.autoExpandMembers(), config.displayPlayerWorlds(), spriteManager);
+		this.showInfo = config.autoExpandMembers();
+		this.banner = new PlayerBanner(selectedPlayer, showInfo, config.displayPlayerWorlds(), spriteManager);
 		this.inventoryPanel = new PlayerInventoryPanel(selectedPlayer.getInventory(), itemManager);
 		this.equipmentPanel = new PlayerEquipmentPanel(selectedPlayer.getEquipment(), spriteManager, itemManager);
 		this.skillsPanel = new PlayerSkillsPanel(selectedPlayer, config.displayVirtualLevels(), spriteManager);
