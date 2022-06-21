@@ -101,7 +101,7 @@ class PartyPanel extends PluginPanel
 
 		passphrasePanel.add(passphraseTopLabel);
 		passphrasePanel.add(passphraseLabel);
-		setPartyPassphraseVisibility(plugin.getConfig().showPartyPassphrase());
+		syncPartyPassphraseVisibility();
 
 		controlsPanel = new ControlsPanel(plugin);
 		topPanel.add(controlsPanel);
@@ -148,7 +148,7 @@ class PartyPanel extends PluginPanel
 	void drawPlayerPanel(PartyPlayer player)
 	{
 		final PlayerPanel panel = playerPanelMap.computeIfAbsent(player.getMemberId(),
-			(k) -> new PlayerPanel(player, plugin.getConfig().autoExpandMembers(), plugin.getConfig().displayVirtualLevels(), plugin.spriteManager, plugin.itemManager));
+			(k) -> new PlayerPanel(player, plugin.getConfig(), plugin.spriteManager, plugin.itemManager));
 
 		final String playerName = player.getUsername() == null ? "" : player.getUsername();
 		panel.updatePlayerData(player, panel.getPlayer().getMemberId() != player.getMemberId() || !playerName.equals(panel.getPlayer().getUsername()));
@@ -176,25 +176,25 @@ class PartyPanel extends PluginPanel
 		}
 	}
 
-	public void updatePartyControls(boolean showPartyControls)
+	public void updatePartyControls()
 	{
-		controlsPanel.setVisible(showPartyControls);
+		controlsPanel.setVisible(plugin.getConfig().showPartyControls());
 	}
 
-	public void setPartyPassphraseVisibility(boolean showPartyPassphrase)
+	public void syncPartyPassphraseVisibility()
 	{
 		passphraseLabel.setText(plugin.getPartyPassphrase());
-		passphrasePanel.setVisible(showPartyPassphrase && plugin.isInParty());
+		passphrasePanel.setVisible(plugin.getConfig().showPartyPassphrase() && plugin.isInParty());
 	}
 
 	public void updateParty()
 	{
 		controlsPanel.updateControls();
-		setPartyPassphraseVisibility(plugin.getConfig().showPartyPassphrase());
+		syncPartyPassphraseVisibility();
 	}
 
-	public void updateVirtualLevels(boolean displayVirtualLevels)
+	public void updateDisplayVirtualLevels()
 	{
-		playerPanelMap.values().forEach(p -> p.setDisplayVirtualLevels(displayVirtualLevels));
+		playerPanelMap.values().forEach(PlayerPanel::updateDisplayVirtualLevels);
 	}
 }

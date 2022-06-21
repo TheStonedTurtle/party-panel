@@ -54,6 +54,7 @@ import net.runelite.client.ui.components.materialtabs.MaterialTab;
 import net.runelite.client.ui.components.materialtabs.MaterialTabGroup;
 import net.runelite.client.util.AsyncBufferedImage;
 import net.runelite.client.util.ImageUtil;
+import thestonedturtle.partypanel.PartyPanelConfig;
 import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
 import thestonedturtle.partypanel.data.PrayerData;
@@ -93,21 +94,22 @@ public class PlayerPanel extends JPanel
 	private final PlayerSkillsPanel skillsPanel;
 	private final PlayerPrayerPanel prayersPanel;
 
+	private final PartyPanelConfig config;
+
 	@Setter
 	private boolean showInfo;
-	private boolean displayVirtualLevels;
 
-	public PlayerPanel(final PartyPlayer selectedPlayer, boolean expanded, boolean displayVirtualLevels, final SpriteManager spriteManager, final ItemManager itemManager)
+	public PlayerPanel(final PartyPlayer selectedPlayer, final PartyPanelConfig config,
+					   final SpriteManager spriteManager, final ItemManager itemManager)
 	{
 		this.player = selectedPlayer;
-		this.showInfo = expanded;
-		this.displayVirtualLevels = displayVirtualLevels;
+		this.config = config;
 		this.spriteManager = spriteManager;
 		this.itemManager = itemManager;
-		this.banner = new PlayerBanner(selectedPlayer, expanded, spriteManager);
+		this.banner = new PlayerBanner(selectedPlayer, config.autoExpandMembers(), spriteManager);
 		this.inventoryPanel = new PlayerInventoryPanel(selectedPlayer.getInventory(), itemManager);
 		this.equipmentPanel = new PlayerEquipmentPanel(selectedPlayer.getEquipment(), spriteManager, itemManager);
-		this.skillsPanel = new PlayerSkillsPanel(selectedPlayer, displayVirtualLevels, spriteManager);
+		this.skillsPanel = new PlayerSkillsPanel(selectedPlayer, config.displayVirtualLevels(), spriteManager);
 		this.prayersPanel = new PlayerPrayerPanel(selectedPlayer, spriteManager);
 
 		// Non-optimal way to attach a mouse listener to
@@ -239,7 +241,7 @@ public class PlayerPanel extends JPanel
 
 				updateSkill(s);
 			}
-			skillsPanel.getTotalLevelPanel().updateTotalLevel(displayVirtualLevels ? totalLevel : player.getStats().getTotalLevel(), totalXp);
+			skillsPanel.getTotalLevelPanel().updateTotalLevel(config.displayVirtualLevels() ? totalLevel : player.getStats().getTotalLevel(), totalXp);
 		}
 
 		if (player.getPrayers() != null)
@@ -314,13 +316,11 @@ public class PlayerPanel extends JPanel
 
 	public void updateSkill(Skill s)
 	{
-		skillsPanel.updateSkill(player, s, displayVirtualLevels);
+		skillsPanel.updateSkill(player, s, config.displayVirtualLevels());
 	}
 
-	public void setDisplayVirtualLevels(boolean displayVirtualLevels)
+	public void updateDisplayVirtualLevels()
 	{
-		this.displayVirtualLevels = displayVirtualLevels;
-
 		int totalLevel = 0;
 		long totalXp = 0;
 		for (final Skill s : Skill.values())
@@ -337,6 +337,6 @@ public class PlayerPanel extends JPanel
 			updateSkill(s);
 		}
 
-		skillsPanel.getTotalLevelPanel().updateTotalLevel(displayVirtualLevels ? totalLevel : player.getStats().getTotalLevel(), totalXp);
+		skillsPanel.getTotalLevelPanel().updateTotalLevel(config.displayVirtualLevels() ? totalLevel : player.getStats().getTotalLevel(), totalXp);
 	}
 }

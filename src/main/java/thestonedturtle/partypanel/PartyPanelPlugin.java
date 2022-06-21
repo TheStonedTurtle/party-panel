@@ -168,24 +168,20 @@ public class PartyPanelPlugin extends Plugin
 		}
 		addedButton = config.alwaysShowIcon();
 
-		if (c.getKey().equals("autoExpandMembers"))
+		switch (c.getKey())
 		{
-			panel.updatePartyMembersExpand(config.autoExpandMembers());
-		}
-
-		else if (c.getKey().equals("showPartyControls"))
-		{
-			panel.updatePartyControls(config.showPartyControls());
-		}
-
-		else if (c.getKey().equals("showPartyPassphrase"))
-		{
-			panel.setPartyPassphraseVisibility(config.showPartyPassphrase());
-		}
-
-		else if (c.getKey().equals("displayVirtualLevels"))
-		{
-			panel.updateVirtualLevels(config.displayVirtualLevels());
+			case "autoExpandMembers":
+				panel.updatePartyMembersExpand(config.autoExpandMembers());
+				break;
+			case "showPartyControls":
+				panel.updatePartyControls();
+				break;
+			case "showPartyPassphrase":
+				panel.syncPartyPassphraseVisibility();
+				break;
+			case "displayVirtualLevels":
+				panel.updateDisplayVirtualLevels();
+				break;
 		}
 	}
 
