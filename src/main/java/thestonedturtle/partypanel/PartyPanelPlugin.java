@@ -304,6 +304,7 @@ public class PartyPanelPlugin extends Plugin
 
 		if (currentChange.isValid()) {
 			currentChange.setMemberId(partyService.getLocalMember().getMemberId()); // Add member ID before sending
+			currentChange.removeDefaults();
 			partyService.send(currentChange);
 
 			currentChange = new PartyBatchedChange();

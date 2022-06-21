@@ -53,6 +53,14 @@ public class PartyBatchedChange extends PartyMemberMessage
 			|| (m != null && m.size() > 0);
 	}
 
+	// Unset unneeded variables to minimize payload
+	public void removeDefaults()
+	{
+		p = (p == null || p.size() == 0) ? null : p;
+		s = (s == null || s.size() == 0) ? null : s;
+		m = (m == null || m.size() == 0) ? null : m;
+	}
+
 	public void process(PartyPlayer player, ItemManager itemManager)
 	{
 		if (i != null)
