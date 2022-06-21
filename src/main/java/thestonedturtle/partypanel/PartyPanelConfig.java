@@ -14,23 +14,14 @@ public interface PartyPanelConfig extends Config
 	)
 	default boolean alwaysShowIcon()
 	{
-		return false;
-	}
-
-	@ConfigItem(
-		keyName = "autoExpandMembers",
-		name = "Expand members by default",
-		description = "<html>Controls whether party member details are automatically expanded (checked) or collapsed into banners (unchecked)</html>"
-	)
-	default boolean autoExpandMembers()
-	{
-		return false;
+		return true;
 	}
 
 	@ConfigItem(
 		keyName = "showPartyControls",
 		name = "Show Party Controls",
-		description = "<html>Controls whether we display the party control buttons like create and leave party</html>"
+		description = "<html>Controls whether we display the party control buttons like create and leave party</html>",
+		position = 0
 	)
 	default boolean showPartyControls()
 	{
@@ -40,12 +31,37 @@ public interface PartyPanelConfig extends Config
 	@ConfigItem(
 		keyName = "showPartyPassphrase",
 		name = "Show Party Passphrase",
-		description = "<html>Controls whether the party passphrase is displayed within the UI<br/>If disabled and party controls are shown you can still copy</html>"
+		description = "<html>Controls whether the party passphrase is displayed within the UI<br/>If disabled and party controls are shown you can still copy</html>",
+		position = 1
 	)
 	default boolean showPartyPassphrase()
 	{
 		return true;
 	}
+
+	@ConfigItem(
+		keyName = "autoExpandMembers",
+		name = "Expand members by default",
+		description = "<html>Controls whether party member details are automatically expanded (checked) or collapsed into banners (unchecked)</html>",
+		position = 2
+	)
+	default boolean autoExpandMembers()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "displayVirtualLevels",
+		name = "Display Virtual Levels",
+		description = "<html>Controls whether we display a players virtual level as their base level</html>",
+		position = 3
+	)
+	default boolean displayVirtualLevels()
+	{
+		return true;
+	}
+
+	
 
 	@ConfigItem(
 		keyName = "previousPartyId",
@@ -65,14 +81,4 @@ public interface PartyPanelConfig extends Config
 		hidden = true
 	)
 	void setPreviousPartyId(String id);
-
-	@ConfigItem(
-		keyName = "displayVirtualLevels",
-		name = "Display Virtual Levels",
-		description = "<html>Controls whether we display a players virtual level as their base level</html>"
-	)
-	default boolean displayVirtualLevels()
-	{
-		return true;
-	}
 }
