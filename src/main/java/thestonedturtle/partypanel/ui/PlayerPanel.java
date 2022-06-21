@@ -170,8 +170,19 @@ public class PlayerPanel extends JPanel
 	// TODO add smarter ways to update data
 	public void updatePlayerData(final PartyPlayer newPlayer)
 	{
+		banner.setPlayer(newPlayer);
+
+		final int newPlayerCmbLvl = newPlayer.getStats() == null ? -1 : newPlayer.getStats().getCombatLevel();
+		final int playerCmbLvl = player.getStats() == null ? -1 : player.getStats().getCombatLevel();
+		// recreate banner if Combat level, Display Name, or Party Member ID changed
+		if (newPlayer.getMemberId() != player.getMemberId()
+			|| (newPlayerCmbLvl != playerCmbLvl)
+			|| !newPlayer.getUsername().equals(player.getUsername()))
+		{
+			banner.recreatePanel();
+		}
+
 		player = newPlayer;
-		banner.setPlayer(player);
 		inventoryPanel.updateInventory(player.getInventory());
 
 		for (final EquipmentInventorySlot equipSlot : EquipmentInventorySlot.values())
@@ -196,16 +207,6 @@ public class PlayerPanel extends JPanel
 			{
 				slot.setGameItem(null, null);
 			}
-		}
-
-		final int newPlayerCmbLvl = newPlayer.getStats() == null ? -1 : newPlayer.getStats().getCombatLevel();
-		final int playerCmbLvl = player.getStats() == null ? -1 : player.getStats().getCombatLevel();
-		// recreate banner if Combat level, Display Name, or Party Member ID changed
-		if (newPlayer.getMemberId() != player.getMemberId()
-			|| (newPlayerCmbLvl != playerCmbLvl)
-			|| !newPlayer.getUsername().equals(player.getUsername()))
-		{
-			banner.recreatePanel();
 		}
 
 		if (player.getStats() != null)
