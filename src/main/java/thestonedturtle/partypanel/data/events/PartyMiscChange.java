@@ -44,6 +44,7 @@ public class PartyMiscChange implements PartyProcess
 		ST, // Stamina duration
 		P, // Poison
 		D, // Disease
+		W, // World
 	}
 
 	@Override
@@ -71,6 +72,9 @@ public class PartyMiscChange implements PartyProcess
 				break;
 			case D:
 				p.setDisease(v);
+				break;
+			case W:
+				p.setWorld(v);
 				break;
 			default:
 				log.warn("Unhandled misc change type for event: {}", this);

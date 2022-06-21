@@ -10,11 +10,13 @@ import javax.swing.SwingUtilities;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
+import net.runelite.api.GameState;
 import net.runelite.api.InventoryID;
 import net.runelite.api.Item;
 import net.runelite.api.Skill;
 import net.runelite.api.VarPlayer;
 import net.runelite.api.Varbits;
+import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.StatChanged;
@@ -182,6 +184,41 @@ public class PartyPanelPlugin extends Plugin
 			case "displayVirtualLevels":
 				panel.updateDisplayVirtualLevels();
 				break;
+			case "displayPlayerWorlds":
+				panel.updateDisplayPlayerWorlds();
+				break;
+		}
+	}
+
+	@Subscribe
+	public void onGameStateChanged(GameStateChanged c)
+	{
+		if (!isInParty())
+		{
+			return;
+		}
+
+		if (c.getGameState() == GameState.LOGGED_IN)
+		{
+			PartyMiscChange e = new PartyMiscChange(PartyMiscChange.PartyMisc.W, client.getWorld());
+			if (myPlayer.getWorld() == e.getV())
+			{
+				return;
+			}
+
+			myPlayer.setWorld(e.getV());
+			currentChange.getM().add(e);
+		}
+
+		if (c.getGameState() == GameState.LOGIN_SCREEN)
+		{
+			if (myPlayer.getWorld() == 0)
+			{
+				return;
+			}
+
+			myPlayer.setWorld(0);
+			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.W, 0));
 		}
 	}
 

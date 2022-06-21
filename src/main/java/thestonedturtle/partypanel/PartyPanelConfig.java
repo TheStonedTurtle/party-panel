@@ -61,7 +61,18 @@ public interface PartyPanelConfig extends Config
 		return true;
 	}
 
-	
+	@ConfigItem(
+		keyName = "displayPlayerWorlds",
+		name = "Display Player Worlds",
+		description = "<html>Controls whether we display the world a player is currently on</html>",
+		position = 4
+	)
+	default boolean displayPlayerWorlds()
+	{
+		return true;
+	}
+
+
 
 	@ConfigItem(
 		keyName = "previousPartyId",

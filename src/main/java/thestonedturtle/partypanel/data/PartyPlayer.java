@@ -50,6 +50,7 @@ public class PartyPlayer extends PartyMemberMessage
 	private int stamina;
 	private int poison;
 	private int disease;
+	private int world;
 
 	public PartyPlayer(final PartyMember member, final Client client, final ItemManager itemManager)
 	{
@@ -63,6 +64,7 @@ public class PartyPlayer extends PartyMemberMessage
 		this.stamina = client.getVarbitValue(Varbits.STAMINA_EFFECT);
 		this.poison = client.getVar(VarPlayer.POISON);
 		this.disease = client.getVar(VarPlayer.DISEASE_VALUE);
+		this.world = client.getWorld();
 
 		updatePlayerInfo(client, itemManager);
 	}

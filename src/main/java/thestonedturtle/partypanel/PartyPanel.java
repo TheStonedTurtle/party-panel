@@ -197,4 +197,9 @@ class PartyPanel extends PluginPanel
 	{
 		playerPanelMap.values().forEach(PlayerPanel::updateDisplayVirtualLevels);
 	}
+
+	public void updateDisplayPlayerWorlds()
+	{
+		playerPanelMap.values().forEach(PlayerPanel::updateDisplayPlayerWorlds);
+	}
 }

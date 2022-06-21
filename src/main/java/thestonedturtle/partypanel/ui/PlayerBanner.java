@@ -67,6 +67,7 @@ public class PlayerBanner extends JPanel
 	private final Map<String, JLabel> iconLabels = new HashMap<>();
 	@Getter
 	private final JLabel expandIcon = new JLabel();
+	private final JLabel worldLabel = new JLabel();
 
 	private final ImageIcon expandIconUp;
 	private final ImageIcon expandIconDown;
@@ -79,7 +80,7 @@ public class PlayerBanner extends JPanel
 	private BufferedImage currentHeart = null;
 	private boolean usingStamIcon;
 
-	public PlayerBanner(final PartyPlayer player, boolean expanded, SpriteManager spriteManager)
+	public PlayerBanner(final PartyPlayer player, boolean expanded, boolean displayWorld, SpriteManager spriteManager)
 	{
 		super();
 		this.player = player;
@@ -104,8 +105,10 @@ public class PlayerBanner extends JPanel
 			expandIcon.setIcon(expandIconDown);
 		}
 
-		usingStamIcon = player.getStamina() > 0;
+		worldLabel.setHorizontalTextPosition(JLabel.LEFT);
+		worldLabel.setVisible(displayWorld);
 
+		usingStamIcon = player.getStamina() > 0;
 		statsPanel.add(createIconPanel(spriteManager, SpriteID.SKILL_HITPOINTS, Skill.HITPOINTS.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS))));
 		statsPanel.add(createIconPanel(spriteManager, SpriteID.SKILL_PRAYER, Skill.PRAYER.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER))));
 		statsPanel.add(createIconPanel(spriteManager, SpriteID.MULTI_COMBAT_ZONE_CROSSED_SWORDS, SPECIAL_ATTACK_NAME, player.getStats() == null ? "0" : String.valueOf(player.getStats().getSpecialPercent())));
@@ -157,7 +160,7 @@ public class PlayerBanner extends JPanel
 		add(iconLabel, c);
 		c.gridx++;
 
-		final JPanel nameContainer = new JPanel(new GridLayout(1, 1));
+		final JPanel nameContainer = new JPanel(new GridLayout(2, 1));
 		nameContainer.setBorder(new EmptyBorder(0, 5, 0, 0));
 		nameContainer.setOpaque(false);
 
@@ -177,6 +180,24 @@ public class PlayerBanner extends JPanel
 		expandIcon.setAlignmentX(Component.RIGHT_ALIGNMENT);
 		usernameLabel.add(expandIcon, BorderLayout.EAST);
 		nameContainer.add(usernameLabel);
+
+
+		if (player.getWorld() <= 0)
+		{
+			worldLabel.setText("");
+
+			// Prevent duplicate `Not logged in` when first joining party
+			if (!usernameLabel.getText().equals("Not logged in"))
+			{
+				worldLabel.setText("Not logged in");
+			}
+		}
+		else
+		{
+			worldLabel.setText("World " + player.getWorld());
+		}
+		nameContainer.add(worldLabel);
+
 
 		c.weightx = 1.0;
 		c.fill = GridBagConstraints.HORIZONTAL;
@@ -304,5 +325,11 @@ public class PlayerBanner extends JPanel
 		setSpriteIcon(RUN_ENERGY_NAME, id, spriteManager);
 		statsPanel.revalidate();
 		statsPanel.repaint();
+	}
+
+	public void updateWorld(int world, boolean displayWorlds)
+	{
+		worldLabel.setVisible(displayWorlds);
+		worldLabel.setText("World " + world);
 	}
 }
