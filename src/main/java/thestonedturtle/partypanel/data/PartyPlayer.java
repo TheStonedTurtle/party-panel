@@ -31,6 +31,8 @@ import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.InventoryID;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.Skill;
+import net.runelite.api.VarPlayer;
+import net.runelite.api.Varbits;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.party.PartyMember;
 import net.runelite.client.party.messages.PartyMemberMessage;
@@ -45,6 +47,9 @@ public class PartyPlayer extends PartyMemberMessage
 	private GameItem[] inventory;
 	private GameItem[] equipment;
 	private Prayers prayers;
+	private int stamina;
+	private int poison;
+	private int disease;
 
 	public PartyPlayer(final PartyMember member, final Client client, final ItemManager itemManager)
 	{
@@ -55,6 +60,9 @@ public class PartyPlayer extends PartyMemberMessage
 		this.inventory = new GameItem[28];
 		this.equipment = new GameItem[EquipmentInventorySlot.AMMO.getSlotIdx() + 1];
 		this.prayers = null;
+		this.stamina = client.getVarbitValue(Varbits.STAMINA_EFFECT);
+		this.poison = client.getVar(VarPlayer.POISON);
+		this.disease = client.getVar(VarPlayer.DISEASE_VALUE);
 
 		updatePlayerInfo(client, itemManager);
 	}

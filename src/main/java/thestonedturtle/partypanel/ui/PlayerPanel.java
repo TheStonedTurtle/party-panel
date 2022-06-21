@@ -45,6 +45,7 @@ import net.runelite.api.Experience;
 import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
+import net.runelite.client.game.AlternateSprites;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
@@ -69,6 +70,18 @@ public class PlayerPanel extends JPanel
 	private static final Color BACKGROUND_COLOR = ColorScheme.DARK_GRAY_COLOR;
 	private static final Color BACKGROUND_HOVER_COLOR = ColorScheme.DARKER_GRAY_COLOR;
 	private static final BufferedImage EXPAND_ICON = ImageUtil.loadImageResource(PlayerPanel.class, "expand.png");
+
+	private static final int VENOM_THRESHOLD = 1000000;
+	private static final BufferedImage HEART_DISEASE;
+	private static final BufferedImage HEART_POISON;
+	private static final BufferedImage HEART_VENOM;
+
+	static
+	{
+		HEART_DISEASE = ImageUtil.loadImageResource(AlternateSprites.class, AlternateSprites.DISEASE_HEART);
+		HEART_POISON = ImageUtil.loadImageResource(AlternateSprites.class, AlternateSprites.POISON_HEART);
+		HEART_VENOM = ImageUtil.loadImageResource(AlternateSprites.class, AlternateSprites.VENOM_HEART);
+	}
 
 	private PartyPlayer player;
 	private final SpriteManager spriteManager;
@@ -242,6 +255,23 @@ public class PlayerPanel extends JPanel
 
 			prayersPanel.updatePrayerRemaining(player.getSkillBoostedLevel(Skill.PRAYER), player.getSkillRealLevel(Skill.PRAYER));
 		}
+
+		BufferedImage heart = null;
+		if (player.getPoison() >= VENOM_THRESHOLD)
+		{
+			heart = HEART_VENOM;
+		}
+		else if (player.getPoison() > 0)
+		{
+			heart = HEART_POISON;
+		}
+		else if (player.getDisease() > 0)
+		{
+			heart = HEART_DISEASE;
+		}
+		banner.setCurrentHeart(heart, spriteManager);
+
+		banner.setUsingStamIcon(player.getStamina() > 0, spriteManager);
 	}
 
 	public void updatePanel()

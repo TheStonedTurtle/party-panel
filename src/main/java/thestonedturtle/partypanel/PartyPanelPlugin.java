@@ -14,6 +14,7 @@ import net.runelite.api.InventoryID;
 import net.runelite.api.Item;
 import net.runelite.api.Skill;
 import net.runelite.api.VarPlayer;
+import net.runelite.api.Varbits;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.StatChanged;
@@ -409,6 +410,27 @@ public class PartyPanelPlugin extends Plugin
 		{
 			myPlayer.getStats().setSpecialPercent(specialPercent);
 			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.S, specialPercent));
+		}
+
+		final int stamina = client.getVarbitValue(Varbits.STAMINA_EFFECT);
+		if (stamina != myPlayer.getStamina())
+		{
+			myPlayer.setStamina(stamina);
+			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.ST, stamina));
+		}
+
+		final int poison = client.getVar(VarPlayer.POISON);
+		if (poison != myPlayer.getPoison())
+		{
+			myPlayer.setPoison(poison);
+			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.P, poison));
+		}
+
+		final int disease = client.getVar(VarPlayer.DISEASE_VALUE);
+		if (disease != myPlayer.getDisease())
+		{
+			myPlayer.setDisease(disease);
+			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.D, disease));
 		}
 	}
 

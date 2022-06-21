@@ -64,16 +64,20 @@ public class PlayerBanner extends JPanel
 	private final JPanel statsPanel = new JPanel();
 	private final JLabel iconLabel = new JLabel();
 	private final Map<String, JLabel> statLabels = new HashMap<>();
+	private final Map<String, JLabel> iconLabels = new HashMap<>();
 	@Getter
 	private final JLabel expandIcon = new JLabel();
 
-	private ImageIcon expandIconUp;
-	private ImageIcon expandIconDown;
+	private final ImageIcon expandIconUp;
+	private final ImageIcon expandIconDown;
 
 	@Setter
 	@Getter
 	private PartyPlayer player;
 	private boolean checkIcon;
+
+	private BufferedImage currentHeart = null;
+	private boolean usingStamIcon;
 
 	public PlayerBanner(final PartyPlayer player, boolean expanded, SpriteManager spriteManager)
 	{
@@ -100,10 +104,15 @@ public class PlayerBanner extends JPanel
 			expandIcon.setIcon(expandIconDown);
 		}
 
+		usingStamIcon = player.getStamina() > 0;
+
 		statsPanel.add(createIconPanel(spriteManager, SpriteID.SKILL_HITPOINTS, Skill.HITPOINTS.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS))));
 		statsPanel.add(createIconPanel(spriteManager, SpriteID.SKILL_PRAYER, Skill.PRAYER.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER))));
 		statsPanel.add(createIconPanel(spriteManager, SpriteID.MULTI_COMBAT_ZONE_CROSSED_SWORDS, SPECIAL_ATTACK_NAME, player.getStats() == null ? "0" : String.valueOf(player.getStats().getSpecialPercent())));
-		statsPanel.add(createIconPanel(spriteManager, SpriteID.MINIMAP_ORB_RUN_ICON, RUN_ENERGY_NAME, player.getStats() == null ? "0" : String.valueOf(player.getStats().getRunEnergy())));
+		statsPanel.add(createIconPanel(spriteManager,
+			usingStamIcon ? SpriteID.MINIMAP_ORB_RUN_ICON_SLOWED_DEPLETION : SpriteID.MINIMAP_ORB_RUN_ICON,
+			RUN_ENERGY_NAME, player.getStats() == null ? "0" : String.valueOf(player.getStats().getRunEnergy()))
+		);
 
 		recreatePanel();
 	}
@@ -215,20 +224,8 @@ public class PlayerBanner extends JPanel
 	{
 		final JLabel iconLabel = new JLabel();
 		iconLabel.setPreferredSize(STAT_ICON_SIZE);
-		spriteManager.getSpriteAsync(spriteID, 0, img ->
-			SwingUtilities.invokeLater(() ->
-			{
-				if (spriteID == SpriteID.SKILL_PRAYER)
-				{
-					iconLabel.setIcon(new ImageIcon(ImageUtil.resizeImage(img, STAT_ICON_SIZE.width+2, STAT_ICON_SIZE.height+2)));
-				}
-				else
-				{
-					iconLabel.setIcon(new ImageIcon(ImageUtil.resizeImage(img, STAT_ICON_SIZE.width, STAT_ICON_SIZE.height)));
-				}
-				iconLabel.revalidate();
-				iconLabel.repaint();
-			}));
+		iconLabels.put(name, iconLabel);
+		setSpriteIcon(name, spriteID, spriteManager);
 
 		final JLabel textLabel = new JLabel(value);
 		textLabel.setHorizontalAlignment(JLabel.CENTER);
@@ -243,5 +240,69 @@ public class PlayerBanner extends JPanel
 		panel.setToolTipText(name);
 
 		return panel;
+	}
+
+	private void setSpriteIcon(String statLabelKey, final int spriteID, final SpriteManager spriteManager)
+	{
+		final JLabel label = iconLabels.get(statLabelKey);
+		spriteManager.getSpriteAsync(spriteID, 0, img ->
+			SwingUtilities.invokeLater(() ->
+			{
+				if (spriteID == SpriteID.SKILL_PRAYER)
+				{
+					label.setIcon(new ImageIcon(ImageUtil.resizeImage(img, STAT_ICON_SIZE.width+2, STAT_ICON_SIZE.height+2)));
+				}
+				else
+				{
+					label.setIcon(new ImageIcon(ImageUtil.resizeImage(img, STAT_ICON_SIZE.width, STAT_ICON_SIZE.height)));
+				}
+				label.revalidate();
+				label.repaint();
+			}));
+	}
+
+	private void setBufferedIcon(String statLabelKey, final BufferedImage img)
+	{
+		final JLabel label = iconLabels.get(statLabelKey);
+		SwingUtilities.invokeLater(() ->
+		{
+			label.setIcon(new ImageIcon(ImageUtil.resizeImage(img, STAT_ICON_SIZE.width, STAT_ICON_SIZE.height)));
+			label.revalidate();
+			label.repaint();
+		});
+	}
+
+	public void setCurrentHeart(final BufferedImage img, SpriteManager spriteManager)
+	{
+		// If the new value is the same then do nothing
+		if ( (img == null && currentHeart == null) || (img != null && img.equals(currentHeart)) )
+		{
+			return;
+		}
+		currentHeart = img;
+		if (currentHeart == null)
+		{
+			setSpriteIcon(Skill.HITPOINTS.getName(), SpriteID.SKILL_HITPOINTS, spriteManager);
+		}
+		else
+		{
+			setBufferedIcon(Skill.HITPOINTS.getName(), currentHeart);
+		}
+		statsPanel.revalidate();
+		statsPanel.repaint();
+	}
+
+	public void setUsingStamIcon(final boolean isStaminaPotted, SpriteManager spriteManager)
+	{
+		if (isStaminaPotted == usingStamIcon)
+		{
+			return;
+		}
+
+		usingStamIcon = isStaminaPotted;
+		final int id = usingStamIcon ? SpriteID.MINIMAP_ORB_RUN_ICON_SLOWED_DEPLETION : SpriteID.MINIMAP_ORB_RUN_ICON;
+		setSpriteIcon(RUN_ENERGY_NAME, id, spriteManager);
+		statsPanel.revalidate();
+		statsPanel.repaint();
 	}
 }
