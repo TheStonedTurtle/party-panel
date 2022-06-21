@@ -65,4 +65,14 @@ public interface PartyPanelConfig extends Config
 		hidden = true
 	)
 	void setPreviousPartyId(String id);
+
+	@ConfigItem(
+		keyName = "displayVirtualLevels",
+		name = "Display Virtual Levels",
+		description = "<html>Controls whether we display a players virtual level as their base level</html>"
+	)
+	default boolean displayVirtualLevels()
+	{
+		return true;
+	}
 }

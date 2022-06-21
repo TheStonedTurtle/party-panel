@@ -24,13 +24,12 @@
  */
 package thestonedturtle.partypanel.ui;
 
-import java.awt.Dimension;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.text.NumberFormat;
 import java.util.Map;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -41,7 +40,11 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 import lombok.Getter;
 import lombok.Setter;
-import net.runelite.api.*;
+import net.runelite.api.EquipmentInventorySlot;
+import net.runelite.api.Experience;
+import net.runelite.api.Prayer;
+import net.runelite.api.Skill;
+import net.runelite.api.SpriteID;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.ColorScheme;
@@ -58,7 +61,6 @@ import thestonedturtle.partypanel.ui.equipment.PlayerEquipmentPanel;
 import thestonedturtle.partypanel.ui.prayer.PlayerPrayerPanel;
 import thestonedturtle.partypanel.ui.prayer.PrayerSlot;
 import thestonedturtle.partypanel.ui.skills.PlayerSkillsPanel;
-import thestonedturtle.partypanel.ui.skills.SkillPanelSlot;
 
 @Getter
 public class PlayerPanel extends JPanel
@@ -80,17 +82,19 @@ public class PlayerPanel extends JPanel
 
 	@Setter
 	private boolean showInfo;
+	private boolean displayVirtualLevels;
 
-	public PlayerPanel(final PartyPlayer selectedPlayer, boolean expanded, final SpriteManager spriteManager, final ItemManager itemManager)
+	public PlayerPanel(final PartyPlayer selectedPlayer, boolean expanded, boolean displayVirtualLevels, final SpriteManager spriteManager, final ItemManager itemManager)
 	{
 		this.player = selectedPlayer;
 		this.showInfo = expanded;
+		this.displayVirtualLevels = displayVirtualLevels;
 		this.spriteManager = spriteManager;
 		this.itemManager = itemManager;
 		this.banner = new PlayerBanner(selectedPlayer, expanded, spriteManager);
 		this.inventoryPanel = new PlayerInventoryPanel(selectedPlayer.getInventory(), itemManager);
 		this.equipmentPanel = new PlayerEquipmentPanel(selectedPlayer.getEquipment(), spriteManager, itemManager);
-		this.skillsPanel = new PlayerSkillsPanel(selectedPlayer, spriteManager);
+		this.skillsPanel = new PlayerSkillsPanel(selectedPlayer, displayVirtualLevels, spriteManager);
 		this.prayersPanel = new PlayerPrayerPanel(selectedPlayer, spriteManager);
 
 		// Non-optimal way to attach a mouse listener to
@@ -207,6 +211,8 @@ public class PlayerPanel extends JPanel
 		if (player.getStats() != null)
 		{
 			banner.refreshStats();
+			int totalLevel = 0;
+			long totalXp = 0;
 			for (final Skill s : Skill.values())
 			{
 				if (s.equals(Skill.OVERALL))
@@ -214,26 +220,13 @@ public class PlayerPanel extends JPanel
 					continue;
 				}
 
-				final SkillPanelSlot panel = skillsPanel.getPanelMap().get(s);
-				int newExp = player.getStats().getSkillEXPs().get(s);
+				int xp = player.getSkillExperience(s);
+				totalLevel += Experience.getLevelForXp(xp);
+				totalXp += xp;
 
-				panel.updateBoostedLevel(player.getStats().getBoostedLevels().get(s));
-				panel.updateBaseLevel(player.getStats().getBaseLevels().get(s));
-				panel.setSkillEXP(newExp);
-
-				String tooltipExp = "<html>" + s.getName() + " XP: " + NumberFormat.getNumberInstance().format(newExp) + "<br/>";
-				int currLevel = player.getStats().getBaseLevels().get(s);
-				if (currLevel > 0 && currLevel < 126)
-				{
-					int virtualLevel = Experience.getLevelForXp(player.getStats().getSkillEXPs().get(s));
-					int nextLevelExp = Experience.getXpForLevel(virtualLevel+1);
-					tooltipExp += "Next level at: " + NumberFormat.getNumberInstance().format(nextLevelExp) + "<br/>";
-					tooltipExp += "Remaining XP: " + NumberFormat.getNumberInstance().format(nextLevelExp - newExp) + "<br/>";
-				}
-
-				panel.setToolTipText(tooltipExp);
+				updateSkill(s);
 			}
-			skillsPanel.getTotalLevelPanel().updateTotalLevel(player.getStats().getTotalLevel());
+			skillsPanel.getTotalLevelPanel().updateTotalLevel(displayVirtualLevels ? totalLevel : player.getStats().getTotalLevel(), totalXp);
 		}
 
 		if (player.getPrayers() != null)
@@ -287,5 +280,19 @@ public class PlayerPanel extends JPanel
 
 		revalidate();
 		repaint();
+	}
+
+	public void updateSkill(Skill s)
+	{
+		skillsPanel.updateSkill(player, s, displayVirtualLevels);
+	}
+
+	public void setDisplayVirtualLevels(boolean displayVirtualLevels)
+	{
+		this.displayVirtualLevels = displayVirtualLevels;
+		for (final Skill s : Skill.values())
+		{
+			updateSkill(s);
+		}
 	}
 }

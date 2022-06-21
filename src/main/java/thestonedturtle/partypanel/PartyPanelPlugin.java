@@ -172,14 +172,19 @@ public class PartyPanelPlugin extends Plugin
 			panel.updatePartyMembersExpand(config.autoExpandMembers());
 		}
 
-		if (c.getKey().equals("showPartyControls"))
+		else if (c.getKey().equals("showPartyControls"))
 		{
 			panel.updatePartyControls(config.showPartyControls());
 		}
 
-		if (c.getKey().equals("showPartyPassphrase"))
+		else if (c.getKey().equals("showPartyPassphrase"))
 		{
 			panel.setPartyPassphraseVisibility(config.showPartyPassphrase());
+		}
+
+		else if (c.getKey().equals("displayVirtualLevels"))
+		{
+			panel.updateVirtualLevels(config.displayVirtualLevels());
 		}
 	}
 

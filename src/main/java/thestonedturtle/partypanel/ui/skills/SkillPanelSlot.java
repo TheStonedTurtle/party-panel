@@ -109,12 +109,11 @@ public class SkillPanelSlot extends JPanel
 		c.anchor = GridBagConstraints.NORTHWEST;
 		textPanel.add(boostedLabel, c);
 
-		baseLabel.setText(String.valueOf(baseLevel));
 		baseLabel.setVerticalAlignment(JLabel.CENTER);
 		baseLabel.setHorizontalAlignment(JLabel.RIGHT);
-		baseLabel.setBorder(new EmptyBorder(0, 0, 6, 6));
 		baseLabel.setFont(FontManager.getRunescapeSmallFont());
 		baseLabel.setForeground(Color.YELLOW);
+		updateBaseLevel(baseLevel); // Call so the correct right border is used
 
 		skillEXP = exp;
 
@@ -146,7 +145,19 @@ public class SkillPanelSlot extends JPanel
 
 	public void updateBaseLevel(final int baseLevel)
 	{
+		// Adjust offset depending on amount of characters to make the UI look nicer
+		int rightPadding = 9;
+		if (baseLevel > 99)
+		{
+			rightPadding = 2;
+		}
+		else if (baseLevel > 9)
+		{
+			rightPadding = 6;
+		}
+
 		baseLabel.setText(String.valueOf(baseLevel));
+		baseLabel.setBorder(new EmptyBorder(0, 0, 4, rightPadding));
 		baseLabel.repaint();
 	}
 
