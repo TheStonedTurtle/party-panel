@@ -526,7 +526,7 @@ public class PartyPanelPlugin extends Plugin
 	public void createParty()
 	{
 		// Create party
-		clientThread.invokeLater(() -> changeParty(partyService.generatePasspharse()));
+		clientThread.invokeLater(() -> changeParty(partyService.generatePassphrase()));
 	}
 
 	public String getPartyPassphrase()
