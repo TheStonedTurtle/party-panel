@@ -361,7 +361,8 @@ public class PartyPanelPlugin extends Plugin
 			}
 		}
 
-		if (currentChange.isValid()) {
+		if (currentChange.isValid())
+		{
 			currentChange.setMemberId(partyService.getLocalMember().getMemberId()); // Add member ID before sending
 			currentChange.removeDefaults();
 			partyService.send(currentChange);
@@ -494,7 +495,8 @@ public class PartyPanelPlugin extends Plugin
 		}
 
 		final PartyPlayer player = partyMembers.get(e.getMemberId());
-		clientThread.invoke(() -> {
+		clientThread.invoke(() ->
+		{
 			e.process(player, itemManager);
 
 			// We need to call update here as the update below can trigger before the clientThread has been invoked
@@ -524,7 +526,7 @@ public class PartyPanelPlugin extends Plugin
 	public void createParty()
 	{
 		// Create party
-		clientThread.invokeLater(() -> changeParty(partyService.generatePassphrase()));
+		clientThread.invokeLater(() -> changeParty(partyService.generatePasspharse()));
 	}
 
 	public String getPartyPassphrase()

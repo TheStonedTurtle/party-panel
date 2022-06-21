@@ -48,7 +48,6 @@ import net.runelite.client.ui.DynamicGridLayout;
 import net.runelite.client.ui.PluginPanel;
 import thestonedturtle.partypanel.data.PartyPlayer;
 import thestonedturtle.partypanel.ui.ControlsPanel;
-import thestonedturtle.partypanel.ui.PlayerBanner;
 import thestonedturtle.partypanel.ui.PlayerPanel;
 
 class PartyPanel extends PluginPanel
@@ -119,7 +118,7 @@ class PartyPanel extends PluginPanel
 	}
 
 	/**
-	 * Shows all members of the party, excluding the local player. See {@link PlayerBanner)
+	 * Shows all members of the party, excluding the local player. See {@link thestonedturtle.partypanel.ui.PlayerBanner )
 	 */
 	void renderSidebar()
 	{

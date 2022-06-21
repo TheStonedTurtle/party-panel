@@ -55,7 +55,7 @@ import thestonedturtle.partypanel.data.PartyPlayer;
 public class PlayerBanner extends JPanel
 {
 	private static final Dimension STAT_ICON_SIZE = new Dimension(18, 18);
-	private static final Dimension ICON_SIZE = new Dimension(Constants.ITEM_SPRITE_WIDTH-6, Constants.ITEM_SPRITE_HEIGHT-4);
+	private static final Dimension ICON_SIZE = new Dimension(Constants.ITEM_SPRITE_WIDTH - 6, Constants.ITEM_SPRITE_HEIGHT - 4);
 	private static final BufferedImage EXPAND_ICON = ImageUtil.loadImageResource(PlayerPanel.class, "expand.png");
 	private static final String SPECIAL_ATTACK_NAME = "Special Attack";
 	private static final String RUN_ENERGY_NAME = "Run Energy";
@@ -212,7 +212,7 @@ public class PlayerBanner extends JPanel
 
 	private void addIcon()
 	{
-		final BufferedImage resized = ImageUtil.resizeImage(player.getMember().getAvatar(), Constants.ITEM_SPRITE_WIDTH-8, Constants.ITEM_SPRITE_HEIGHT-4);
+		final BufferedImage resized = ImageUtil.resizeImage(player.getMember().getAvatar(), Constants.ITEM_SPRITE_WIDTH - 8, Constants.ITEM_SPRITE_HEIGHT - 4);
 		iconLabel.setIcon(new ImageIcon(resized));
 	}
 
@@ -267,7 +267,7 @@ public class PlayerBanner extends JPanel
 			{
 				if (spriteID == SpriteID.SKILL_PRAYER)
 				{
-					label.setIcon(new ImageIcon(ImageUtil.resizeImage(img, STAT_ICON_SIZE.width+2, STAT_ICON_SIZE.height+2)));
+					label.setIcon(new ImageIcon(ImageUtil.resizeImage(img, STAT_ICON_SIZE.width + 2, STAT_ICON_SIZE.height + 2)));
 				}
 				else
 				{

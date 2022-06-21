@@ -36,7 +36,8 @@ public class PartyMiscChange implements PartyProcess
 	PartyMisc t;
 	int v;
 
-	public enum PartyMisc {
+	public enum PartyMisc
+	{
 		S, // Special
 		R, // RUN
 		C, // Combat

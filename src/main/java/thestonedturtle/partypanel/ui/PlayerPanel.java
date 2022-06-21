@@ -100,7 +100,7 @@ public class PlayerPanel extends JPanel
 	private boolean showInfo;
 
 	public PlayerPanel(final PartyPlayer selectedPlayer, final PartyPanelConfig config,
-					   final SpriteManager spriteManager, final ItemManager itemManager)
+						final SpriteManager spriteManager, final ItemManager itemManager)
 	{
 		this.player = selectedPlayer;
 		this.config = config;
@@ -117,9 +117,9 @@ public class PlayerPanel extends JPanel
 		// the entire panel, but easy to implement
 		JPanel statsPanel = this.banner.getStatsPanel();
 		JLabel expandIcon = this.banner.getExpandIcon();
-		Component[] list = new Component[statsPanel.getComponentCount()+1];
-		System.arraycopy(statsPanel.getComponents(), 0, list, 0, list.length-1);
-		list[list.length-1] = banner;
+		Component[] list = new Component[statsPanel.getComponentCount() + 1];
+		System.arraycopy(statsPanel.getComponents(), 0, list, 0, list.length - 1);
+		list[list.length - 1] = banner;
 
 		for (Component comp : list)
 		{
