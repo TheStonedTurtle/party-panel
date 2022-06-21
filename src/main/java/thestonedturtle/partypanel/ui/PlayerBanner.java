@@ -182,19 +182,15 @@ public class PlayerBanner extends JPanel
 		nameContainer.add(usernameLabel);
 
 
-		if (player.getWorld() <= 0)
-		{
-			worldLabel.setText("");
-
-			// Prevent duplicate `Not logged in` when first joining party
-			if (!usernameLabel.getText().equals("Not logged in"))
-			{
-				worldLabel.setText("Not logged in");
-			}
-		}
-		else
+		worldLabel.setText("Not logged in");
+		if (player.getWorld() > 0)
 		{
 			worldLabel.setText("World " + player.getWorld());
+		}
+		// Prevent duplicate `Not logged in` when first joining party
+		else if (Strings.isNullOrEmpty(player.getUsername()))
+		{
+			worldLabel.setText("");
 		}
 		nameContainer.add(worldLabel);
 
