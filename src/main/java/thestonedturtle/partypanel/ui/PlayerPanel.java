@@ -198,9 +198,11 @@ public class PlayerPanel extends JPanel
 			}
 		}
 
+		final int newPlayerCmbLvl = newPlayer.getStats() == null ? -1 : newPlayer.getStats().getCombatLevel();
+		final int playerCmbLvl = player.getStats() == null ? -1 : player.getStats().getCombatLevel();
 		// recreate banner if Combat level, Display Name, or Party Member ID changed
 		if (newPlayer.getMemberId() != player.getMemberId()
-			|| newPlayer.getStats().getCombatLevel() != player.getStats().getCombatLevel()
+			|| (newPlayerCmbLvl != playerCmbLvl)
 			|| !newPlayer.getUsername().equals(player.getUsername()))
 		{
 			banner.recreatePanel();
