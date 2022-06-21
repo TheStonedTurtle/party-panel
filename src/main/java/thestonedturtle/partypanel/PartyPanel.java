@@ -99,9 +99,20 @@ class PartyPanel extends PluginPanel
 
 	void drawPlayerPanel(PartyPlayer player)
 	{
-		playerPanelMap.computeIfAbsent(player.getMemberId(), (k) ->
-				new PlayerPanel(player, plugin.getConfig().autoExpandMembers(), plugin.spriteManager, plugin.itemManager)).updatePlayerData(player);
-		basePanel.add(playerPanelMap.get(player.getMemberId()));
+		final PlayerPanel panel = playerPanelMap.computeIfAbsent(player.getMemberId(),
+			(k) -> new PlayerPanel(player, plugin.getConfig().autoExpandMembers(), plugin.spriteManager, plugin.itemManager));
+
+		if (panel.getPlayer().getMemberId() != player.getMemberId())
+		{
+			panel.setPlayer(player);
+			panel.updatePlayerData(true);
+		}
+		else
+		{
+			panel.updatePlayerData(false);
+		}
+
+		basePanel.add(panel);
 		basePanel.revalidate();
 		basePanel.repaint();
 	}

@@ -88,4 +88,11 @@ public class PartyBatchedChange extends PartyMemberMessage
 			m.forEach(change -> change.process(player));
 		}
 	}
+
+	public boolean hasBreakingBannerChange()
+	{
+		return m != null
+			&& m.stream()
+				.anyMatch(e -> e.getT() == PartyMiscChange.PartyMisc.C || e.getT() == PartyMiscChange.PartyMisc.W);
+	}
 }

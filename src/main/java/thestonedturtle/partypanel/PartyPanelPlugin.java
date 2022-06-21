@@ -418,7 +418,8 @@ public class PartyPanelPlugin extends Plugin
 		clientThread.invoke(() -> {
 			e.process(player, itemManager);
 
-			SwingUtilities.invokeLater(() -> panel.getPlayerPanelMap().get(e.getMemberId()).updatePlayerData(player));
+			// We need to call update here as the update below can trigger before the clientThread has been invoked
+			SwingUtilities.invokeLater(() -> panel.getPlayerPanelMap().get(e.getMemberId()).updatePlayerData(e.hasBreakingBannerChange()));
 		});
 	}
 
