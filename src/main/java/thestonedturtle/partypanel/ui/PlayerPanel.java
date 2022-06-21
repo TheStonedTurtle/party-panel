@@ -168,11 +168,13 @@ public class PlayerPanel extends JPanel
 	}
 
 	// TODO add smarter ways to update data
-	public void updatePlayerData(boolean hasBreakingBannerChange)
+	public void updatePlayerData(PartyPlayer newPlayer, boolean hasBreakingBannerChange)
 	{
+		player = newPlayer;
+		banner.setPlayer(player);
+
 		if (hasBreakingBannerChange)
 		{
-			banner.setPlayer(player);
 			banner.recreatePanel();
 		}
 
@@ -285,11 +287,5 @@ public class PlayerPanel extends JPanel
 
 		revalidate();
 		repaint();
-	}
-
-	public void setPlayer(PartyPlayer p)
-	{
-		player = p;
-		banner.setPlayer(p);
 	}
 }
