@@ -290,9 +290,23 @@ public class PlayerPanel extends JPanel
 	public void setDisplayVirtualLevels(boolean displayVirtualLevels)
 	{
 		this.displayVirtualLevels = displayVirtualLevels;
+
+		int totalLevel = 0;
+		long totalXp = 0;
 		for (final Skill s : Skill.values())
 		{
+			if (s.equals(Skill.OVERALL))
+			{
+				continue;
+			}
+
+			int xp = player.getSkillExperience(s);
+			totalLevel += Experience.getLevelForXp(xp);
+			totalXp += xp;
+
 			updateSkill(s);
 		}
+
+		skillsPanel.getTotalLevelPanel().updateTotalLevel(displayVirtualLevels ? totalLevel : player.getStats().getTotalLevel(), totalXp);
 	}
 }
