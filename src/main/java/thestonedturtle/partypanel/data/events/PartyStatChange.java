@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, TheStonedTurtle <https://github.com/TheStonedTurtle>
+ * Copyright (c) 2022, TheStonedTurtle <https://github.com/TheStonedTurtle>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,17 +22,25 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package thestonedturtle.partypanel.data;
+package thestonedturtle.partypanel.data.events;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import net.runelite.api.Prayer;
+import lombok.Value;
+import net.runelite.api.Skill;
+import thestonedturtle.partypanel.data.PartyPlayer;
 
-@Data
-@AllArgsConstructor
-public class PrayerData
+@Value
+public class PartyStatChange implements PartyProcess
 {
-	private final Prayer prayer;
-	private boolean available;
-	private boolean enabled;
+	Skill s;
+	int l; // Level
+	int b; // Boosted Level
+	int e; // EXP
+
+	@Override
+	public void process(PartyPlayer p)
+	{
+		p.getStats().getBaseLevels().put(s, l);
+		p.getStats().getBoostedLevels().put(s, b);
+		p.getStats().getSkillEXPs().put(s, e);
+	}
 }

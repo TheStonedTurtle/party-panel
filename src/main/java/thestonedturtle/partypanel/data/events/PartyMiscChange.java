@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, TheStonedTurtle <https://github.com/TheStonedTurtle>
+ * Copyright (c) 2022, TheStonedTurtle <https://github.com/TheStonedTurtle>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,17 +22,46 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package thestonedturtle.partypanel.data;
+package thestonedturtle.partypanel.data.events;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import net.runelite.api.Prayer;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
+import thestonedturtle.partypanel.data.PartyPlayer;
 
-@Data
-@AllArgsConstructor
-public class PrayerData
+// Used for updating stuff that is just a single integer value and doesn't fit into the other classes
+@Value
+@Slf4j
+public class PartyMiscChange implements PartyProcess
 {
-	private final Prayer prayer;
-	private boolean available;
-	private boolean enabled;
+	PartyMisc t;
+	int v;
+
+	public enum PartyMisc {
+		S, // Special
+		R, // RUN
+		C, // Combat
+		T, // Total
+	}
+
+	@Override
+	public void process(PartyPlayer p)
+	{
+		switch (t)
+		{
+			case S:
+				p.getStats().setSpecialPercent(v);
+				break;
+			case C:
+				p.getStats().setCombatLevel(v);
+				break;
+			case T:
+				p.getStats().setTotalLevel(v);
+				break;
+			case R:
+				p.getStats().setRunEnergy(v);
+				break;
+			default:
+				log.warn("Unhandled misc change type for event: {}", this);
+		}
+	}
 }

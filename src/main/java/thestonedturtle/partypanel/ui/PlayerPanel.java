@@ -168,12 +168,16 @@ public class PlayerPanel extends JPanel
 	}
 
 	// TODO add smarter ways to update data
-	public void updatePlayerData(final PartyPlayer newPlayer)
+	public void updatePlayerData(PartyPlayer newPlayer, boolean hasBreakingBannerChange)
 	{
-		final boolean newUser = !newPlayer.getMemberId().equals(player.getMemberId());
-
 		player = newPlayer;
 		banner.setPlayer(player);
+
+		if (hasBreakingBannerChange)
+		{
+			banner.recreatePanel();
+		}
+
 		inventoryPanel.updateInventory(player.getInventory());
 
 		for (final EquipmentInventorySlot equipSlot : EquipmentInventorySlot.values())
@@ -200,11 +204,6 @@ public class PlayerPanel extends JPanel
 			}
 		}
 
-		if (newUser)
-		{
-			banner.recreatePanel();
-		}
-
 		if (player.getStats() != null)
 		{
 			banner.refreshStats();
@@ -226,7 +225,8 @@ public class PlayerPanel extends JPanel
 				int currLevel = player.getStats().getBaseLevels().get(s);
 				if (currLevel > 0 && currLevel < 126)
 				{
-					int nextLevelExp = Experience.getXpForLevel(player.getStats().getBaseLevels().get(s)+1);
+					int virtualLevel = Experience.getLevelForXp(player.getStats().getSkillEXPs().get(s));
+					int nextLevelExp = Experience.getXpForLevel(virtualLevel+1);
 					tooltipExp += "Next level at: " + NumberFormat.getNumberInstance().format(nextLevelExp) + "<br/>";
 					tooltipExp += "Remaining XP: " + NumberFormat.getNumberInstance().format(nextLevelExp - newExp) + "<br/>";
 				}

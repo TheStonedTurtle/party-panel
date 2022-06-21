@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, TheStonedTurtle <https://github.com/TheStonedTurtle>
+ * Copyright (c) 2022, TheStonedTurtle <https://github.com/TheStonedTurtle>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,17 +22,30 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package thestonedturtle.partypanel.data;
+package thestonedturtle.partypanel.data.events;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Value;
 import net.runelite.api.Prayer;
+import thestonedturtle.partypanel.data.PartyPlayer;
+import thestonedturtle.partypanel.data.PrayerData;
 
-@Data
-@AllArgsConstructor
-public class PrayerData
+@Value
+public class PartyPrayerChange implements PartyProcess
 {
-	private final Prayer prayer;
-	private boolean available;
-	private boolean enabled;
+	Prayer p;
+	boolean a; // Available
+	boolean e; // Enabled
+
+	public PartyPrayerChange(PrayerData data)
+	{
+		p = data.getPrayer();
+		a = data.isAvailable();
+		e = data.isEnabled();
+	}
+
+	@Override
+	public void process(PartyPlayer player)
+	{
+		player.getPrayers().getPrayerData().put(p, new PrayerData(p, a, e));
+	}
 }

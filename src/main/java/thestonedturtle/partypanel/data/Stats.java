@@ -32,6 +32,7 @@ import net.runelite.api.Client;
 import net.runelite.api.Experience;
 import net.runelite.api.Skill;
 import net.runelite.api.VarPlayer;
+import thestonedturtle.partypanel.data.events.PartyStatChange;
 
 @Getter
 @Setter
@@ -69,5 +70,25 @@ public class Stats
 		specialPercent = client.getVar(VarPlayer.SPECIAL_ATTACK_PERCENT) / 10;
 		totalLevel = client.getTotalLevel();
 		runEnergy = client.getEnergy();
+	}
+
+	public int recalculateCombatLevel()
+	{
+		combatLevel = Experience.getCombatLevel(
+			baseLevels.get(Skill.ATTACK),
+			baseLevels.get(Skill.STRENGTH),
+			baseLevels.get(Skill.DEFENCE),
+			baseLevels.get(Skill.HITPOINTS),
+			baseLevels.get(Skill.MAGIC),
+			baseLevels.get(Skill.RANGED),
+			baseLevels.get(Skill.PRAYER)
+		);
+
+		return combatLevel;
+	}
+
+	public PartyStatChange createPartyStatChangeForSkill(Skill s)
+	{
+		return new PartyStatChange(s, baseLevels.get(s), boostedLevels.get(s), skillEXPs.get(s));
 	}
 }

@@ -50,7 +50,7 @@ public class PartyPlayer extends PartyMemberMessage
 	{
 		this.setMemberId(member.getMemberId());
 		this.member = member;
-		this.username = null;
+		this.username = "";
 		this.stats = null;
 		this.inventory = new GameItem[28];
 		this.equipment = new GameItem[EquipmentInventorySlot.AMMO.getSlotIdx() + 1];

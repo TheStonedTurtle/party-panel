@@ -5,43 +5,46 @@ import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 import javax.inject.Inject;
 import javax.swing.SwingUtilities;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
-import net.runelite.api.GameState;
 import net.runelite.api.InventoryID;
+import net.runelite.api.Item;
 import net.runelite.api.Skill;
 import net.runelite.api.VarPlayer;
-import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
-import net.runelite.client.account.AccountSession;
 import net.runelite.client.account.SessionManager;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.events.PartyChanged;
+import net.runelite.client.events.PartyMemberAvatar;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
+import net.runelite.client.party.PartyService;
+import net.runelite.client.party.WSClient;
+import net.runelite.client.party.events.UserJoin;
+import net.runelite.client.party.events.UserPart;
+import net.runelite.client.party.messages.UserSync;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
-import net.runelite.client.party.PartyService;
-import net.runelite.client.party.WSClient;
-import net.runelite.client.party.messages.UserJoin;
-import net.runelite.client.party.messages.UserPart;
-import net.runelite.client.party.messages.UserSync;
 import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
 import thestonedturtle.partypanel.data.Prayers;
+import thestonedturtle.partypanel.data.events.PartyBatchedChange;
+import thestonedturtle.partypanel.data.events.PartyItemsChange;
+import thestonedturtle.partypanel.data.events.PartyMiscChange;
+import thestonedturtle.partypanel.data.events.PartyPrayerChange;
+import thestonedturtle.partypanel.data.events.PartyStatChange;
 import thestonedturtle.partypanel.ui.prayer.PrayerSprites;
 
 @Slf4j
@@ -87,7 +90,7 @@ public class PartyPanelPlugin extends Plugin
 	}
 
 	@Getter
-	private final Map<UUID, PartyPlayer> partyMembers = new HashMap<>();
+	private final Map<Long, PartyPlayer> partyMembers = new HashMap<>();
 
 	@Getter
 	private PartyPlayer myPlayer = null;
@@ -96,6 +99,9 @@ public class PartyPanelPlugin extends Plugin
 	private boolean addedButton = false;
 
 	private PartyPanel panel;
+
+	// All events should be deferred to the next game tick
+	private PartyBatchedChange currentChange = new PartyBatchedChange();
 
 	@Override
 	protected void startUp() throws Exception
@@ -109,15 +115,7 @@ public class PartyPanelPlugin extends Plugin
 			.build();
 
 		wsClient.registerMessage(PartyPlayer.class);
-
-		// If there isn't already a session open, open one
-		if (!wsClient.sessionExists())
-		{
-			AccountSession accountSession = sessionManager.getAccountSession();
-			// Use the existing account session, if it exists, otherwise generate a new session id
-			UUID uuid = accountSession != null ? accountSession.getUuid() : UUID.randomUUID();
-			wsClient.changeSession(uuid);
-		}
+		wsClient.registerMessage(PartyBatchedChange.class);
 
 		if (isInParty() || config.alwaysShowIcon())
 		{
@@ -130,9 +128,20 @@ public class PartyPanelPlugin extends Plugin
 			clientThread.invokeLater(() ->
 			{
 				myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
-				wsClient.send(myPlayer);
+				partyService.send(myPlayer);
+				partyService.send(new UserSync());
 			});
 		}
+	}
+
+	@Override
+	protected void shutDown() throws Exception
+	{
+		clientToolbar.removeNavigation(navButton);
+		addedButton = false;
+		partyMembers.clear();
+		wsClient.unregisterMessage(PartyPlayer.class);
+		wsClient.unregisterMessage(PartyBatchedChange.class);
 	}
 
 	@Subscribe
@@ -164,76 +173,43 @@ public class PartyPanelPlugin extends Plugin
 		}
 	}
 
-	@Override
-	protected void shutDown() throws Exception
-	{
-		clientToolbar.removeNavigation(navButton);
-		addedButton = false;
-		partyMembers.clear();
-		wsClient.unregisterMessage(PartyPlayer.class);
-	}
-
 	boolean isInParty()
 	{
-		// TODO: Determine if this is the correct way to check if we are in a party
-		return wsClient.sessionExists() && partyService.getLocalMember() != null;
+		return partyService.isInParty();
 	}
 
-	@Subscribe
-	public void onPartyPlayer(final PartyPlayer player)
+	public boolean isLocalPlayer(long id)
 	{
-		if (!isInParty())
-		{
-			return;
-		}
-
-		if (player.getMemberId().equals(partyService.getLocalMember().getMemberId()))
-		{
-			return;
-		}
-
-		player.setMember(partyService.getMemberById(player.getMemberId()));
-		if (player.getMember() == null)
-		{
-			return;
-		}
-
-		partyMembers.put(player.getMemberId(), player);
-		SwingUtilities.invokeLater(() -> panel.renderSidebar());
+		return partyService.getLocalMember() != null && partyService.getLocalMember().getMemberId() == id;
 	}
 
 	@Subscribe
 	public void onUserJoin(final UserJoin event)
 	{
 		// TODO: Figure out how to support people not using the plugin
-		if (partyService.getLocalMember() == null)
-		{
-			return;
-		}
-
 		if (!addedButton)
 		{
 			clientToolbar.addNavigation(navButton);
 			addedButton = true;
 		}
 
-		// Self joined
-		if (event.getMemberId().equals(partyService.getLocalMember().getMemberId()))
+		// We care about self joined
+		if (!isLocalPlayer(event.getMemberId()))
 		{
-			if (myPlayer == null)
-			{
-				clientThread.invoke(() ->
-				{
-					myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
-					wsClient.send(myPlayer);
-					return true;
-				});
-			}
-			else
-			{
-				wsClient.send(myPlayer);
-			}
+			return;
 		}
+
+		if (myPlayer != null)
+		{
+			partyService.send(myPlayer);
+			return;
+		}
+
+		clientThread.invoke(() ->
+		{
+			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
+			partyService.send(myPlayer);
+		});
 	}
 
 	@Subscribe
@@ -255,7 +231,7 @@ public class PartyPanelPlugin extends Plugin
 	@Subscribe
 	public void onUserSync(final UserSync event)
 	{
-		wsClient.send(myPlayer);
+		partyService.send(myPlayer);
 	}
 
 	@Subscribe
@@ -273,75 +249,66 @@ public class PartyPanelPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onGameStateChanged(final GameStateChanged event)
-	{
-		if (!isInParty())
-		{
-			return;
-		}
-
-		if (event.getGameState().equals(GameState.LOGIN_SCREEN))
-		{
-			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
-			wsClient.send(myPlayer);
-		}
-	}
-
-	@Subscribe
 	public void onGameTick(final GameTick tick)
 	{
-		if (!isInParty() || client.getLocalPlayer() == null)
+		if (!isInParty() || client.getLocalPlayer() == null || partyService.getLocalMember() == null)
 		{
 			return;
 		}
 
-		boolean changed = false;
-
-		if (myPlayer == null)
+		// First time logging in or they changed accounts so resend the entire player object
+		if (myPlayer == null || !Objects.equals(client.getLocalPlayer().getName(), myPlayer.getUsername()))
 		{
 			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
-			// member changed account, send new data to all members
-			wsClient.send(myPlayer);
+			partyService.send(myPlayer);
 			return;
 		}
 
 		if (myPlayer.getStats() == null)
 		{
 			myPlayer.updatePlayerInfo(client, itemManager);
-			changed = true;
+
+			for (final Skill s : Skill.values())
+			{
+				currentChange.getS().add(myPlayer.getStats().createPartyStatChangeForSkill(s));
+			}
 		}
 		else
 		{
+			// We only need to check energy every tick as the special attack and stat levels are handled in their respective events
 			final int energy = client.getEnergy();
 			if (myPlayer.getStats().getRunEnergy() != energy)
 			{
 				myPlayer.getStats().setRunEnergy(energy);
-				changed = true;
+				currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.R, energy));
 			}
-		}
-
-		if (!Objects.equals(client.getLocalPlayer().getName(), myPlayer.getUsername()))
-		{
-			myPlayer.setUsername(client.getLocalPlayer().getName());
-			changed = true;
 		}
 
 		if (myPlayer.getPrayers() == null)
 		{
 			myPlayer.setPrayers(new Prayers(client));
-			changed = true;
+			for (final PrayerSprites p : PrayerSprites.values())
+			{
+				currentChange.getP().add(new PartyPrayerChange(myPlayer.getPrayers().getPrayerData().get(p.getPrayer())));
+			}
 		}
 		else
 		{
 			for (final PrayerSprites prayer : PrayerSprites.values())
 			{
-				changed = myPlayer.getPrayers().updatePrayerState(prayer, client) || changed;
+				if (myPlayer.getPrayers().updatePrayerState(prayer, client))
+				{
+					currentChange.getP().add(new PartyPrayerChange(myPlayer.getPrayers().getPrayerData().get(prayer.getPrayer())));
+				}
 			}
 		}
 
-		if (changed)
-		{
-			wsClient.send(myPlayer);
+		if (currentChange.isValid()) {
+			currentChange.setMemberId(partyService.getLocalMember().getMemberId()); // Add member ID before sending
+			currentChange.removeDefaults();
+			partyService.send(currentChange);
+
+			currentChange = new PartyBatchedChange();
 		}
 	}
 
@@ -355,23 +322,38 @@ public class PartyPanelPlugin extends Plugin
 
 		final Skill s = event.getSkill();
 		if (myPlayer.getSkillBoostedLevel(s) == event.getBoostedLevel() &&
-				myPlayer.getSkillRealLevel(s) == event.getLevel() &&
-				myPlayer.getSkillExperience(s) == event.getXp())
+			myPlayer.getSkillRealLevel(s) == event.getLevel() &&
+			myPlayer.getSkillExperience(s) == event.getXp())
 		{
 			return;
 		}
 
-		myPlayer.setSkillExperience(event.getSkill(), event.getXp());
 		myPlayer.setSkillsBoostedLevel(event.getSkill(), event.getBoostedLevel());
 		myPlayer.setSkillsRealLevel(event.getSkill(), event.getLevel());
-		myPlayer.getStats().setTotalLevel(client.getTotalLevel());
-		wsClient.send(myPlayer);
+		myPlayer.setSkillExperience(event.getSkill(), event.getXp());
+
+		currentChange.getS().add(new PartyStatChange(event.getSkill(), event.getLevel(), event.getBoostedLevel(), event.getXp()));
+
+		// Total level change
+		if (myPlayer.getStats().getTotalLevel() != client.getTotalLevel())
+		{
+			myPlayer.getStats().setTotalLevel(client.getTotalLevel());
+			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.T, myPlayer.getStats().getTotalLevel()));
+		}
+
+		// Combat level change
+		final int oldCombatLevel = myPlayer.getStats().getCombatLevel();
+		myPlayer.getStats().recalculateCombatLevel();
+		if (myPlayer.getStats().getCombatLevel() != oldCombatLevel)
+		{
+			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.C, myPlayer.getStats().getCombatLevel()));
+		}
 	}
 
 	@Subscribe
 	public void onItemContainerChanged(final ItemContainerChanged c)
 	{
-		if (!isInParty())
+		if (myPlayer == null || !isInParty())
 		{
 			return;
 		}
@@ -379,17 +361,15 @@ public class PartyPanelPlugin extends Plugin
 		if (c.getContainerId() == InventoryID.INVENTORY.getId())
 		{
 			myPlayer.setInventory(GameItem.convertItemsToGameItems(c.getItemContainer().getItems(), itemManager));
+			int[][] items = convertItemsToArrays(c.getItemContainer().getItems());
+			currentChange.setI(new PartyItemsChange(PartyItemsChange.PartyItemContainer.I, items[0], items[1]));
 		}
 		else if (c.getContainerId() == InventoryID.EQUIPMENT.getId())
 		{
 			myPlayer.setEquipment(GameItem.convertItemsToGameItems(c.getItemContainer().getItems(), itemManager));
+			int[][] items = convertItemsToArrays(c.getItemContainer().getItems());
+			currentChange.setE(new PartyItemsChange(PartyItemsChange.PartyItemContainer.E, items[0], items[1]));
 		}
-		else
-		{
-			return;
-		}
-
-		wsClient.send(myPlayer);
 	}
 
 	@Subscribe
@@ -404,7 +384,70 @@ public class PartyPanelPlugin extends Plugin
 		if (specialPercent != myPlayer.getStats().getSpecialPercent())
 		{
 			myPlayer.getStats().setSpecialPercent(specialPercent);
-			wsClient.send(myPlayer);
+			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.S, specialPercent));
 		}
+	}
+
+	@Subscribe
+	public void onPartyPlayer(final PartyPlayer player)
+	{
+		if (!isInParty() || isLocalPlayer(player.getMemberId()))
+		{
+			return;
+		}
+
+		player.setMember(partyService.getMemberById(player.getMemberId()));
+		if (player.getMember() == null)
+		{
+			return;
+		}
+
+		partyMembers.put(player.getMemberId(), player);
+		SwingUtilities.invokeLater(() -> panel.renderSidebar());
+	}
+
+	@Subscribe
+	public void onPartyBatchedChange(PartyBatchedChange e)
+	{
+		if (isLocalPlayer(e.getMemberId()))
+		{
+			return;
+		}
+
+		final PartyPlayer player = partyMembers.get(e.getMemberId());
+		clientThread.invoke(() -> {
+			e.process(player, itemManager);
+
+			// We need to call update here as the update below can trigger before the clientThread has been invoked
+			SwingUtilities.invokeLater(() -> panel.getPlayerPanelMap().get(e.getMemberId()).updatePlayerData(player, e.hasBreakingBannerChange()));
+		});
+	}
+
+	@Subscribe
+	public void onPartyMemberAvatar(PartyMemberAvatar e)
+	{
+		if (isLocalPlayer(e.getMemberId()) || partyMembers.get(e.getMemberId()) == null)
+		{
+			return;
+		}
+
+		final PartyPlayer player = partyMembers.get(e.getMemberId());
+		player.getMember().setAvatar(e.getImage());
+		SwingUtilities.invokeLater(() -> panel.getPlayerPanelMap().get(e.getMemberId()).getBanner().refreshStats());
+	}
+
+	private int[][] convertItemsToArrays(Item[] items)
+	{
+		int[] ids = new int[items.length];
+		int[] qtys = new int[items.length];
+		for (int i = 0; i < items.length; i++)
+		{
+			ids[i] = items[i].getId();
+			qtys[i] = items[i].getQuantity();
+		}
+
+		return new int[][]{
+			ids, qtys
+		};
 	}
 }

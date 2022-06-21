@@ -24,18 +24,19 @@
  */
 package thestonedturtle.partypanel;
 
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import java.awt.BorderLayout;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.border.EmptyBorder;
+import lombok.Getter;
 import net.runelite.client.ui.DynamicGridLayout;
 import net.runelite.client.ui.PluginPanel;
 import thestonedturtle.partypanel.data.PartyPlayer;
@@ -45,7 +46,8 @@ import thestonedturtle.partypanel.ui.PlayerPanel;
 class PartyPanel extends PluginPanel
 {
 	private final PartyPanelPlugin plugin;
-	private final HashMap<UUID, PlayerPanel> playerPanelMap = new HashMap<>();
+	@Getter
+	private final HashMap<Long, PlayerPanel> playerPanelMap = new HashMap<>();
 	private final JPanel basePanel;
 
 	@Inject
@@ -78,7 +80,7 @@ class PartyPanel extends PluginPanel
 		// Sort by their RSN first; If it doesn't exist sort by their Discord name instead
 		final List<PartyPlayer> players = plugin.getPartyMembers().values()
 			.stream()
-			.sorted(Comparator.comparing(o -> o.getUsername() == null ? o.getMember().getName() : o.getUsername()))
+			.sorted(Comparator.comparing(o -> Strings.isNullOrEmpty(o.getUsername()) ? o.getMember().getDisplayName() : o.getUsername()))
 			.collect(Collectors.toList());
 
 		for (final PartyPlayer player : players)
@@ -97,9 +99,12 @@ class PartyPanel extends PluginPanel
 
 	void drawPlayerPanel(PartyPlayer player)
 	{
-		playerPanelMap.computeIfAbsent(player.getMemberId(), (k) ->
-				new PlayerPanel(player, plugin.getConfig().autoExpandMembers(), plugin.spriteManager, plugin.itemManager)).updatePlayerData(player);
-		basePanel.add(playerPanelMap.get(player.getMemberId()));
+		final PlayerPanel panel = playerPanelMap.computeIfAbsent(player.getMemberId(),
+			(k) -> new PlayerPanel(player, plugin.getConfig().autoExpandMembers(), plugin.spriteManager, plugin.itemManager));
+
+		final String playerName = player.getUsername() == null ? "" : player.getUsername();
+		panel.updatePlayerData(player, panel.getPlayer().getMemberId() != player.getMemberId() || !playerName.equals(panel.getPlayer().getUsername()));
+		basePanel.add(panel);
 		basePanel.revalidate();
 		basePanel.repaint();
 	}

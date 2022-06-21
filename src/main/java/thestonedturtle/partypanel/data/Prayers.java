@@ -77,9 +77,9 @@ public class Prayers
 		}
 		else
 		{
-			changed = data.isAvailable() != available || data.isActivated() != enabled;
+			changed = data.isAvailable() != available || data.isEnabled() != enabled;
 			data.setAvailable(available);
-			data.setActivated(enabled);
+			data.setEnabled(enabled);
 		}
 
 		prayerData.put(data.getPrayer(), data);

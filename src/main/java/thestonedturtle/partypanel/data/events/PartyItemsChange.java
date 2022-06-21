@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, TheStonedTurtle <https://github.com/TheStonedTurtle>
+ * Copyright (c) 2022, TheStonedTurtle <https://github.com/TheStonedTurtle>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,17 +22,42 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package thestonedturtle.partypanel.data;
+package thestonedturtle.partypanel.data.events;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import net.runelite.api.Prayer;
+import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
+import net.runelite.client.game.ItemManager;
+import thestonedturtle.partypanel.data.GameItem;
+import thestonedturtle.partypanel.data.PartyPlayer;
 
-@Data
-@AllArgsConstructor
-public class PrayerData
+@Value
+@Slf4j
+public class PartyItemsChange implements PartyProcessItemManager
 {
-	private final Prayer prayer;
-	private boolean available;
-	private boolean enabled;
+	PartyItemContainer t; // Type
+	int[] i; // Items
+	int[] q; // Quantity
+
+	public enum PartyItemContainer
+	{
+		I, // Inventory
+		E, // Equipment
+	}
+
+	@Override
+	public void process(PartyPlayer p, ItemManager itemManager)
+	{
+		final GameItem[] gameItems = GameItem.convertItemsToGameItems(this.i, this.q, itemManager);
+		switch (t)
+		{
+			case E:
+				p.setEquipment(gameItems);
+				break;
+			case I:
+				p.setInventory(gameItems);
+				break;
+			default:
+				log.warn("Unhandled item container type for event: {}", this);
+		}
+	}
 }
