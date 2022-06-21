@@ -126,7 +126,7 @@ public class PlayerSkillsPanel extends JPanel
 		this.setMinimumSize(PANEL_SIZE);
 		this.setPreferredSize(PANEL_SIZE);
 		this.setBackground(new Color(62, 53, 41));
-		this.setLayout(new DynamicGridLayout(8, 3, 0, 0));
+		this.setLayout(new DynamicGridLayout(8, 3, 2, 0));
 
 		int totalLevel = 0;
 		long totalXp = 0;
