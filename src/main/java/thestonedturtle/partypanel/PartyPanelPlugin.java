@@ -129,6 +129,7 @@ public class PartyPanelPlugin extends Plugin
 			{
 				myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
 				partyService.send(myPlayer);
+				partyService.send(new UserSync());
 			});
 		}
 	}
