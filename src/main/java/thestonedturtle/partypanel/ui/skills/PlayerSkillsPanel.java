@@ -151,6 +151,11 @@ public class PlayerSkillsPanel extends JPanel
 
 	public void updateSkill(final PartyPlayer player, final Skill s, final boolean displayVirtualLevels)
 	{
+		if (player.getStats() == null)
+		{
+			return;
+		}
+
 		final SkillPanelSlot panel = panelMap.get(s);
 		final int exp = player.getStats().getSkillEXPs().get(s);
 		final int baseLevel = displayVirtualLevels ? Experience.getLevelForXp(exp) : player.getStats().getBaseLevels().get(s);
