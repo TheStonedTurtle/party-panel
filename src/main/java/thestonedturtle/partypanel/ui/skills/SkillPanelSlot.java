@@ -146,14 +146,14 @@ public class SkillPanelSlot extends JPanel
 	public void updateBaseLevel(final int baseLevel)
 	{
 		// Adjust offset depending on amount of characters to make the UI look nicer
-		int rightPadding = 9;
+		int rightPadding = 8;
 		if (baseLevel > 99)
 		{
-			rightPadding = 2;
+			rightPadding = 1;
 		}
 		else if (baseLevel > 9)
 		{
-			rightPadding = 6;
+			rightPadding = 4;
 		}
 
 		baseLabel.setText(String.valueOf(baseLevel));
