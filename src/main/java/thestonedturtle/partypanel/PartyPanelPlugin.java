@@ -256,6 +256,8 @@ public class PartyPanelPlugin extends Plugin
 		SwingUtilities.invokeLater(panel::renderSidebar);
 		myPlayer = null;
 
+		panel.updateParty();
+
 		if (!isInParty())
 		{
 			return;
