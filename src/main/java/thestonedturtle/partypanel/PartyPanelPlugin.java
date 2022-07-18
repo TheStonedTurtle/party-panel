@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.swing.SwingUtilities;
 import lombok.Getter;
@@ -37,6 +38,7 @@ import net.runelite.client.party.events.UserPart;
 import net.runelite.client.party.messages.UserSync;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
@@ -76,6 +78,9 @@ public class PartyPanelPlugin extends Plugin
 
 	@Inject
 	private SessionManager sessionManager;
+
+	@Inject
+	private PluginManager pluginManager;
 
 	@Inject
 	SpriteManager spriteManager;
@@ -134,6 +139,12 @@ public class PartyPanelPlugin extends Plugin
 				partyService.send(myPlayer);
 				partyService.send(new UserSync());
 			});
+		}
+
+		final Optional<Plugin> partyPlugin = pluginManager.getPlugins().stream().filter(p -> p.getName().equals("Party")).findFirst();
+		if (partyPlugin.isPresent() && !pluginManager.isPluginEnabled(partyPlugin.get()))
+		{
+			pluginManager.setPluginEnabled(partyPlugin.get(), true);
 		}
 	}
 
