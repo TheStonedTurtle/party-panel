@@ -30,6 +30,7 @@ import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.util.HashMap;
 import java.util.Map;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -98,6 +99,7 @@ public class PlayerPanel extends JPanel
 
 	@Setter
 	private boolean showInfo;
+	private final Map<Integer, Boolean> tabMap = new HashMap<>();
 
 	public PlayerPanel(final PartyPlayer selectedPlayer, final PartyPanelConfig config,
 						final SpriteManager spriteManager, final ItemManager itemManager)
@@ -179,6 +181,15 @@ public class PlayerPanel extends JPanel
 				{
 					tabGroup.select(tab);
 				}
+
+				tabMap.put(spriteID, false);
+				tab.setOnSelectEvent(() -> {
+					tabMap.replaceAll((k,v) -> v=false);
+					tabMap.put(spriteID, true);
+					updatePlayerData(player, false);
+					return true;
+				});
+
 			}));
 	}
 
@@ -198,35 +209,65 @@ public class PlayerPanel extends JPanel
 			banner.recreatePanel();
 		}
 
-		inventoryPanel.updateInventory(player.getInventory());
-
-		for (final EquipmentInventorySlot equipSlot : EquipmentInventorySlot.values())
-		{
-			GameItem item = null;
-			if (player.getEquipment().length > equipSlot.getSlotIdx())
-			{
-				item = player.getEquipment()[equipSlot.getSlotIdx()];
-			}
-
-			final EquipmentPanelSlot slot = this.equipmentPanel.getPanelMap().get(equipSlot);
-			if (item != null && slot != null)
-			{
-				final AsyncBufferedImage img = itemManager.getImage(item.getId(), item.getQty(), item.isStackable());
-				slot.setGameItem(item, img);
-
-				// Ensure item is set when image loads
-				final GameItem finalItem = item;
-				img.onLoaded(() -> slot.setGameItem(finalItem, img));
-			}
-			else if (slot != null)
-			{
-				slot.setGameItem(null, null);
-			}
-		}
-
 		if (player.getStats() != null)
 		{
 			banner.refreshStats();
+		}
+
+		BufferedImage heart = null;
+		if (player.getPoison() >= VENOM_THRESHOLD)
+		{
+			heart = HEART_VENOM;
+		}
+		else if (player.getPoison() > 0)
+		{
+			heart = HEART_POISON;
+		}
+		else if (player.getDisease() > 0)
+		{
+			heart = HEART_DISEASE;
+		}
+		banner.setCurrentHeart(heart, spriteManager);
+		banner.setUsingStamIcon(player.getStamina() > 0, spriteManager);
+
+		if (!showInfo) {
+			return;
+		}
+
+		if (tabMap.getOrDefault(SpriteID.TAB_INVENTORY, false))
+		{
+			inventoryPanel.updateInventory(player.getInventory());
+		}
+
+		if (tabMap.getOrDefault(SpriteID.TAB_EQUIPMENT, false))
+		{
+			for (final EquipmentInventorySlot equipSlot : EquipmentInventorySlot.values())
+			{
+				GameItem item = null;
+				if (player.getEquipment().length > equipSlot.getSlotIdx())
+				{
+					item = player.getEquipment()[equipSlot.getSlotIdx()];
+				}
+
+				final EquipmentPanelSlot slot = this.equipmentPanel.getPanelMap().get(equipSlot);
+				if (item != null && slot != null)
+				{
+					final AsyncBufferedImage img = itemManager.getImage(item.getId(), item.getQty(), item.isStackable());
+					slot.setGameItem(item, img);
+
+					// Ensure item is set when image loads
+					final GameItem finalItem = item;
+					img.onLoaded(() -> slot.setGameItem(finalItem, img));
+				}
+				else if (slot != null)
+				{
+					slot.setGameItem(null, null);
+				}
+			}
+		}
+
+		if (player.getStats() != null && tabMap.getOrDefault(SpriteID.TAB_STATS, false))
+		{
 			int totalLevel = 0;
 			long totalXp = 0;
 			for (final Skill s : Skill.values())
@@ -245,7 +286,7 @@ public class PlayerPanel extends JPanel
 			skillsPanel.getTotalLevelPanel().updateTotalLevel(config.displayVirtualLevels() ? totalLevel : player.getStats().getTotalLevel(), totalXp);
 		}
 
-		if (player.getPrayers() != null)
+		if (player.getPrayers() != null && tabMap.getOrDefault(SpriteID.TAB_PRAYER, false))
 		{
 			for (final Map.Entry<Prayer, PrayerSlot> entry : prayersPanel.getSlotMap().entrySet())
 			{
@@ -258,23 +299,6 @@ public class PlayerPanel extends JPanel
 
 			prayersPanel.updatePrayerRemaining(player.getSkillBoostedLevel(Skill.PRAYER), player.getSkillRealLevel(Skill.PRAYER));
 		}
-
-		BufferedImage heart = null;
-		if (player.getPoison() >= VENOM_THRESHOLD)
-		{
-			heart = HEART_VENOM;
-		}
-		else if (player.getPoison() > 0)
-		{
-			heart = HEART_POISON;
-		}
-		else if (player.getDisease() > 0)
-		{
-			heart = HEART_DISEASE;
-		}
-		banner.setCurrentHeart(heart, spriteManager);
-
-		banner.setUsingStamIcon(player.getStamina() > 0, spriteManager);
 	}
 
 	public void updatePanel()
@@ -297,6 +321,7 @@ public class PlayerPanel extends JPanel
 		final MaterialTabGroup tabGroup = new MaterialTabGroup(view);
 		tabGroup.setBorder(new EmptyBorder(10, 0, 4, 0));
 
+		tabMap.clear();
 		addTab(tabGroup, SpriteID.TAB_INVENTORY, inventoryPanel, "Inventory");
 		addTab(tabGroup, SpriteID.TAB_EQUIPMENT, equipmentPanel, "Equipment");
 		addTab(tabGroup, SpriteID.TAB_PRAYER, prayersPanel, "Prayers");
