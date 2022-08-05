@@ -530,6 +530,11 @@ public class PartyPanelPlugin extends Plugin
 
 	public void changeParty(String passphrase)
 	{
+		passphrase = passphrase.replace(" ", "-").trim();
+		if (passphrase.length() == 0) {
+			return;
+		}
+
 		partyService.changeParty(passphrase);
 		panel.updateParty();
 	}
