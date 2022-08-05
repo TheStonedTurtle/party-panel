@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -533,6 +534,19 @@ public class PartyPanelPlugin extends Plugin
 		passphrase = passphrase.replace(" ", "-").trim();
 		if (passphrase.length() == 0) {
 			return;
+		}
+
+		for (int i = 0; i < passphrase.length(); ++i)
+		{
+			char ch = passphrase.charAt(i);
+			if (!Character.isLetter(ch) && !Character.isDigit(ch) && ch != '-')
+			{
+				JOptionPane.showMessageDialog(panel.getControlsPanel(),
+					"Party passphrase must be a combination of alphanumeric or hyphen characters.",
+					"Invalid party passphrase",
+					JOptionPane.ERROR_MESSAGE);
+				return;
+			}
 		}
 
 		partyService.changeParty(passphrase);

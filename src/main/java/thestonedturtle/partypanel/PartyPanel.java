@@ -58,6 +58,7 @@ class PartyPanel extends PluginPanel
 	private final JPanel basePanel = new JPanel();
 	private final JPanel passphrasePanel = new JPanel();
 	private final JLabel passphraseLabel = new JLabel();
+	@Getter
 	private final ControlsPanel controlsPanel;
 
 	@Inject
