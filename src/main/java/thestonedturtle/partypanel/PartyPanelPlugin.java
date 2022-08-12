@@ -306,16 +306,15 @@ public class PartyPanelPlugin extends Plugin
 
 		if (!isInParty())
 		{
+			if (!config.alwaysShowIcon())
+			{
+				clientToolbar.removeNavigation(navButton);
+				addedButton = false;
+			}
 			return;
 		}
 
 		config.setPreviousPartyId(event.getPassphrase());
-
-		if (!config.alwaysShowIcon())
-		{
-			clientToolbar.removeNavigation(navButton);
-			addedButton = false;
-		}
 	}
 
 	@Subscribe
