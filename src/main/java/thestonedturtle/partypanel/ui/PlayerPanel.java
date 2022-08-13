@@ -177,11 +177,6 @@ public class PlayerPanel extends JPanel
 				tabGroup.revalidate();
 				tabGroup.repaint();
 
-				if (spriteID == SpriteID.TAB_INVENTORY)
-				{
-					tabGroup.select(tab);
-				}
-
 				tabMap.put(spriteID, false);
 				tab.setOnSelectEvent(() -> {
 					tabMap.replaceAll((k,v) -> v=false);
@@ -190,6 +185,11 @@ public class PlayerPanel extends JPanel
 					return true;
 				});
 
+				if (spriteID == SpriteID.TAB_INVENTORY)
+				{
+					tabGroup.select(tab);
+					tabMap.put(spriteID, true);
+				}
 			}));
 	}
 
