@@ -35,11 +35,10 @@ import net.runelite.api.VarPlayer;
 import net.runelite.api.Varbits;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.party.PartyMember;
-import net.runelite.client.party.messages.PartyMemberMessage;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class PartyPlayer extends PartyMemberMessage
+@EqualsAndHashCode
+public class PartyPlayer
 {
 	private transient PartyMember member;
 	private String username;
@@ -54,7 +53,6 @@ public class PartyPlayer extends PartyMemberMessage
 
 	public PartyPlayer(final PartyMember member)
 	{
-		this.setMemberId(member.getMemberId());
 		this.member = member;
 		this.username = "";
 		this.stats = null;

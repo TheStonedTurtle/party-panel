@@ -126,7 +126,6 @@ public class PartyPanelPlugin extends Plugin
 			.panel(panel)
 			.build();
 
-		wsClient.registerMessage(PartyPlayer.class);
 		wsClient.registerMessage(PartyBatchedChange.class);
 
 		if (isInParty() || config.alwaysShowIcon())
@@ -158,7 +157,6 @@ public class PartyPanelPlugin extends Plugin
 		clientToolbar.removeNavigation(navButton);
 		addedButton = false;
 		partyMembers.clear();
-		wsClient.unregisterMessage(PartyPlayer.class);
 		wsClient.unregisterMessage(PartyBatchedChange.class);
 		currentChange = new PartyBatchedChange();
 		panel.getPlayerPanelMap().clear();
