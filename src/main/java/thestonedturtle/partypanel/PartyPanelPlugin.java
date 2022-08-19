@@ -319,6 +319,8 @@ public class PartyPanelPlugin extends Plugin
 				clientToolbar.removeNavigation(navButton);
 				addedButton = false;
 			}
+
+			panel.getPlayerPanelMap().clear();
 			return;
 		}
 
