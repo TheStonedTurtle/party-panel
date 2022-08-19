@@ -24,17 +24,18 @@
  */
 package thestonedturtle.partypanel.data.events;
 
-import lombok.Value;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import thestonedturtle.partypanel.data.PartyPlayer;
 
 // Used for updating stuff that is just a single integer value and doesn't fit into the other classes
-@Value
+@Data
 @Slf4j
 public class PartyMiscChange implements PartyProcess
 {
 	PartyMisc t;
-	int v;
+	Integer v;
+	String s;
 
 	public enum PartyMisc
 	{
@@ -46,6 +47,21 @@ public class PartyMiscChange implements PartyProcess
 		P, // Poison
 		D, // Disease
 		W, // World
+		U, // Username
+	}
+
+	public PartyMiscChange(PartyMisc t, Integer v)
+	{
+		this.t = t;
+		this.v = v;
+		this.s = null;
+	}
+
+	public PartyMiscChange(PartyMisc t, String s)
+	{
+		this.t = t;
+		this.v = null;
+		this.s = s;
 	}
 
 	@Override
@@ -76,6 +92,9 @@ public class PartyMiscChange implements PartyProcess
 				break;
 			case W:
 				p.setWorld(v);
+				break;
+			case U:
+				p.setUsername(s);
 				break;
 			default:
 				log.warn("Unhandled misc change type for event: {}", this);

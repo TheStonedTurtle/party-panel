@@ -141,6 +141,7 @@ public class PartyPanelPlugin extends Plugin
 			{
 				myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
 				partyService.send(new UserSync());
+				partyService.send(partyPlayerAsBatchedChange());
 			});
 		}
 
@@ -159,6 +160,8 @@ public class PartyPanelPlugin extends Plugin
 		partyMembers.clear();
 		wsClient.unregisterMessage(PartyPlayer.class);
 		wsClient.unregisterMessage(PartyBatchedChange.class);
+		currentChange = new PartyBatchedChange();
+		panel.getPlayerPanelMap().clear();
 	}
 
 	@Subscribe
@@ -209,6 +212,14 @@ public class PartyPanelPlugin extends Plugin
 	{
 		if (!isInParty())
 		{
+			return;
+		}
+
+		if (myPlayer == null)
+		{
+			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
+			final PartyBatchedChange ce = partyPlayerAsBatchedChange();
+			partyService.send(ce);
 			return;
 		}
 
@@ -280,7 +291,6 @@ public class PartyPanelPlugin extends Plugin
 			}
 			return;
 		}
-
 
 		clientThread.invoke(() ->
 		{
@@ -526,7 +536,7 @@ public class PartyPanelPlugin extends Plugin
 		}
 
 		// Create placeholder prayer object
-		if (player.getPrayers() == null && (e.getAp() > -1 || e.getEp() > -1))
+		if (player.getPrayers() == null && (e.getAp() != null || e.getEp() != null))
 		{
 			player.setPrayers(new Prayers());
 		}
@@ -654,7 +664,7 @@ public class PartyPanelPlugin extends Plugin
 		{
 			for (final Skill s : Skill.values())
 			{
-				currentChange.getS().add(myPlayer.getStats().createPartyStatChangeForSkill(s));
+				c.getS().add(myPlayer.getStats().createPartyStatChangeForSkill(s));
 			}
 
 			c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.S, myPlayer.getStats().getSpecialPercent()));
@@ -688,12 +698,15 @@ public class PartyPanelPlugin extends Plugin
 				}
 			}
 
-			currentChange.setAp(PartyBatchedChange.pack(available));
-			currentChange.setEp(PartyBatchedChange.pack(enabled));
+			c.setAp(PartyBatchedChange.pack(available));
+			c.setEp(PartyBatchedChange.pack(enabled));
 		}
+
+		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.U, myPlayer.getUsername()));
 
 		c.setMemberId(partyService.getLocalMember().getMemberId()); // Add member ID before sending
 		c.removeDefaults();
+
 		return c;
 	}
 }
