@@ -464,14 +464,14 @@ public class PartyPanelPlugin extends Plugin
 		if (c.getContainerId() == InventoryID.INVENTORY.getId())
 		{
 			myPlayer.setInventory(GameItem.convertItemsToGameItems(c.getItemContainer().getItems(), itemManager));
-			int[][] items = convertItemsToArrays(c.getItemContainer().getItems());
-			currentChange.setI(new PartyItemsChange(PartyItemsChange.PartyItemContainer.I, items[0], items[1]));
+			int[] items = convertItemsToArray(c.getItemContainer().getItems());
+			currentChange.setI(new PartyItemsChange(PartyItemsChange.PartyItemContainer.I, items));
 		}
 		else if (c.getContainerId() == InventoryID.EQUIPMENT.getId())
 		{
 			myPlayer.setEquipment(GameItem.convertItemsToGameItems(c.getItemContainer().getItems(), itemManager));
-			int[][] items = convertItemsToArrays(c.getItemContainer().getItems());
-			currentChange.setE(new PartyItemsChange(PartyItemsChange.PartyItemContainer.E, items[0], items[1]));
+			int[] items = convertItemsToArray(c.getItemContainer().getItems());
+			currentChange.setE(new PartyItemsChange(PartyItemsChange.PartyItemContainer.E, items));
 		}
 	}
 
@@ -602,18 +602,15 @@ public class PartyPanelPlugin extends Plugin
 		panel.updateParty();
 	}
 
-	private int[][] convertItemsToArrays(Item[] items)
+	private int[] convertItemsToArray(Item[] items)
 	{
-		int[] ids = new int[items.length];
-		int[] qtys = new int[items.length];
-		for (int i = 0; i < items.length; i++)
+		int[] eles = new int[items.length * 2];
+		for (int i = 0; i < items.length * 2; i += 2)
 		{
-			ids[i] = items[i].getId();
-			qtys[i] = items[i].getQuantity();
+			eles[i] = items[i / 2].getId();
+			eles[i + 1] = items[i / 2].getQuantity();
 		}
 
-		return new int[][]{
-			ids, qtys
-		};
+		return eles;
 	}
 }

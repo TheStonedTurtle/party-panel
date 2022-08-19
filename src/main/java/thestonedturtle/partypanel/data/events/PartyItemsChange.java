@@ -35,8 +35,7 @@ import thestonedturtle.partypanel.data.PartyPlayer;
 public class PartyItemsChange implements PartyProcessItemManager
 {
 	PartyItemContainer t; // Type
-	int[] i; // Items
-	int[] q; // Quantity
+	int[] e; // Items & Quantities
 
 	public enum PartyItemContainer
 	{
@@ -47,7 +46,7 @@ public class PartyItemsChange implements PartyProcessItemManager
 	@Override
 	public void process(PartyPlayer p, ItemManager itemManager)
 	{
-		final GameItem[] gameItems = GameItem.convertItemsToGameItems(this.i, this.q, itemManager);
+		final GameItem[] gameItems = GameItem.convertItemsToGameItems(this.e, itemManager);
 		switch (t)
 		{
 			case E:

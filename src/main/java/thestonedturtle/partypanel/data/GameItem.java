@@ -57,18 +57,18 @@ public class GameItem
 		this.price = itemManager.getItemPrice(c.getNote() != -1 ? c.getLinkedNoteId() : id);
 	}
 
-	public static GameItem[] convertItemsToGameItems(final int[] ids, final int[] qtys, final ItemManager itemManager)
+	public static GameItem[] convertItemsToGameItems(final int[] items, final ItemManager itemManager)
 	{
-		GameItem[] output = new GameItem[ids.length];
-		for (int i = 0; i < ids.length; i++)
+		GameItem[] output = new GameItem[items.length / 2];
+		for (int i = 0; i < items.length; i += 2)
 		{
-			if (ids[i] == -1 || qtys[i] <= 0)
+			if (items[i] == -1 || items[i + 1] <= 0)
 			{
-				output[i] = null;
+				output[i / 2] = null;
 			}
 			else
 			{
-				output[i] = new GameItem(ids[i], qtys[i], itemManager);
+				output[i / 2] = new GameItem(items[i], items[i + 1], itemManager);
 			}
 		}
 
