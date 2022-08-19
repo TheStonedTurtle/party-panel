@@ -37,7 +37,6 @@ import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.party.PartyService;
 import net.runelite.client.party.WSClient;
-import net.runelite.client.party.events.UserJoin;
 import net.runelite.client.party.events.UserPart;
 import net.runelite.client.party.messages.UserSync;
 import net.runelite.client.plugins.Plugin;
@@ -50,10 +49,11 @@ import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
 import thestonedturtle.partypanel.data.PrayerData;
 import thestonedturtle.partypanel.data.Prayers;
+import thestonedturtle.partypanel.data.Stats;
 import thestonedturtle.partypanel.data.events.PartyBatchedChange;
-import thestonedturtle.partypanel.data.events.PartyItemsChange;
 import thestonedturtle.partypanel.data.events.PartyMiscChange;
 import thestonedturtle.partypanel.data.events.PartyStatChange;
+import thestonedturtle.partypanel.ui.PlayerPanel;
 import thestonedturtle.partypanel.ui.prayer.PrayerSprites;
 
 @Slf4j
@@ -140,7 +140,6 @@ public class PartyPanelPlugin extends Plugin
 			clientThread.invokeLater(() ->
 			{
 				myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
-				partyService.send(myPlayer);
 				partyService.send(new UserSync());
 			});
 		}
@@ -248,35 +247,6 @@ public class PartyPanelPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onUserJoin(final UserJoin event)
-	{
-		// TODO: Figure out how to support people not using the plugin
-		if (!addedButton)
-		{
-			clientToolbar.addNavigation(navButton);
-			addedButton = true;
-		}
-
-		// We care about self joined
-		if (!isLocalPlayer(event.getMemberId()))
-		{
-			return;
-		}
-
-		if (myPlayer != null)
-		{
-			partyService.send(myPlayer);
-			return;
-		}
-
-		clientThread.invoke(() ->
-		{
-			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
-			partyService.send(myPlayer);
-		});
-	}
-
-	@Subscribe
 	public void onUserPart(final UserPart event)
 	{
 		final PartyPlayer removed = partyMembers.remove(event.getMemberId());
@@ -295,7 +265,32 @@ public class PartyPanelPlugin extends Plugin
 	@Subscribe
 	public void onUserSync(final UserSync event)
 	{
-		partyService.send(myPlayer);
+		if (!addedButton)
+		{
+			clientToolbar.addNavigation(navButton);
+			addedButton = true;
+		}
+
+		if (myPlayer != null)
+		{
+			final PartyBatchedChange c = partyPlayerAsBatchedChange();
+			if (c.isValid())
+			{
+				partyService.send(c);
+			}
+			return;
+		}
+
+
+		clientThread.invoke(() ->
+		{
+			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
+			final PartyBatchedChange c = partyPlayerAsBatchedChange();
+			if (c.isValid())
+			{
+				partyService.send(c);
+			}
+		});
 	}
 
 	@Subscribe
@@ -332,7 +327,8 @@ public class PartyPanelPlugin extends Plugin
 		if (myPlayer == null || !Objects.equals(client.getLocalPlayer().getName(), myPlayer.getUsername()))
 		{
 			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
-			partyService.send(myPlayer);
+			final PartyBatchedChange c = partyPlayerAsBatchedChange();
+			partyService.send(c);
 			return;
 		}
 
@@ -513,24 +509,6 @@ public class PartyPanelPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onPartyPlayer(final PartyPlayer player)
-	{
-		if (!isInParty() || isLocalPlayer(player.getMemberId()))
-		{
-			return;
-		}
-
-		player.setMember(partyService.getMemberById(player.getMemberId()));
-		if (player.getMember() == null)
-		{
-			return;
-		}
-
-		partyMembers.put(player.getMemberId(), player);
-		SwingUtilities.invokeLater(() -> panel.renderSidebar());
-	}
-
-	@Subscribe
 	public void onPartyBatchedChange(PartyBatchedChange e)
 	{
 		if (isLocalPlayer(e.getMemberId()))
@@ -538,13 +516,34 @@ public class PartyPanelPlugin extends Plugin
 			return;
 		}
 
-		final PartyPlayer player = partyMembers.get(e.getMemberId());
+		// create new PartyPlayer for this member if they don't already exist
+		final PartyPlayer player = partyMembers.computeIfAbsent(e.getMemberId(), k -> new PartyPlayer(partyService.getMemberById(e.getMemberId())));
+
+		// Create placeholder stats object
+		if (player.getStats() == null && e.hasStatChange())
+		{
+			player.setStats(new Stats());
+		}
+
+		// Create placeholder prayer object
+		if (player.getPrayers() == null && (e.getAp() > -1 || e.getEp() > -1))
+		{
+			player.setPrayers(new Prayers());
+		}
 		clientThread.invoke(() ->
 		{
 			e.process(player, itemManager);
 
-			// We need to call update here as the update below can trigger before the clientThread has been invoked
-			SwingUtilities.invokeLater(() -> panel.getPlayerPanelMap().get(e.getMemberId()).updatePlayerData(player, e.hasBreakingBannerChange()));
+			SwingUtilities.invokeLater(() -> {
+				final PlayerPanel playerPanel = panel.getPlayerPanelMap().get(e.getMemberId());
+				if (playerPanel != null)
+				{
+					playerPanel.updatePlayerData(player, e.hasBreakingBannerChange());
+					return;
+				}
+
+				panel.drawPlayerPanel(player);
+			});
 		});
 	}
 
@@ -618,5 +617,83 @@ public class PartyPanelPlugin extends Plugin
 		}
 
 		return eles;
+	}
+
+	private int[] convertGameItemsToArray(GameItem[] items)
+	{
+		int[] eles = new int[items.length * 2];
+		for (int i = 0; i < items.length * 2; i += 2)
+		{
+			if (items[i / 2] == null) {
+				eles[i] = -1;
+				eles[i + 1] = 0;
+				continue;
+			}
+
+			eles[i] = items[i / 2].getId();
+			eles[i + 1] = items[i / 2].getQty();
+		}
+
+		return eles;
+	}
+
+	public PartyBatchedChange partyPlayerAsBatchedChange()
+	{
+		final PartyBatchedChange c = new PartyBatchedChange();
+		if (myPlayer == null)
+		{
+			return c;
+		}
+
+		// Inventories
+		c.setI(convertGameItemsToArray(myPlayer.getInventory()));
+		c.setE(convertGameItemsToArray(myPlayer.getEquipment()));
+
+		// Stats
+		if (myPlayer.getStats() != null)
+		{
+			for (final Skill s : Skill.values())
+			{
+				currentChange.getS().add(myPlayer.getStats().createPartyStatChangeForSkill(s));
+			}
+
+			c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.S, myPlayer.getStats().getSpecialPercent()));
+			c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.R, myPlayer.getStats().getRunEnergy()));
+			c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.C, myPlayer.getStats().getCombatLevel()));
+			c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.T, myPlayer.getStats().getTotalLevel()));;
+		}
+
+		// Misc
+		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.ST, myPlayer.getStamina()));
+		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.P, myPlayer.getPoison()));
+		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.D, myPlayer.getDisease()));
+		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.W, myPlayer.getWorld()));
+
+		// Prayers
+		if (myPlayer.getPrayers() != null)
+		{
+			final Collection<Prayer> available = new ArrayList<>();
+			final Collection<Prayer> enabled = new ArrayList<>();
+			for (final PrayerSprites p : PrayerSprites.values())
+			{
+				final PrayerData data = myPlayer.getPrayers().getPrayerData().get(p.getPrayer());
+				if (data.isAvailable())
+				{
+					available.add(p.getPrayer());
+				}
+
+				if (data.isEnabled())
+				{
+					enabled.add(p.getPrayer());
+				}
+			}
+
+			currentChange.setAp(PartyBatchedChange.pack(available));
+			currentChange.setEp(PartyBatchedChange.pack(enabled));
+		}
+
+		c.setMemberId(partyService.getLocalMember().getMemberId()); // Add member ID before sending
+		c.removeDefaults();
+		return c;
 	}
 }

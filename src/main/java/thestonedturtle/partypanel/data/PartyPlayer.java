@@ -52,7 +52,7 @@ public class PartyPlayer extends PartyMemberMessage
 	private int disease;
 	private int world;
 
-	public PartyPlayer(final PartyMember member, final Client client, final ItemManager itemManager)
+	public PartyPlayer(final PartyMember member)
 	{
 		this.setMemberId(member.getMemberId());
 		this.member = member;
@@ -61,6 +61,15 @@ public class PartyPlayer extends PartyMemberMessage
 		this.inventory = new GameItem[28];
 		this.equipment = new GameItem[EquipmentInventorySlot.AMMO.getSlotIdx() + 1];
 		this.prayers = null;
+		this.stamina = 0;
+		this.poison = 0;
+		this.disease = 0;
+		this.world = 0;
+	}
+
+	public PartyPlayer(final PartyMember member, final Client client, final ItemManager itemManager)
+	{
+		this(member);
 		this.stamina = client.getVarbitValue(Varbits.STAMINA_EFFECT);
 		this.poison = client.getVar(VarPlayer.POISON);
 		this.disease = client.getVar(VarPlayer.DISEASE_VALUE);

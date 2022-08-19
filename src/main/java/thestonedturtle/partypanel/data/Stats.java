@@ -46,6 +46,26 @@ public class Stats
 	private int combatLevel;
 	private int totalLevel;
 
+	public Stats()
+	{
+		for (final Skill s : Skill.values())
+		{
+			baseLevels.put(s, 1);
+			boostedLevels.put(s, 1);
+			skillEXPs.put(s, 0);
+		}
+
+		baseLevels.put(Skill.HITPOINTS, 10);
+		boostedLevels.put(Skill.HITPOINTS, 10);
+		skillEXPs.put(Skill.HITPOINTS, 1154);
+
+		combatLevel = 3;
+		specialPercent = 0;
+		runEnergy = 0;
+		combatLevel = 0;
+		totalLevel = 0;
+	}
+
 	public Stats(final Client client)
 	{
 		final int[] bases = client.getRealSkillLevels();

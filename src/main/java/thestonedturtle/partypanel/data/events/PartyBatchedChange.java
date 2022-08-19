@@ -118,6 +118,17 @@ public class PartyBatchedChange extends PartyMemberMessage
 				.anyMatch(e -> e.getT() == PartyMiscChange.PartyMisc.C || e.getT() == PartyMiscChange.PartyMisc.W);
 	}
 
+	public boolean hasStatChange()
+	{
+		return (s != null && s.size() > 0)
+			|| (m != null && m.stream().anyMatch(e ->
+				e.getT() == PartyMiscChange.PartyMisc.S
+				|| e.getT() == PartyMiscChange.PartyMisc.R
+				|| e.getT() == PartyMiscChange.PartyMisc.C
+				|| e.getT() == PartyMiscChange.PartyMisc.T)
+			);
+	}
+
 	public static <E extends Enum<E>> int pack(Collection<E> items) {
 		int i = 0;
 		for (E e : items) {

@@ -48,6 +48,14 @@ public class Prayers
 	@Getter
 	private final Map<Prayer, PrayerData> prayerData = new HashMap<>();
 
+	public Prayers()
+	{
+		for (final Prayer p : Prayer.values())
+		{
+			prayerData.put(p, new PrayerData(p, p.ordinal() == 0, p.ordinal() == 0));
+		}
+	}
+
 	public Prayers(final Client client)
 	{
 		// Initialize all prayers if created when logged in
