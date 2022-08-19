@@ -33,6 +33,7 @@ import lombok.NoArgsConstructor;
 import net.runelite.api.Prayer;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.party.messages.PartyMemberMessage;
+import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
 
 @Data
@@ -40,8 +41,8 @@ import thestonedturtle.partypanel.data.PartyPlayer;
 @EqualsAndHashCode(callSuper = true)
 public class PartyBatchedChange extends PartyMemberMessage
 {
-	PartyItemsChange i; // Inventory
-	PartyItemsChange e; // equipment
+	int[] i; // Inventory
+	int[] e; // equipment
 	Collection<PartyStatChange> s = new ArrayList<>(); // Stat Changes
 	Collection<PartyMiscChange> m = new ArrayList<>(); // Misc Changes
 	Integer ap; // Available Prayers, bit-packed & contains all available prayers on every change
@@ -68,12 +69,14 @@ public class PartyBatchedChange extends PartyMemberMessage
 	{
 		if (i != null)
 		{
-			i.process(player, itemManager);
+			final GameItem[] gameItems = GameItem.convertItemsToGameItems(i, itemManager);
+			player.setInventory(gameItems);
 		}
 
 		if (e != null)
 		{
-			e.process(player, itemManager);
+			final GameItem[] gameItems = GameItem.convertItemsToGameItems(e, itemManager);
+			player.setEquipment(gameItems);
 		}
 
 		if (s != null)
