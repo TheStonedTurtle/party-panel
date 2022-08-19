@@ -2,6 +2,8 @@ package thestonedturtle.partypanel;
 
 import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -15,6 +17,7 @@ import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.InventoryID;
 import net.runelite.api.Item;
+import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
 import net.runelite.api.VarPlayer;
 import net.runelite.api.Varbits;
@@ -45,11 +48,11 @@ import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
 import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
+import thestonedturtle.partypanel.data.PrayerData;
 import thestonedturtle.partypanel.data.Prayers;
 import thestonedturtle.partypanel.data.events.PartyBatchedChange;
 import thestonedturtle.partypanel.data.events.PartyItemsChange;
 import thestonedturtle.partypanel.data.events.PartyMiscChange;
-import thestonedturtle.partypanel.data.events.PartyPrayerChange;
 import thestonedturtle.partypanel.data.events.PartyStatChange;
 import thestonedturtle.partypanel.ui.prayer.PrayerSprites;
 
@@ -356,19 +359,49 @@ public class PartyPanelPlugin extends Plugin
 		if (myPlayer.getPrayers() == null)
 		{
 			myPlayer.setPrayers(new Prayers(client));
+			final Collection<Prayer> available = new ArrayList<>();
+			final Collection<Prayer> enabled = new ArrayList<>();
 			for (final PrayerSprites p : PrayerSprites.values())
 			{
-				currentChange.getP().add(new PartyPrayerChange(myPlayer.getPrayers().getPrayerData().get(p.getPrayer())));
+				final PrayerData data = myPlayer.getPrayers().getPrayerData().get(p.getPrayer());
+				if (data.isAvailable()) {
+					available.add(p.getPrayer());
+				}
+
+				if (data.isEnabled()) {
+					enabled.add(p.getPrayer());
+				}
 			}
+
+			currentChange.setAp(PartyBatchedChange.pack(available));
+			currentChange.setEp(PartyBatchedChange.pack(enabled));
 		}
 		else
 		{
-			for (final PrayerSprites prayer : PrayerSprites.values())
+			final Collection<Prayer> available = new ArrayList<>();
+			final Collection<Prayer> enabled = new ArrayList<>();
+			boolean change = false;
+			for (final PrayerSprites p : PrayerSprites.values())
 			{
-				if (myPlayer.getPrayers().updatePrayerState(prayer, client))
-				{
-					currentChange.getP().add(new PartyPrayerChange(myPlayer.getPrayers().getPrayerData().get(prayer.getPrayer())));
+				change = myPlayer.getPrayers().updatePrayerState(p, client) || change;
+
+				// Store the data for this prayer regardless of if it changes since any update
+				// will assume all prayers are not available & disabled
+				final PrayerData data = myPlayer.getPrayers().getPrayerData().get(p.getPrayer());
+				if (data.isAvailable()) {
+					available.add(p.getPrayer());
 				}
+
+				if (data.isEnabled()) {
+					enabled.add(p.getPrayer());
+				}
+			}
+
+			// Send both arrays as bit-packed ints whenever any prayer has changed.
+			if (change)
+			{
+				currentChange.setAp(PartyBatchedChange.pack(available));
+				currentChange.setEp(PartyBatchedChange.pack(enabled));
 			}
 		}
 
