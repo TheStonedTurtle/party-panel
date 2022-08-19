@@ -567,7 +567,13 @@ public class PartyPanelPlugin extends Plugin
 
 		final PartyPlayer player = partyMembers.get(e.getMemberId());
 		player.getMember().setAvatar(e.getImage());
-		SwingUtilities.invokeLater(() -> panel.getPlayerPanelMap().get(e.getMemberId()).getBanner().refreshStats());
+		SwingUtilities.invokeLater(() -> {
+			final PlayerPanel p = panel.getPlayerPanelMap().get(e.getMemberId());
+			if (p != null)
+			{
+				p.getBanner().refreshStats();
+			}
+		});
 	}
 
 	public void changeParty(String passphrase)
