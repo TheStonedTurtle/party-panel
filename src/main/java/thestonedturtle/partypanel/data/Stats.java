@@ -109,6 +109,6 @@ public class Stats
 
 	public PartyStatChange createPartyStatChangeForSkill(Skill s)
 	{
-		return new PartyStatChange(s, baseLevels.get(s), boostedLevels.get(s), skillEXPs.get(s));
+		return new PartyStatChange(s.ordinal(), baseLevels.get(s), boostedLevels.get(s), skillEXPs.get(s));
 	}
 }

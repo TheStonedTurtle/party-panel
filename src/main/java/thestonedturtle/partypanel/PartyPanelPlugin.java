@@ -443,7 +443,7 @@ public class PartyPanelPlugin extends Plugin
 		myPlayer.setSkillsRealLevel(event.getSkill(), event.getLevel());
 		myPlayer.setSkillExperience(event.getSkill(), event.getXp());
 
-		currentChange.getS().add(new PartyStatChange(event.getSkill(), event.getLevel(), event.getBoostedLevel(), event.getXp()));
+		currentChange.getS().add(new PartyStatChange(event.getSkill().ordinal(), event.getLevel(), event.getBoostedLevel(), event.getXp()));
 
 		// Total level change
 		if (myPlayer.getStats().getTotalLevel() != client.getTotalLevel())

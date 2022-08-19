@@ -31,7 +31,7 @@ import thestonedturtle.partypanel.data.PartyPlayer;
 @Value
 public class PartyStatChange implements PartyProcess
 {
-	Skill s;
+	int s; // Skill ordinal
 	int l; // Level
 	int b; // Boosted Level
 	int e; // EXP
@@ -39,8 +39,9 @@ public class PartyStatChange implements PartyProcess
 	@Override
 	public void process(PartyPlayer p)
 	{
-		p.getStats().getBaseLevels().put(s, l);
-		p.getStats().getBoostedLevels().put(s, b);
-		p.getStats().getSkillEXPs().put(s, e);
+		final Skill skill = Skill.values()[s];
+		p.getStats().getBaseLevels().put(skill, l);
+		p.getStats().getBoostedLevels().put(skill, b);
+		p.getStats().getSkillEXPs().put(skill, e);
 	}
 }
