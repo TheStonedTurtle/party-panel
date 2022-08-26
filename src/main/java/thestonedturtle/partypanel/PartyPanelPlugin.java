@@ -2,6 +2,8 @@ package thestonedturtle.partypanel;
 
 import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -42,6 +44,7 @@ import net.runelite.client.party.messages.UserSync;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.PluginManager;
+import net.runelite.client.task.Schedule;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
@@ -111,6 +114,7 @@ public class PartyPanelPlugin extends Plugin
 	private boolean addedButton = false;
 
 	private PartyPanel panel;
+	private Instant lastLogout;
 
 	// All events should be deferred to the next game tick
 	private PartyBatchedChange currentChange = new PartyBatchedChange();
@@ -149,6 +153,8 @@ public class PartyPanelPlugin extends Plugin
 		{
 			pluginManager.setPluginEnabled(partyPlugin.get(), true);
 		}
+
+		lastLogout = Instant.now();
 	}
 
 	@Override
@@ -160,6 +166,7 @@ public class PartyPanelPlugin extends Plugin
 		wsClient.unregisterMessage(PartyBatchedChange.class);
 		currentChange = new PartyBatchedChange();
 		panel.getPlayerPanelMap().clear();
+		lastLogout = null;
 	}
 
 	@Subscribe
@@ -211,6 +218,11 @@ public class PartyPanelPlugin extends Plugin
 		if (!isInParty())
 		{
 			return;
+		}
+
+		if (c.getGameState() == GameState.LOGIN_SCREEN)
+		{
+			lastLogout = Instant.now();
 		}
 
 		if (myPlayer == null)
@@ -714,5 +726,24 @@ public class PartyPanelPlugin extends Plugin
 		c.removeDefaults();
 
 		return c;
+	}
+
+	@Schedule(
+		period = 10,
+		unit = ChronoUnit.SECONDS
+	)
+	private void checkIdle()
+	{
+		if (client.getGameState() != GameState.LOGIN_SCREEN)
+		{
+			return;
+		}
+
+		if (lastLogout != null && lastLogout.isBefore(Instant.now().minus(30, ChronoUnit.MINUTES))
+			&& partyService.isInParty())
+		{
+			log.info("Leaving party due to inactivity");
+			partyService.changeParty(null);
+		}
 	}
 }
