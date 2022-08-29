@@ -140,21 +140,24 @@ public class PlayerSkillsPanel extends JPanel
 			totalLevel += realLevel;
 		}
 
+		// Add 9 instead of 10 since `overall` is included in the Skill enum
+		totalLevel = player.getStats() == null ? (9 + Skill.values().length) : totalLevel;
 		totalLevelPanel = new TotalPanelSlot(totalLevel, spriteManager);
 		this.add(totalLevelPanel);
 	}
 
 	public void updateSkill(final PartyPlayer player, final Skill s, final boolean displayVirtualLevels)
 	{
-		if (player.getStats() == null)
+		int boosted = s == Skill.HITPOINTS ? 10 : 1;
+		int baseLevel = s == Skill.HITPOINTS ? 10 : 1;
+		if (player.getStats() != null)
 		{
-			return;
+			boosted = player.getSkillBoostedLevel(s);
+			baseLevel = player.getSkillRealLevel(s, displayVirtualLevels);
 		}
 
 		final SkillPanelSlot panel = panelMap.get(s);
-		final int baseLevel = player.getSkillRealLevel(s, displayVirtualLevels);
-
-		panel.updateBoostedLevel(player.getStats().getBoostedLevels().get(s));
+		panel.updateBoostedLevel(boosted);
 		panel.updateBaseLevel(baseLevel);
 		panel.setToolTipText(s.getName());
 	}
