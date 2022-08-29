@@ -28,14 +28,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import lombok.Getter;
-import net.runelite.api.Experience;
 import net.runelite.api.Skill;
 import static net.runelite.api.Skill.AGILITY;
 import static net.runelite.api.Skill.ATTACK;
@@ -129,11 +127,10 @@ public class PlayerSkillsPanel extends JPanel
 		this.setLayout(new DynamicGridLayout(8, 3, 2, 0));
 
 		int totalLevel = 0;
-		long totalXp = 0;
 		for (final Skill s : SKILLS)
 		{
-			int realLevel = displayVirtualLevels ? Experience.getLevelForXp(player.getSkillExperience(s)) : player.getSkillRealLevel(s);
-			final SkillPanelSlot slot = new SkillPanelSlot(player.getSkillBoostedLevel(s), realLevel, player.getSkillExperience(s));
+			int realLevel = player.getSkillRealLevel(s, displayVirtualLevels);
+			final SkillPanelSlot slot = new SkillPanelSlot(player.getSkillBoostedLevel(s), realLevel);
 			panelMap.put(s, slot);
 			this.add(slot);
 			spriteManager.getSpriteAsync(SPRITE_MAP.get(s), 0, img -> SwingUtilities.invokeLater(() -> slot.initImages(img, spriteManager)));
@@ -141,11 +138,9 @@ public class PlayerSkillsPanel extends JPanel
 			updateSkill(player, s, displayVirtualLevels); // Call to ensure tooltip is correct
 
 			totalLevel += realLevel;
-			totalXp += player.getSkillExperience(s);
 		}
 
-		totalLevel = player.getStats() == null ? -1 : totalLevel;
-		totalLevelPanel = new TotalPanelSlot(totalLevel, totalXp, spriteManager);
+		totalLevelPanel = new TotalPanelSlot(totalLevel, spriteManager);
 		this.add(totalLevelPanel);
 	}
 
@@ -157,22 +152,10 @@ public class PlayerSkillsPanel extends JPanel
 		}
 
 		final SkillPanelSlot panel = panelMap.get(s);
-		final int exp = player.getStats().getSkillEXPs().get(s);
-		final int baseLevel = displayVirtualLevels ? Experience.getLevelForXp(exp) : player.getStats().getBaseLevels().get(s);
+		final int baseLevel = player.getSkillRealLevel(s, displayVirtualLevels);
 
 		panel.updateBoostedLevel(player.getStats().getBoostedLevels().get(s));
 		panel.updateBaseLevel(baseLevel);
-		panel.setSkillEXP(exp);
-
-		String tooltipExp = "<html>" + s.getName() + " XP: " + NumberFormat.getNumberInstance().format(exp) + "<br/>";
-		int virtualLevel = Experience.getLevelForXp(exp);
-		if (virtualLevel > 0 && virtualLevel < 126)
-		{
-			int nextLevelExp = Experience.getXpForLevel(virtualLevel + 1);
-			tooltipExp += "Next level at: " + NumberFormat.getNumberInstance().format(nextLevelExp) + "<br/>";
-			tooltipExp += "Remaining XP: " + NumberFormat.getNumberInstance().format(nextLevelExp - exp) + "<br/>";
-		}
-
-		panel.setToolTipText(tooltipExp);
+		panel.setToolTipText(s.getName());
 	}
 }

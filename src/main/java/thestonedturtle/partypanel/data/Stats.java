@@ -40,7 +40,6 @@ public class Stats
 {
 	private final Map<Skill, Integer> baseLevels = new HashMap<>();
 	private final Map<Skill, Integer> boostedLevels = new HashMap<>();
-	private final Map<Skill, Integer> skillEXPs = new HashMap<>();
 	private int specialPercent;
 	private int runEnergy;
 	private int combatLevel;
@@ -52,12 +51,10 @@ public class Stats
 		{
 			baseLevels.put(s, 1);
 			boostedLevels.put(s, 1);
-			skillEXPs.put(s, 0);
 		}
 
 		baseLevels.put(Skill.HITPOINTS, 10);
 		boostedLevels.put(Skill.HITPOINTS, 10);
-		skillEXPs.put(Skill.HITPOINTS, 1154);
 
 		combatLevel = 3;
 		specialPercent = 0;
@@ -68,24 +65,15 @@ public class Stats
 
 	public Stats(final Client client)
 	{
-		final int[] bases = client.getRealSkillLevels();
+		final int[] bases = client.getSkillExperiences();
 		final int[] boosts = client.getBoostedSkillLevels();
 		for (final Skill s : Skill.values())
 		{
-			baseLevels.put(s, bases[s.ordinal()]);
+			baseLevels.put(s, Experience.getLevelForXp(bases[s.ordinal()]));
 			boostedLevels.put(s, boosts[s.ordinal()]);
-			skillEXPs.put(s, client.getSkillExperience(s));
 		}
 
-		combatLevel = Experience.getCombatLevel(
-			baseLevels.get(Skill.ATTACK),
-			baseLevels.get(Skill.STRENGTH),
-			baseLevels.get(Skill.DEFENCE),
-			baseLevels.get(Skill.HITPOINTS),
-			baseLevels.get(Skill.MAGIC),
-			baseLevels.get(Skill.RANGED),
-			baseLevels.get(Skill.PRAYER)
-		);
+		recalculateCombatLevel();
 
 		specialPercent = client.getVar(VarPlayer.SPECIAL_ATTACK_PERCENT) / 10;
 		totalLevel = client.getTotalLevel();
@@ -95,13 +83,13 @@ public class Stats
 	public int recalculateCombatLevel()
 	{
 		combatLevel = Experience.getCombatLevel(
-			baseLevels.get(Skill.ATTACK),
-			baseLevels.get(Skill.STRENGTH),
-			baseLevels.get(Skill.DEFENCE),
-			baseLevels.get(Skill.HITPOINTS),
-			baseLevels.get(Skill.MAGIC),
-			baseLevels.get(Skill.RANGED),
-			baseLevels.get(Skill.PRAYER)
+			Math.min(baseLevels.get(Skill.ATTACK), 99),
+			Math.min(baseLevels.get(Skill.STRENGTH), 99),
+			Math.min(baseLevels.get(Skill.DEFENCE), 99),
+			Math.min(baseLevels.get(Skill.HITPOINTS), 99),
+			Math.min(baseLevels.get(Skill.MAGIC), 99),
+			Math.min(baseLevels.get(Skill.RANGED), 99),
+			Math.min(baseLevels.get(Skill.PRAYER), 99)
 		);
 
 		return combatLevel;
@@ -109,6 +97,6 @@ public class Stats
 
 	public PartyStatChange createPartyStatChangeForSkill(Skill s)
 	{
-		return new PartyStatChange(s.ordinal(), baseLevels.get(s), boostedLevels.get(s), skillEXPs.get(s));
+		return new PartyStatChange(s.ordinal(), baseLevels.get(s), boostedLevels.get(s));
 	}
 }

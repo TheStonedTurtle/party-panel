@@ -29,7 +29,6 @@ import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.image.BufferedImage;
-import java.text.NumberFormat;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import net.runelite.api.SpriteID;
@@ -65,7 +64,7 @@ public class TotalPanelSlot extends JPanel
 		}
 	}
 
-	TotalPanelSlot(final int totalLevel, final long totalXp, final SpriteManager spriteManager)
+	TotalPanelSlot(final int totalLevel, final SpriteManager spriteManager)
 	{
 		super();
 		setOpaque(false);
@@ -100,15 +99,11 @@ public class TotalPanelSlot extends JPanel
 		levelLabel.setForeground(Color.YELLOW);
 		c.gridy++;
 		add(levelLabel, c);
-
-		setToolTipText("Total XP: " + NumberFormat.getNumberInstance().format(totalXp));
 	}
 
-	public void updateTotalLevel(final int level, final long totalXp)
+	public void updateTotalLevel(final int level)
 	{
 		levelLabel.setText(String.valueOf(level));
 		levelLabel.repaint();
-
-		setToolTipText("Total XP: " + NumberFormat.getNumberInstance().format(totalXp));
 	}
 }

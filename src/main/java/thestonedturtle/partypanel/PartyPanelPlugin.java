@@ -16,6 +16,7 @@ import javax.swing.SwingUtilities;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
+import net.runelite.api.Experience;
 import net.runelite.api.GameState;
 import net.runelite.api.InventoryID;
 import net.runelite.api.Item;
@@ -441,19 +442,20 @@ public class PartyPanelPlugin extends Plugin
 			return;
 		}
 
+		// Always store the players "real" level using their virtual level so when they change the config the data still exists
 		final Skill s = event.getSkill();
 		if (myPlayer.getSkillBoostedLevel(s) == event.getBoostedLevel() &&
-			myPlayer.getSkillRealLevel(s) == event.getLevel() &&
-			myPlayer.getSkillExperience(s) == event.getXp())
+			Experience.getLevelForXp(event.getXp()) == myPlayer.getSkillRealLevel(s))
 		{
 			return;
 		}
 
-		myPlayer.setSkillsBoostedLevel(event.getSkill(), event.getBoostedLevel());
-		myPlayer.setSkillsRealLevel(event.getSkill(), event.getLevel());
-		myPlayer.setSkillExperience(event.getSkill(), event.getXp());
+		final int virtualLvl = Experience.getLevelForXp(event.getXp());
 
-		currentChange.getS().add(new PartyStatChange(event.getSkill().ordinal(), event.getLevel(), event.getBoostedLevel(), event.getXp()));
+		myPlayer.setSkillsBoostedLevel(event.getSkill(), event.getBoostedLevel());
+		myPlayer.setSkillsRealLevel(event.getSkill(), virtualLvl);
+
+		currentChange.getS().add(new PartyStatChange(event.getSkill().ordinal(), virtualLvl, event.getBoostedLevel()));
 
 		// Total level change
 		if (myPlayer.getStats().getTotalLevel() != client.getTotalLevel())

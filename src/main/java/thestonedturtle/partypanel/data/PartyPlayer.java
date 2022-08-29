@@ -103,16 +103,6 @@ public class PartyPlayer
 		}
 	}
 
-	public int getSkillExperience(final Skill skill)
-	{
-		if (stats == null)
-		{
-			return 0;
-		}
-
-		return stats.getSkillEXPs().get(skill);
-	}
-
 	public int getSkillBoostedLevel(final Skill skill)
 	{
 		if (stats == null)
@@ -125,22 +115,19 @@ public class PartyPlayer
 
 	public int getSkillRealLevel(final Skill skill)
 	{
+		return getSkillRealLevel(skill, false);
+	}
+
+	public int getSkillRealLevel(final Skill skill, final boolean allowVirtualLevels)
+	{
 		if (stats == null)
 		{
 			return 0;
 		}
 
-		return stats.getBaseLevels().get(skill);
-	}
+		assert skill != Skill.OVERALL;
 
-	public void setSkillExperience(final Skill skill, final int exp)
-	{
-		if (stats == null)
-		{
-			return;
-		}
-
-		stats.getSkillEXPs().put(skill, exp);
+		return Math.min(stats.getBaseLevels().get(skill), allowVirtualLevels ? 126 : 99);
 	}
 
 	public void setSkillsBoostedLevel(final Skill skill, final int level)

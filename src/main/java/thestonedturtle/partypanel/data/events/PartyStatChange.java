@@ -34,7 +34,6 @@ public class PartyStatChange implements PartyProcess
 	int s; // Skill ordinal
 	int l; // Level
 	int b; // Boosted Level
-	int e; // EXP
 
 	@Override
 	public void process(PartyPlayer p)
@@ -42,6 +41,5 @@ public class PartyStatChange implements PartyProcess
 		final Skill skill = Skill.values()[s];
 		p.getStats().getBaseLevels().put(skill, l);
 		p.getStats().getBoostedLevels().put(skill, b);
-		p.getStats().getSkillEXPs().put(skill, e);
 	}
 }

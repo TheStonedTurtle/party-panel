@@ -42,7 +42,6 @@ import javax.swing.border.MatteBorder;
 import lombok.Getter;
 import lombok.Setter;
 import net.runelite.api.EquipmentInventorySlot;
-import net.runelite.api.Experience;
 import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
 import net.runelite.api.SpriteID;
@@ -269,7 +268,6 @@ public class PlayerPanel extends JPanel
 		if (player.getStats() != null && tabMap.getOrDefault(SpriteID.TAB_STATS, false))
 		{
 			int totalLevel = 0;
-			long totalXp = 0;
 			for (final Skill s : Skill.values())
 			{
 				if (s.equals(Skill.OVERALL))
@@ -277,13 +275,11 @@ public class PlayerPanel extends JPanel
 					continue;
 				}
 
-				int xp = player.getSkillExperience(s);
-				totalLevel += Experience.getLevelForXp(xp);
-				totalXp += xp;
+				totalLevel += player.getSkillRealLevel(s, config.displayVirtualLevels());
 
 				updateSkill(s);
 			}
-			skillsPanel.getTotalLevelPanel().updateTotalLevel(config.displayVirtualLevels() ? totalLevel : player.getStats().getTotalLevel(), totalXp);
+			skillsPanel.getTotalLevelPanel().updateTotalLevel(totalLevel);
 		}
 
 		if (player.getPrayers() != null && tabMap.getOrDefault(SpriteID.TAB_PRAYER, false))
@@ -356,14 +352,12 @@ public class PlayerPanel extends JPanel
 				continue;
 			}
 
-			int xp = player.getSkillExperience(s);
-			totalLevel += Experience.getLevelForXp(xp);
-			totalXp += xp;
+			totalLevel += player.getSkillRealLevel(s, config.displayVirtualLevels());
 
 			updateSkill(s);
 		}
 
-		skillsPanel.getTotalLevelPanel().updateTotalLevel(config.displayVirtualLevels() ? totalLevel : player.getStats().getTotalLevel(), totalXp);
+		skillsPanel.getTotalLevelPanel().updateTotalLevel(totalLevel);
 	}
 
 	public void updateDisplayPlayerWorlds()
