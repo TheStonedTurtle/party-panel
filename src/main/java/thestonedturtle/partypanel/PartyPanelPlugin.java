@@ -133,6 +133,11 @@ public class PartyPanelPlugin extends Plugin
 
 		wsClient.registerMessage(PartyBatchedChange.class);
 
+		if(!isInParty() && config.autoRejoinParty())
+		{
+			changeParty(config.previousPartyId());
+		}
+
 		if (isInParty() || config.alwaysShowIcon())
 		{
 			clientToolbar.addNavigation(navButton);

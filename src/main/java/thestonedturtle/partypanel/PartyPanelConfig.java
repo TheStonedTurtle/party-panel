@@ -18,6 +18,16 @@ public interface PartyPanelConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "autoRejoinParty",
+		name = "Startup in previous party",
+		description = "<html>Controls whether we automatically join the previous party.</html>"
+	)
+	default boolean autoRejoinParty()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "showPartyControls",
 		name = "Show Party Controls",
 		description = "<html>Controls whether we display the party control buttons like create and leave party</html>",
