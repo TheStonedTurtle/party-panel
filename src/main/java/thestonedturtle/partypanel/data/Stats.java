@@ -75,7 +75,7 @@ public class Stats
 
 		recalculateCombatLevel();
 
-		specialPercent = client.getVar(VarPlayer.SPECIAL_ATTACK_PERCENT) / 10;
+		specialPercent = client.getVarpValue(VarPlayer.SPECIAL_ATTACK_PERCENT) / 10;
 		totalLevel = client.getTotalLevel();
 		runEnergy = client.getEnergy();
 	}

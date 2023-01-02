@@ -69,8 +69,8 @@ public class PartyPlayer
 	{
 		this(member);
 		this.stamina = client.getVarbitValue(Varbits.STAMINA_EFFECT);
-		this.poison = client.getVar(VarPlayer.POISON);
-		this.disease = client.getVar(VarPlayer.DISEASE_VALUE);
+		this.poison = client.getVarpValue(VarPlayer.POISON);
+		this.disease = client.getVarpValue(VarPlayer.DISEASE_VALUE);
 		this.world = client.getWorld();
 
 		updatePlayerInfo(client, itemManager);

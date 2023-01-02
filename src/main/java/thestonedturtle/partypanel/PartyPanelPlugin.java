@@ -522,7 +522,7 @@ public class PartyPanelPlugin extends Plugin
 			return;
 		}
 
-		final int specialPercent = client.getVar(VarPlayer.SPECIAL_ATTACK_PERCENT) / 10;
+		final int specialPercent = client.getVarpValue(VarPlayer.SPECIAL_ATTACK_PERCENT) / 10;
 		if (specialPercent != myPlayer.getStats().getSpecialPercent())
 		{
 			myPlayer.getStats().setSpecialPercent(specialPercent);
@@ -536,14 +536,14 @@ public class PartyPanelPlugin extends Plugin
 			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.ST, stamina));
 		}
 
-		final int poison = client.getVar(VarPlayer.POISON);
+		final int poison = client.getVarpValue(VarPlayer.POISON);
 		if (poison != myPlayer.getPoison())
 		{
 			myPlayer.setPoison(poison);
 			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.P, poison));
 		}
 
-		final int disease = client.getVar(VarPlayer.DISEASE_VALUE);
+		final int disease = client.getVarpValue(VarPlayer.DISEASE_VALUE);
 		if (disease != myPlayer.getDisease())
 		{
 			myPlayer.setDisease(disease);
