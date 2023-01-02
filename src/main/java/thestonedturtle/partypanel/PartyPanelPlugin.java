@@ -120,6 +120,8 @@ public class PartyPanelPlugin extends Plugin
 	// All events should be deferred to the next game tick
 	private PartyBatchedChange currentChange = new PartyBatchedChange();
 
+	private int gameTickCount = 0;
+
 	@Override
 	protected void startUp() throws Exception
 	{
@@ -156,6 +158,7 @@ public class PartyPanelPlugin extends Plugin
 		}
 
 		lastLogout = Instant.now();
+		gameTickCount = 0;
 	}
 
 	@Override
@@ -168,6 +171,7 @@ public class PartyPanelPlugin extends Plugin
 		currentChange = new PartyBatchedChange();
 		panel.getPlayerPanelMap().clear();
 		lastLogout = null;
+		gameTickCount = 0;
 	}
 
 	@Subscribe
@@ -341,6 +345,19 @@ public class PartyPanelPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(final GameTick tick)
 	{
+		// If the gameTickCount is 3 or higher we need to reset to 0 so we process the next tick
+		if (gameTickCount > 2)
+		{
+			gameTickCount = 0;
+			return;
+		}
+
+		// We only want to process every other tick (every 2nd tick), so tick 0 and 2
+		if (gameTickCount > 0 &&  gameTickCount % 2 != 0)
+		{
+			return;
+		}
+
 		if (!isInParty() || client.getLocalPlayer() == null || partyService.getLocalMember() == null)
 		{
 			return;
@@ -432,6 +449,8 @@ public class PartyPanelPlugin extends Plugin
 
 			currentChange = new PartyBatchedChange();
 		}
+
+		gameTickCount++;
 	}
 
 	@Subscribe
