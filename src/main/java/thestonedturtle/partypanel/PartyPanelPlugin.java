@@ -345,6 +345,11 @@ public class PartyPanelPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(final GameTick tick)
 	{
+		if (!isInParty() || client.getLocalPlayer() == null || partyService.getLocalMember() == null)
+		{
+			return;
+		}
+
 		// If the gameTickCount is 3 or higher we need to reset to 0 so we process the next tick
 		if (gameTickCount > 2)
 		{
@@ -353,13 +358,9 @@ public class PartyPanelPlugin extends Plugin
 		}
 
 		// We only want to process every other tick (every 2nd tick), so tick 0 and 2
-		if (gameTickCount > 0 &&  gameTickCount % 2 != 0)
+		if (gameTickCount > 0 && gameTickCount % 2 != 0)
 		{
-			return;
-		}
-
-		if (!isInParty() || client.getLocalPlayer() == null || partyService.getLocalMember() == null)
-		{
+			gameTickCount++;
 			return;
 		}
 
