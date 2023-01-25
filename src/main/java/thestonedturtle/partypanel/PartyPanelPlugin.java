@@ -120,8 +120,6 @@ public class PartyPanelPlugin extends Plugin
 	// All events should be deferred to the next game tick
 	private PartyBatchedChange currentChange = new PartyBatchedChange();
 
-	private int gameTickCount = 0;
-
 	@Override
 	protected void startUp() throws Exception
 	{
@@ -158,7 +156,6 @@ public class PartyPanelPlugin extends Plugin
 		}
 
 		lastLogout = Instant.now();
-		gameTickCount = 0;
 	}
 
 	@Override
@@ -171,7 +168,6 @@ public class PartyPanelPlugin extends Plugin
 		currentChange = new PartyBatchedChange();
 		panel.getPlayerPanelMap().clear();
 		lastLogout = null;
-		gameTickCount = 0;
 	}
 
 	@Subscribe
@@ -350,17 +346,9 @@ public class PartyPanelPlugin extends Plugin
 			return;
 		}
 
-		// If the gameTickCount is 3 or higher we need to reset to 0 so we process the next tick
-		if (gameTickCount > 2)
+		// To reduce server load we should only process changes every X ticks
+		if (client.getTickCount() % messageFreq(partyService.getMembers().size()) != 0)
 		{
-			gameTickCount = 0;
-			return;
-		}
-
-		// We only want to process every other tick (every 2nd tick), so tick 0 and 2
-		if (gameTickCount > 0 && gameTickCount % 2 != 0)
-		{
-			gameTickCount++;
 			return;
 		}
 
@@ -450,8 +438,6 @@ public class PartyPanelPlugin extends Plugin
 
 			currentChange = new PartyBatchedChange();
 		}
-
-		gameTickCount++;
 	}
 
 	@Subscribe
@@ -767,5 +753,12 @@ public class PartyPanelPlugin extends Plugin
 			log.info("Leaving party due to inactivity");
 			partyService.changeParty(null);
 		}
+	}
+
+	private static int messageFreq(int partySize)
+	{
+		// introduce a tick delay for each member >6
+		// Default the message frequency to every 2 ticks since this plugin sends a lot of data
+		return Math.max(2, partySize - 6);
 	}
 }
