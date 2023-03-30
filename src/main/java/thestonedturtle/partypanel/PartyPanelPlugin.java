@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -161,6 +162,14 @@ public class PartyPanelPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
+		if (isInParty()) {
+			final PartyBatchedChange cleanUserInfo = partyPlayerAsBatchedChange();
+			cleanUserInfo.setI(new int[0]);
+			cleanUserInfo.setE(new int[0]);
+			cleanUserInfo.setM(Collections.emptySet());
+			cleanUserInfo.setS(Collections.emptySet());
+			partyService.send(cleanUserInfo);
+		}
 		clientToolbar.removeNavigation(navButton);
 		addedButton = false;
 		partyMembers.clear();
