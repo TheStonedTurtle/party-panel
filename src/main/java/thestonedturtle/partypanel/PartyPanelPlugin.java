@@ -373,7 +373,7 @@ public class PartyPanelPlugin extends Plugin
 		else
 		{
 			// We only need to check energy every tick as the special attack and stat levels are handled in their respective events
-			final int energy = client.getEnergy();
+			final int energy = (client.getEnergy() / 100);
 			if (myPlayer.getStats().getRunEnergy() != energy)
 			{
 				myPlayer.getStats().setRunEnergy(energy);
