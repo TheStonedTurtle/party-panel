@@ -749,7 +749,7 @@ public class PartyPanelPlugin extends Plugin
 		period = 10,
 		unit = ChronoUnit.SECONDS
 	)
-	private void checkIdle()
+	public void checkIdle()
 	{
 		if (client.getGameState() != GameState.LOGIN_SCREEN)
 		{
