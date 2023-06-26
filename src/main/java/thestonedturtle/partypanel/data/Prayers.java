@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
 import net.runelite.api.Client;
+import net.runelite.api.EnumComposition;
+import net.runelite.api.EnumID;
 import net.runelite.api.Prayer;
 import thestonedturtle.partypanel.ui.prayer.PrayerSprites;
 
@@ -47,12 +49,13 @@ public class Prayers
 
 	@Getter
 	private final Map<Prayer, PrayerData> prayerData = new HashMap<>();
+	private int[] prayerIds = new int[0];
 
 	public Prayers()
 	{
 		for (final Prayer p : Prayer.values())
 		{
-			prayerData.put(p, new PrayerData(p, p.ordinal() == 0, p.ordinal() == 0));
+			prayerData.put(p, new PrayerData(p, p.ordinal() == 0, false));
 		}
 	}
 
@@ -66,13 +69,20 @@ public class Prayers
 				updatePrayerState(p, client);
 			}
 		}
+
+		setCurrentPrayerIds(client);
 	}
 
 	public boolean updatePrayerState(final PrayerSprites p, final Client client)
 	{
+		if (prayerIds.length == 0) {
+			setCurrentPrayerIds(client);
+		}
+
+		assert prayerIds.length > 0;
 		boolean changed;
 
-		client.runScript(PRAYER_IS_AVAILABLE, p.getScriptIndex());
+		client.runScript(PRAYER_IS_AVAILABLE, prayerIds[p.getScriptIndex()]);
 		final boolean available = client.getIntStack()[0] > 0;
 
 		final boolean enabled = client.isPrayerActive(p.getPrayer());
@@ -92,5 +102,10 @@ public class Prayers
 
 		prayerData.put(data.getPrayer(), data);
 		return changed;
+	}
+
+	private void setCurrentPrayerIds(Client client) {
+		final EnumComposition prayers = client.getEnum(EnumID.PRAYERS_NORMAL);
+		this.prayerIds = prayers.getIntVals();
 	}
 }
