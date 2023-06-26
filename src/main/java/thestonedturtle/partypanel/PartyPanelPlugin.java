@@ -30,7 +30,6 @@ import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
-import net.runelite.client.account.SessionManager;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -84,9 +83,6 @@ public class PartyPanelPlugin extends Plugin
 
 	@Inject
 	private PartyService partyService;
-
-	@Inject
-	private SessionManager sessionManager;
 
 	@Inject
 	private PluginManager pluginManager;
