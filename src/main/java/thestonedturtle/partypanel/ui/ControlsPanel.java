@@ -120,7 +120,7 @@ public class ControlsPanel extends JPanel
 					null,
 					null,
 					"");
-
+				s = s.toLowerCase()
 				if (s == null)
 				{
 					return;
