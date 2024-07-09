@@ -25,6 +25,7 @@
  */
 package thestonedturtle.partypanel.ui;
 
+import java.util.Locale;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -120,11 +121,14 @@ public class ControlsPanel extends JPanel
 					null,
 					null,
 					"");
-				s = s.toLowerCase()
+
 				if (s == null)
 				{
 					return;
 				}
+
+				s = s.toLowerCase(Locale.US);
+
 
 				plugin.changeParty(s);
 			}
