@@ -101,7 +101,7 @@ public class PlayerPanel extends JPanel
 	private final Map<Integer, Boolean> tabMap = new HashMap<>();
 
 	public PlayerPanel(final PartyPlayer selectedPlayer, final PartyPanelConfig config,
-						final SpriteManager spriteManager, final ItemManager itemManager)
+		final SpriteManager spriteManager, final ItemManager itemManager)
 	{
 		this.player = selectedPlayer;
 		this.config = config;
@@ -133,8 +133,8 @@ public class PlayerPanel extends JPanel
 					{
 						if (e.getButton() == MouseEvent.BUTTON1)
 						{
-							ImageIcon retrieve = (ImageIcon)expandIcon.getIcon();
-							BufferedImage buffered = (BufferedImage)retrieve.getImage();
+							ImageIcon retrieve = (ImageIcon) expandIcon.getIcon();
+							BufferedImage buffered = (BufferedImage) retrieve.getImage();
 
 							showInfo = !showInfo;
 							expandIcon.setIcon(new ImageIcon(ImageUtil.rotateImage(buffered, Math.PI)));
@@ -177,8 +177,9 @@ public class PlayerPanel extends JPanel
 				tabGroup.repaint();
 
 				tabMap.put(spriteID, false);
-				tab.setOnSelectEvent(() -> {
-					tabMap.replaceAll((k,v) -> v=false);
+				tab.setOnSelectEvent(() ->
+				{
+					tabMap.replaceAll((k, v) -> v = false);
 					tabMap.put(spriteID, true);
 					updatePlayerData(player, false);
 					return true;
@@ -229,7 +230,8 @@ public class PlayerPanel extends JPanel
 		banner.setCurrentHeart(heart, spriteManager);
 		banner.setUsingStamIcon(player.getStamina() > 0, spriteManager);
 
-		if (!showInfo) {
+		if (!showInfo)
+		{
 			return;
 		}
 
@@ -270,11 +272,6 @@ public class PlayerPanel extends JPanel
 			int totalLevel = 0;
 			for (final Skill s : Skill.values())
 			{
-				if (s.equals(Skill.OVERALL))
-				{
-					continue;
-				}
-
 				totalLevel += player.getSkillRealLevel(s, config.displayVirtualLevels());
 
 				updateSkill(s);
@@ -303,8 +300,8 @@ public class PlayerPanel extends JPanel
 		if (showInfo)
 		{
 			this.setBorder(new CompoundBorder(
-					new MatteBorder(2, 2, 2, 2, new Color(87, 80, 64)),
-					new EmptyBorder(0, 0, 5,  0)
+				new MatteBorder(2, 2, 2, 2, new Color(87, 80, 64)),
+				new EmptyBorder(0, 0, 5, 0)
 			));
 		}
 		else
@@ -313,7 +310,7 @@ public class PlayerPanel extends JPanel
 		}
 
 		final JPanel view = new JPanel();
-		view.setBorder(new EmptyBorder(5, 5, 0,  5));
+		view.setBorder(new EmptyBorder(5, 5, 0, 5));
 		final MaterialTabGroup tabGroup = new MaterialTabGroup(view);
 		tabGroup.setBorder(new EmptyBorder(10, 0, 4, 0));
 
@@ -344,14 +341,8 @@ public class PlayerPanel extends JPanel
 	public void updateDisplayVirtualLevels()
 	{
 		int totalLevel = 0;
-		long totalXp = 0;
 		for (final Skill s : Skill.values())
 		{
-			if (s.equals(Skill.OVERALL))
-			{
-				continue;
-			}
-
 			totalLevel += player.getSkillRealLevel(s, config.displayVirtualLevels());
 
 			updateSkill(s);

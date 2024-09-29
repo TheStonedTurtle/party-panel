@@ -64,6 +64,7 @@ import net.runelite.client.ui.DynamicGridLayout;
 import net.runelite.client.ui.PluginPanel;
 import thestonedturtle.partypanel.data.PartyPlayer;
 
+@Getter
 public class PlayerSkillsPanel extends JPanel
 {
 	/**
@@ -81,6 +82,7 @@ public class PlayerSkillsPanel extends JPanel
 	);
 
 	private static final ImmutableMap<Skill, Integer> SPRITE_MAP;
+
 	static
 	{
 		final ImmutableMap.Builder<Skill, Integer> map = ImmutableMap.builder();
@@ -112,9 +114,7 @@ public class PlayerSkillsPanel extends JPanel
 
 	private static final Dimension PANEL_SIZE = new Dimension(PluginPanel.PANEL_WIDTH - 14, 296);
 
-	@Getter
 	private final Map<Skill, SkillPanelSlot> panelMap = new HashMap<>();
-	@Getter
 	private final TotalPanelSlot totalLevelPanel;
 
 	public PlayerSkillsPanel(final PartyPlayer player, final boolean displayVirtualLevels, final SpriteManager spriteManager)
@@ -140,7 +140,7 @@ public class PlayerSkillsPanel extends JPanel
 			totalLevel += realLevel;
 		}
 
-		// Add 9 instead of 10 since `overall` is included in the Skill enum
+		// Add 9 since hp starts at 10
 		totalLevel = player.getStats() == null ? (9 + Skill.values().length) : totalLevel;
 		totalLevelPanel = new TotalPanelSlot(totalLevel, spriteManager);
 		this.add(totalLevelPanel);

@@ -52,8 +52,8 @@ public class PartyBatchedChange extends PartyMemberMessage
 	{
 		return i != null
 			|| e != null
-			|| (s != null && s.size() > 0)
-			|| (m != null && m.size() > 0)
+			|| (s != null && !s.isEmpty())
+			|| (m != null && !m.isEmpty())
 			|| ap != null
 			|| ep != null;
 	}
@@ -61,8 +61,8 @@ public class PartyBatchedChange extends PartyMemberMessage
 	// Unset unneeded variables to minimize payload
 	public void removeDefaults()
 	{
-		s = (s == null || s.size() == 0) ? null : s;
-		m = (m == null || m.size() == 0) ? null : m;
+		s = (s == null || s.isEmpty()) ? null : s;
+		m = (m == null || m.isEmpty()) ? null : m;
 	}
 
 	public void process(PartyPlayer player, ItemManager itemManager)
@@ -95,7 +95,8 @@ public class PartyBatchedChange extends PartyMemberMessage
 		}
 
 		// Default all prayers to not available and not enabled
-		player.getPrayers().getPrayerData().forEach((idx, p) -> {
+		player.getPrayers().getPrayerData().forEach((idx, p) ->
+		{
 			p.setAvailable(false);
 			p.setEnabled(false);
 		});
@@ -115,23 +116,25 @@ public class PartyBatchedChange extends PartyMemberMessage
 	{
 		return m != null
 			&& m.stream()
-				.anyMatch(e -> e.getT() == PartyMiscChange.PartyMisc.C || e.getT() == PartyMiscChange.PartyMisc.W);
+			.anyMatch(e -> e.getT() == PartyMiscChange.PartyMisc.C || e.getT() == PartyMiscChange.PartyMisc.W);
 	}
 
 	public boolean hasStatChange()
 	{
-		return (s != null && s.size() > 0)
+		return (s != null && !s.isEmpty())
 			|| (m != null && m.stream().anyMatch(e ->
-				e.getT() == PartyMiscChange.PartyMisc.S
+			e.getT() == PartyMiscChange.PartyMisc.S
 				|| e.getT() == PartyMiscChange.PartyMisc.R
 				|| e.getT() == PartyMiscChange.PartyMisc.C
 				|| e.getT() == PartyMiscChange.PartyMisc.T)
-			);
+		);
 	}
 
-	public static <E extends Enum<E>> int pack(Collection<E> items) {
+	public static <E extends Enum<E>> int pack(Collection<E> items)
+	{
 		int i = 0;
-		for (E e : items) {
+		for (E e : items)
+		{
 			assert e.ordinal() < 32;
 			i |= (1 << e.ordinal());
 		}
@@ -139,10 +142,13 @@ public class PartyBatchedChange extends PartyMemberMessage
 		return i;
 	}
 
-	private Collection<Prayer> unpack(int pack) {
+	private Collection<Prayer> unpack(int pack)
+	{
 		final List<Prayer> out = new ArrayList<>();
-		for (Prayer p : Prayer.values()) {
-			if ((pack & (1 << p.ordinal())) != 0) {
+		for (Prayer p : Prayer.values())
+		{
+			if ((pack & (1 << p.ordinal())) != 0)
+			{
 				out.add(p);
 			}
 		}
@@ -150,11 +156,13 @@ public class PartyBatchedChange extends PartyMemberMessage
 		return out;
 	}
 
-	public Collection<Prayer> unpackActivePrayers() {
+	public Collection<Prayer> unpackActivePrayers()
+	{
 		return unpack(ap);
 	}
 
-	public Collection<Prayer> unpackEnabledPrayers() {
+	public Collection<Prayer> unpackEnabledPrayers()
+	{
 		return unpack(ep);
 	}
 }

@@ -158,7 +158,8 @@ public class PartyPanelPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
-		if (isInParty()) {
+		if (isInParty())
+		{
 			final PartyBatchedChange cleanUserInfo = partyPlayerAsBatchedChange();
 			cleanUserInfo.setI(new int[0]);
 			cleanUserInfo.setE(new int[0]);
@@ -394,11 +395,13 @@ public class PartyPanelPlugin extends Plugin
 			for (final PrayerSprites p : PrayerSprites.values())
 			{
 				final PrayerData data = myPlayer.getPrayers().getPrayerData().get(p.getPrayer());
-				if (data.isAvailable()) {
+				if (data.isAvailable())
+				{
 					available.add(p.getPrayer());
 				}
 
-				if (data.isEnabled()) {
+				if (data.isEnabled())
+				{
 					enabled.add(p.getPrayer());
 				}
 			}
@@ -418,11 +421,13 @@ public class PartyPanelPlugin extends Plugin
 				// Store the data for this prayer regardless of if it changes since any update
 				// will assume all prayers are not available & disabled
 				final PrayerData data = myPlayer.getPrayers().getPrayerData().get(p.getPrayer());
-				if (data.isAvailable()) {
+				if (data.isAvailable())
+				{
 					available.add(p.getPrayer());
 				}
 
-				if (data.isEnabled()) {
+				if (data.isEnabled())
+				{
 					enabled.add(p.getPrayer());
 				}
 			}
@@ -569,7 +574,8 @@ public class PartyPanelPlugin extends Plugin
 		{
 			e.process(player, itemManager);
 
-			SwingUtilities.invokeLater(() -> {
+			SwingUtilities.invokeLater(() ->
+			{
 				final PlayerPanel playerPanel = panel.getPlayerPanelMap().get(e.getMemberId());
 				if (playerPanel != null)
 				{
@@ -592,7 +598,8 @@ public class PartyPanelPlugin extends Plugin
 
 		final PartyPlayer player = partyMembers.get(e.getMemberId());
 		player.getMember().setAvatar(e.getImage());
-		SwingUtilities.invokeLater(() -> {
+		SwingUtilities.invokeLater(() ->
+		{
 			final PlayerPanel p = panel.getPlayerPanelMap().get(e.getMemberId());
 			if (p != null)
 			{
@@ -604,7 +611,8 @@ public class PartyPanelPlugin extends Plugin
 	public void changeParty(String passphrase)
 	{
 		passphrase = passphrase.replace(" ", "-").trim();
-		if (passphrase.length() == 0) {
+		if (passphrase.length() == 0)
+		{
 			return;
 		}
 
@@ -647,7 +655,8 @@ public class PartyPanelPlugin extends Plugin
 		int[] eles = new int[items.length * 2];
 		for (int i = 0; i < items.length * 2; i += 2)
 		{
-			if (items[i / 2] == null) {
+			if (items[i / 2] == null)
+			{
 				eles[i] = -1;
 				eles[i + 1] = 0;
 				continue;
@@ -665,7 +674,8 @@ public class PartyPanelPlugin extends Plugin
 		int[] eles = new int[items.length * 2];
 		for (int i = 0; i < items.length * 2; i += 2)
 		{
-			if (items[i / 2] == null) {
+			if (items[i / 2] == null)
+			{
 				eles[i] = -1;
 				eles[i + 1] = 0;
 				continue;
@@ -701,7 +711,7 @@ public class PartyPanelPlugin extends Plugin
 			c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.S, myPlayer.getStats().getSpecialPercent()));
 			c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.R, myPlayer.getStats().getRunEnergy()));
 			c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.C, myPlayer.getStats().getCombatLevel()));
-			c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.T, myPlayer.getStats().getTotalLevel()));;
+			c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.T, myPlayer.getStats().getTotalLevel()));
 		}
 
 		// Misc

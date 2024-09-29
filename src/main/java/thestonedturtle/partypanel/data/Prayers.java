@@ -75,7 +75,8 @@ public class Prayers
 
 	public boolean updatePrayerState(final PrayerSprites p, final Client client)
 	{
-		if (prayerIds.length == 0) {
+		if (prayerIds.length == 0)
+		{
 			setCurrentPrayerIds(client);
 		}
 
@@ -104,7 +105,8 @@ public class Prayers
 		return changed;
 	}
 
-	private void setCurrentPrayerIds(Client client) {
+	private void setCurrentPrayerIds(Client client)
+	{
 		final EnumComposition prayers = client.getEnum(EnumID.PRAYERS_NORMAL);
 		this.prayerIds = prayers.getIntVals();
 	}
