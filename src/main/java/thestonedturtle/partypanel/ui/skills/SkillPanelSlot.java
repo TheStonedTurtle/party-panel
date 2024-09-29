@@ -31,6 +31,7 @@ import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.image.BufferedImage;
+import java.util.Objects;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
@@ -136,6 +137,12 @@ public class SkillPanelSlot extends JPanel
 
 	public void updateBaseLevel(final int baseLevel)
 	{
+		final String levelAsString = String.valueOf(baseLevel);
+		if (Objects.equals(levelAsString, baseLabel.getText()))
+		{
+			return;
+		}
+
 		// Adjust offset depending on amount of characters to make the UI look nicer
 		int rightPadding = 8;
 		if (baseLevel > 99)
@@ -147,14 +154,20 @@ public class SkillPanelSlot extends JPanel
 			rightPadding = 4;
 		}
 
-		baseLabel.setText(String.valueOf(baseLevel));
+		baseLabel.setText(levelAsString);
 		baseLabel.setBorder(new EmptyBorder(0, 0, 4, rightPadding));
 		baseLabel.repaint();
 	}
 
 	public void updateBoostedLevel(final int boostedLevel)
 	{
-		boostedLabel.setText(String.valueOf(boostedLevel));
+		final String levelAsString = String.valueOf(boostedLevel);
+		if (Objects.equals(levelAsString, boostedLabel.getText()))
+		{
+			return;
+		}
+
+		boostedLabel.setText(levelAsString);
 		boostedLabel.repaint();
 	}
 }
