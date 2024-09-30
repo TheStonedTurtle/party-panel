@@ -147,6 +147,13 @@ public class PartyBatchedChange extends PartyMemberMessage
 		final List<Prayer> out = new ArrayList<>();
 		for (Prayer p : Prayer.values())
 		{
+			// We bitpack into an int of 32 bits, as of now that's fine but the ruinous powers could break this
+			// since the prayer enum has these defined still break out early.
+			if (p.ordinal() >= 32)
+			{
+				break;
+			}
+
 			if ((pack & (1 << p.ordinal())) != 0)
 			{
 				out.add(p);
