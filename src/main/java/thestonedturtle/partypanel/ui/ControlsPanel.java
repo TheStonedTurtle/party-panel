@@ -25,13 +25,13 @@
  */
 package thestonedturtle.partypanel.ui;
 
-import java.util.Locale;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import java.util.Locale;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -96,7 +96,7 @@ public class ControlsPanel extends JPanel
 				final int result = JOptionPane.showOptionDialog(startButton,
 					"Are you sure you want to leave the party?",
 					"Leave party?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,
-					null, new String[]{"Yes", "No"}, "No");
+					null, new String[]{"Yes", "No"}, "Yes");
 
 				if (result == JOptionPane.YES_OPTION)
 				{
