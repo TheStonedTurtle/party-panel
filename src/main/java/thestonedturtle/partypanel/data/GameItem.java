@@ -29,6 +29,7 @@ import lombok.Value;
 import net.runelite.api.Item;
 import net.runelite.api.ItemComposition;
 import net.runelite.client.game.ItemManager;
+import net.runelite.client.util.QuantityFormatter;
 
 @Value
 @AllArgsConstructor
@@ -92,5 +93,15 @@ public class GameItem
 		}
 
 		return output;
+	}
+
+	public String getDisplayName()
+	{
+		if (this.qty <= 1)
+		{
+			return this.name;
+		}
+
+		return this.name + " x " + QuantityFormatter.formatNumber(this.qty);
 	}
 }

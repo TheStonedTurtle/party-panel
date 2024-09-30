@@ -109,7 +109,7 @@ public class PlayerPanel extends JPanel
 		this.itemManager = itemManager;
 		this.showInfo = config.autoExpandMembers();
 		this.banner = new PlayerBanner(selectedPlayer, showInfo, config.displayPlayerWorlds(), spriteManager);
-		this.inventoryPanel = new PlayerInventoryPanel(selectedPlayer.getInventory(), itemManager);
+		this.inventoryPanel = new PlayerInventoryPanel(selectedPlayer.getInventory(), selectedPlayer.getRunesInPouch(), itemManager);
 		this.equipmentPanel = new PlayerEquipmentPanel(selectedPlayer.getEquipment(), spriteManager, itemManager);
 		this.skillsPanel = new PlayerSkillsPanel(selectedPlayer, config.displayVirtualLevels(), spriteManager);
 		this.prayersPanel = new PlayerPrayerPanel(selectedPlayer, spriteManager);
@@ -237,7 +237,7 @@ public class PlayerPanel extends JPanel
 
 		if (tabMap.getOrDefault(SpriteID.TAB_INVENTORY, false))
 		{
-			inventoryPanel.updateInventory(player.getInventory());
+			inventoryPanel.updateInventory(player.getInventory(), player.getRunesInPouch());
 		}
 
 		if (tabMap.getOrDefault(SpriteID.TAB_EQUIPMENT, false))

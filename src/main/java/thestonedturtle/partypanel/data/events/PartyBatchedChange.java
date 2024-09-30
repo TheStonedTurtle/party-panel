@@ -25,11 +25,13 @@
 package thestonedturtle.partypanel.data.events;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import net.runelite.api.Item;
 import net.runelite.api.Prayer;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.party.messages.PartyMemberMessage;
@@ -47,6 +49,7 @@ public class PartyBatchedChange extends PartyMemberMessage
 	Collection<PartyMiscChange> m = new ArrayList<>(); // Misc Changes
 	Integer ap; // Available Prayers, bit-packed & contains all available prayers on every change
 	Integer ep; // Enabled Prayers, bit-packed & contains all enabled prayers on every change
+	int[] rp; // rp itemId and qty
 
 	public boolean isValid()
 	{
@@ -55,7 +58,8 @@ public class PartyBatchedChange extends PartyMemberMessage
 			|| (s != null && !s.isEmpty())
 			|| (m != null && !m.isEmpty())
 			|| ap != null
-			|| ep != null;
+			|| ep != null
+			|| rp != null;
 	}
 
 	// Unset unneeded variables to minimize payload
@@ -89,11 +93,22 @@ public class PartyBatchedChange extends PartyMemberMessage
 			m.forEach(change -> change.process(player));
 		}
 
-		if (ap == null || ep == null)
+		if (ap != null || ep != null)
 		{
-			return;
+			processPrayers(player);
 		}
 
+		if (rp != null)
+		{
+			Item[] runePouchContents = Arrays.stream(rp)
+				.mapToObj(PartyBatchedChange::unpackRune)
+				.toArray(Item[]::new);
+			player.setRunesInPouch(GameItem.convertItemsToGameItems(runePouchContents, itemManager));
+		}
+	}
+
+	private void processPrayers(PartyPlayer player)
+	{
 		// Default all prayers to not available and not enabled
 		player.getPrayers().getPrayerData().forEach((idx, p) ->
 		{
@@ -161,6 +176,28 @@ public class PartyBatchedChange extends PartyMemberMessage
 		}
 
 		return out;
+	}
+
+	public static int packRune(final Item item)
+	{
+		return packRune(item.getId(), item.getQuantity());
+	}
+
+	public static int packRune(final int itemId, final int qty)
+	{
+		// qty can only be between 1 and 16,000, which is 14 bits of the 31 available bits (excluding sign)
+		// pack the qty into the left-most 14 bits by offsetting it by 18
+		int packed = qty << 18;
+		return packed | itemId;
+	}
+
+	public static Item unpackRune(final int packed)
+	{
+		final int qty = packed >>> 18;
+		// To retrieve the itemId we need to set the left most 14 bits to 0
+		final int itemId = packed & 0x3FFFF;
+
+		return new Item(itemId, qty);
 	}
 
 	public Collection<Prayer> unpackActivePrayers()

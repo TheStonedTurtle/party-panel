@@ -24,17 +24,20 @@
  */
 package thestonedturtle.partypanel.data;
 
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import net.runelite.api.Client;
 import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.InventoryID;
+import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.Skill;
 import net.runelite.api.VarPlayer;
 import net.runelite.api.Varbits;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.party.PartyMember;
+import thestonedturtle.partypanel.PartyPanelPlugin;
 
 @Data
 @EqualsAndHashCode
@@ -50,6 +53,7 @@ public class PartyPlayer
 	private int poison;
 	private int disease;
 	private int world;
+	private GameItem[] runesInPouch;
 
 	public PartyPlayer(final PartyMember member)
 	{
@@ -63,6 +67,7 @@ public class PartyPlayer
 		this.poison = 0;
 		this.disease = 0;
 		this.world = 0;
+		this.runesInPouch = new GameItem[0];
 	}
 
 	public PartyPlayer(final PartyMember member, final Client client, final ItemManager itemManager)
@@ -88,6 +93,8 @@ public class PartyPlayer
 			if (invi != null)
 			{
 				this.inventory = GameItem.convertItemsToGameItems(invi.getItems(), itemManager);
+				final List<Item> runesInPouch = PartyPanelPlugin.getRunePouchContents(client);
+				this.runesInPouch = GameItem.convertItemsToGameItems(runesInPouch.toArray(Item[]::new), itemManager);
 			}
 
 			final ItemContainer equip = client.getItemContainer(InventoryID.EQUIPMENT);

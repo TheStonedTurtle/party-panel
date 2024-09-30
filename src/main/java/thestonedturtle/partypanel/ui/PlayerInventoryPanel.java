@@ -26,12 +26,16 @@ package thestonedturtle.partypanel.ui;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.DynamicGridLayout;
 import net.runelite.client.ui.PluginPanel;
-import net.runelite.client.util.QuantityFormatter;
+import org.apache.commons.lang3.ArrayUtils;
+import thestonedturtle.partypanel.PartyPanelPlugin;
 import thestonedturtle.partypanel.data.GameItem;
 
 public class PlayerInventoryPanel extends JPanel
@@ -42,7 +46,7 @@ public class PlayerInventoryPanel extends JPanel
 
 	private final ItemManager itemManager;
 
-	public PlayerInventoryPanel(final GameItem[] items, final ItemManager itemManager)
+	public PlayerInventoryPanel(final GameItem[] items, final GameItem[] runePouchContents, final ItemManager itemManager)
 	{
 		super();
 
@@ -52,10 +56,10 @@ public class PlayerInventoryPanel extends JPanel
 		setBackground(INVI_BACKGROUND);
 		setPreferredSize(PANEL_SIZE);
 
-		updateInventory(items);
+		updateInventory(items, runePouchContents);
 	}
 
-	public void updateInventory(final GameItem[] items)
+	public void updateInventory(final GameItem[] items, final GameItem[] runePouchContents)
 	{
 		this.removeAll();
 
@@ -69,12 +73,16 @@ public class PlayerInventoryPanel extends JPanel
 
 			if (i != null)
 			{
-				String name = i.getName();
-				if (i.getQty() > 1)
+				String tooltip;
+				if (ArrayUtils.contains(PartyPanelPlugin.RUNEPOUCH_ITEM_IDS, i.getId()))
 				{
-					name += " x " + QuantityFormatter.formatNumber(i.getQty());
+					tooltip = getRunePouchHoverText(i, runePouchContents);
 				}
-				label.setToolTipText(name);
+				else
+				{
+					tooltip = i.getDisplayName();
+				}
+				label.setToolTipText(tooltip);
 				itemManager.getImage(i.getId(), i.getQty(), i.isStackable()).addTo(label);
 			}
 
@@ -93,5 +101,24 @@ public class PlayerInventoryPanel extends JPanel
 
 		revalidate();
 		repaint();
+	}
+
+	public String getRunePouchHoverText(final GameItem runePouch, final GameItem[] contents)
+	{
+		final String contentNames = Arrays.stream(contents)
+			.filter(Objects::nonNull)
+			.map(GameItem::getDisplayName)
+			.collect(Collectors.joining("<br>"));
+
+		if (contentNames.isEmpty())
+		{
+			return runePouch.getDisplayName();
+		}
+
+		return "<html>"
+			+ runePouch.getDisplayName()
+			+ "<br><br>"
+			+ contentNames
+			+ "</html>";
 	}
 }

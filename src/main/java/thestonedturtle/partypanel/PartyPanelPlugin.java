@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -17,14 +18,19 @@ import javax.swing.SwingUtilities;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
+import net.runelite.api.EnumComposition;
+import net.runelite.api.EnumID;
 import net.runelite.api.Experience;
 import net.runelite.api.GameState;
 import net.runelite.api.InventoryID;
 import net.runelite.api.Item;
+import net.runelite.api.ItemContainer;
+import net.runelite.api.ItemID;
 import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
 import net.runelite.api.VarPlayer;
 import net.runelite.api.Varbits;
+import net.runelite.api.annotations.Varbit;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
@@ -49,6 +55,7 @@ import net.runelite.client.task.Schedule;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
+import org.apache.commons.lang3.ArrayUtils;
 import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
 import thestonedturtle.partypanel.data.PrayerData;
@@ -67,6 +74,17 @@ import thestonedturtle.partypanel.ui.prayer.PrayerSprites;
 public class PartyPanelPlugin extends Plugin
 {
 	private static final BufferedImage ICON = ImageUtil.loadImageResource(PartyPanelPlugin.class, "icon.png");
+	private static final int[] RUNEPOUCH_AMOUNT_VARBITS = {
+		Varbits.RUNE_POUCH_AMOUNT1, Varbits.RUNE_POUCH_AMOUNT2, Varbits.RUNE_POUCH_AMOUNT3, Varbits.RUNE_POUCH_AMOUNT4,
+		Varbits.RUNE_POUCH_AMOUNT5, Varbits.RUNE_POUCH_AMOUNT6
+	};
+	private static final int[] RUNEPOUCH_RUNE_VARBITS = {
+		Varbits.RUNE_POUCH_RUNE1, Varbits.RUNE_POUCH_RUNE2, Varbits.RUNE_POUCH_RUNE3, Varbits.RUNE_POUCH_RUNE4,
+		Varbits.RUNE_POUCH_RUNE5, Varbits.RUNE_POUCH_RUNE6
+	};
+	public static final int[] RUNEPOUCH_ITEM_IDS = {
+		ItemID.RUNE_POUCH, ItemID.RUNE_POUCH_L, ItemID.DIVINE_RUNE_POUCH, ItemID.DIVINE_RUNE_POUCH_L
+	};
 
 	@Inject
 	private Client client;
@@ -165,6 +183,7 @@ public class PartyPanelPlugin extends Plugin
 			cleanUserInfo.setE(new int[0]);
 			cleanUserInfo.setM(Collections.emptySet());
 			cleanUserInfo.setS(Collections.emptySet());
+			cleanUserInfo.setRp(null);
 			partyService.send(cleanUserInfo);
 		}
 		clientToolbar.removeNavigation(navButton);
@@ -499,9 +518,17 @@ public class PartyPanelPlugin extends Plugin
 
 		if (c.getContainerId() == InventoryID.INVENTORY.getId())
 		{
-			myPlayer.setInventory(GameItem.convertItemsToGameItems(c.getItemContainer().getItems(), itemManager));
+			final ItemContainer inventory = c.getItemContainer();
+			myPlayer.setInventory(GameItem.convertItemsToGameItems(inventory.getItems(), itemManager));
 			int[] items = convertItemsToArray(c.getItemContainer().getItems());
 			currentChange.setI(items);
+
+			if (itemContainerHasRunePouch(inventory))
+			{
+				final List<Item> runesInPouch = getRunePouchContents(client);
+				myPlayer.setRunesInPouch(GameItem.convertItemsToGameItems(runesInPouch.toArray(Item[]::new), itemManager));
+				currentChange.setRp(convertRunePouchContentsToPackedInts(runesInPouch));
+			}
 		}
 		else if (c.getContainerId() == InventoryID.EQUIPMENT.getId())
 		{
@@ -509,6 +536,50 @@ public class PartyPanelPlugin extends Plugin
 			int[] items = convertItemsToArray(c.getItemContainer().getItems());
 			currentChange.setE(items);
 		}
+	}
+
+	private static boolean itemContainerHasRunePouch(ItemContainer inventory)
+	{
+		for (final int id : RUNEPOUCH_ITEM_IDS)
+		{
+			if (inventory.contains(id))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public int[] convertRunePouchContentsToPackedInts(final List<Item> runesInPouch)
+	{
+		return runesInPouch.stream()
+			.mapToInt(PartyBatchedChange::packRune)
+			.toArray();
+	}
+
+	public static List<Item> getRunePouchContents(Client client)
+	{
+		final EnumComposition runepouchEnum = client.getEnum(EnumID.RUNEPOUCH_RUNE);
+		final List<Item> items = new ArrayList<>();
+		for (int i = 0; i < RUNEPOUCH_AMOUNT_VARBITS.length; i++)
+		{
+			@Varbit int amount = client.getVarbitValue(RUNEPOUCH_AMOUNT_VARBITS[i]);
+			if (amount <= 0)
+			{
+				continue;
+			}
+
+			@Varbit int runeId = client.getVarbitValue(RUNEPOUCH_RUNE_VARBITS[i]);
+			if (runeId == 0)
+			{
+				continue;
+			}
+
+			final int itemId = runepouchEnum.getIntValue(runeId);
+			items.add(new Item(itemId, amount));
+		}
+
+		return items;
 	}
 
 	@Subscribe
@@ -545,6 +616,13 @@ public class PartyPanelPlugin extends Plugin
 		{
 			myPlayer.setDisease(disease);
 			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.D, disease));
+		}
+
+		if (ArrayUtils.contains(RUNEPOUCH_RUNE_VARBITS, event.getVarbitId()) || ArrayUtils.contains(RUNEPOUCH_AMOUNT_VARBITS, event.getVarbitId()))
+		{
+			List<Item> runePouchContents = getRunePouchContents(client);
+			myPlayer.setRunesInPouch(GameItem.convertItemsToGameItems(runePouchContents.toArray(Item[]::new), itemManager));
+			currentChange.setRp(convertRunePouchContentsToPackedInts(runePouchContents));
 		}
 	}
 
@@ -744,6 +822,8 @@ public class PartyPanelPlugin extends Plugin
 		}
 
 		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.U, myPlayer.getUsername()));
+
+		c.setRp(convertRunePouchContentsToPackedInts(getRunePouchContents(client)));
 
 		c.setMemberId(partyService.getLocalMember().getMemberId()); // Add member ID before sending
 		c.removeDefaults();
