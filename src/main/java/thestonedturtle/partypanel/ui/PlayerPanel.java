@@ -209,7 +209,8 @@ public class PlayerPanel extends JPanel
 		final String newPlayerName = newPlayer.getUsername() == null ? "" : newPlayer.getUsername();
 		hasBreakingBannerChange = hasBreakingBannerChange
 			|| player.getMember().getMemberId() != newPlayer.getMember().getMemberId()
-			|| !newPlayerName.equals(player.getUsername());
+			|| !newPlayerName.equals(player.getUsername())
+			|| newPlayer.getWorld() != player.getWorld();
 
 		player = newPlayer;
 		banner.setPlayer(player);
