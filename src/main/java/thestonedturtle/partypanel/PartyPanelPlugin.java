@@ -280,6 +280,9 @@ public class PartyPanelPlugin extends Plugin
 
 			myPlayer.setWorld(0);
 			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.W, 0));
+
+			partyService.send(currentChange);
+			currentChange = new PartyBatchedChange();
 		}
 	}
 
