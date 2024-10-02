@@ -343,7 +343,11 @@ public class PartyPanelPlugin extends Plugin
 	public void onPartyChanged(final PartyChanged event)
 	{
 		partyMembers.clear();
-		SwingUtilities.invokeLater(panel::renderSidebar);
+		SwingUtilities.invokeLater(() ->
+		{
+			panel.clearSidebar();
+			panel.renderSidebar();
+		});
 		myPlayer = null;
 
 		panel.updateParty();
@@ -654,13 +658,6 @@ public class PartyPanelPlugin extends Plugin
 
 			SwingUtilities.invokeLater(() ->
 			{
-				final PlayerPanel playerPanel = panel.getPlayerPanelMap().get(e.getMemberId());
-				if (playerPanel != null)
-				{
-					playerPanel.updatePlayerData(player, e.hasBreakingBannerChange());
-					return;
-				}
-
 				panel.drawPlayerPanel(player);
 			});
 		});

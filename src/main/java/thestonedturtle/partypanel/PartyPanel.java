@@ -118,13 +118,20 @@ class PartyPanel extends PluginPanel
 		this.add(scrollPane, BorderLayout.CENTER);
 	}
 
+	void clearSidebar()
+	{
+		basePanel.removeAll();
+		playerPanelMap.clear();
+
+		basePanel.revalidate();
+		basePanel.repaint();
+	}
+
 	/**
 	 * Shows all members of the party, excluding the local player. See {@link thestonedturtle.partypanel.ui.PlayerBanner )
 	 */
 	void renderSidebar()
 	{
-		basePanel.removeAll();
-
 		// Sort by their RSN first; If it doesn't exist sort by their Discord name instead
 		final List<PartyPlayer> players = plugin.getPartyMembers().values()
 			.stream()
@@ -166,8 +173,12 @@ class PartyPanel extends PluginPanel
 	{
 		if (player != null)
 		{
-			playerPanelMap.remove(player.getMember().getMemberId());
-			renderSidebar();
+			final PlayerPanel p = playerPanelMap.remove(player.getMember().getMemberId());
+			if (p != null)
+			{
+				basePanel.remove(p);
+				renderSidebar();
+			}
 		}
 	}
 
