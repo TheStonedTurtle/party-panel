@@ -158,7 +158,7 @@ public class PartyPanelPlugin extends Plugin
 		{
 			clientThread.invokeLater(() ->
 			{
-				myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
+				myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager, clientThread);
 				partyService.send(new UserSync());
 				partyService.send(partyPlayerAsBatchedChange());
 			});
@@ -253,7 +253,7 @@ public class PartyPanelPlugin extends Plugin
 
 		if (myPlayer == null)
 		{
-			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
+			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager, clientThread);
 			final PartyBatchedChange ce = partyPlayerAsBatchedChange();
 			partyService.send(ce);
 			return;
@@ -330,7 +330,7 @@ public class PartyPanelPlugin extends Plugin
 
 		clientThread.invoke(() ->
 		{
-			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
+			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager, clientThread);
 			final PartyBatchedChange c = partyPlayerAsBatchedChange();
 			if (c.isValid())
 			{
@@ -380,7 +380,7 @@ public class PartyPanelPlugin extends Plugin
 		// First time logging in or they changed accounts so resend the entire player object
 		if (myPlayer == null || !Objects.equals(client.getLocalPlayer().getName(), myPlayer.getUsername()))
 		{
-			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager);
+			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager, clientThread);
 			final PartyBatchedChange c = partyPlayerAsBatchedChange();
 			partyService.send(c);
 			return;
@@ -823,7 +823,10 @@ public class PartyPanelPlugin extends Plugin
 
 		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.U, myPlayer.getUsername()));
 
-		c.setRp(convertRunePouchContentsToPackedInts(getRunePouchContents(client)));
+		if (client.isClientThread())
+		{
+			c.setRp(convertRunePouchContentsToPackedInts(getRunePouchContents(client)));
+		}
 
 		c.setMemberId(partyService.getLocalMember().getMemberId()); // Add member ID before sending
 		c.removeDefaults();

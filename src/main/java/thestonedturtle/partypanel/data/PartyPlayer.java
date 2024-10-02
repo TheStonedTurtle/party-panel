@@ -35,6 +35,7 @@ import net.runelite.api.ItemContainer;
 import net.runelite.api.Skill;
 import net.runelite.api.VarPlayer;
 import net.runelite.api.Varbits;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.party.PartyMember;
 import thestonedturtle.partypanel.PartyPanelPlugin;
@@ -70,7 +71,7 @@ public class PartyPlayer
 		this.runesInPouch = new GameItem[0];
 	}
 
-	public PartyPlayer(final PartyMember member, final Client client, final ItemManager itemManager)
+	public PartyPlayer(final PartyMember member, final Client client, final ItemManager itemManager, final ClientThread clientThread)
 	{
 		this(member);
 		this.stamina = client.getVarbitValue(Varbits.STAMINA_EFFECT);
@@ -78,11 +79,13 @@ public class PartyPlayer
 		this.disease = client.getVarpValue(VarPlayer.DISEASE_VALUE);
 		this.world = client.getWorld();
 
-		updatePlayerInfo(client, itemManager);
+		clientThread.invoke(() -> updatePlayerInfo(client, itemManager));
 	}
 
 	public void updatePlayerInfo(final Client client, final ItemManager itemManager)
 	{
+		assert client.isClientThread();
+
 		// Player is logged in
 		if (client.getLocalPlayer() != null)
 		{
