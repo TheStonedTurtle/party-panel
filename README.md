@@ -2,9 +2,9 @@
 Adds a side panel that displays useful information about your discord party members who are also using this plugin.
 
 # Using the plugin
-This plugin requires the ![RuneLite Discord Plugin](https://github.com/runelite/runelite/wiki/Discord) to be enabled and is compatible with the ![RuneLite Party Plugin](https://github.com/runelite/runelite/wiki/Party) but does not require it. I would recommend keeping the Party plugin enabled and disabling the `Stats` option to remove the in-game overlays.
+This plugin requires the [RuneLite Discord Plugin](https://github.com/runelite/runelite/wiki/Discord) and the [RuneLite Party Plugin](https://github.com/runelite/runelite/wiki/Party) to be enabled. If the Runelite Party Plugin is not enabled this plugin will automatically enable it on startup. I would recommend disabling the `Stats` option for the RuneLite Party Plugin to remove the in-game overlays if you just want to use this party plugin.
 
-To learn more about joining a party please read the ![RuneLite Wiki Page](https://github.com/runelite/runelite/wiki/Party#how-to-create-a-party) about this.
+To learn more about joining a party please read the [RuneLite Wiki Page](https://github.com/runelite/runelite/wiki/Party#how-to-create-a-party) about this.
 
 # UI Examples
 
