@@ -154,16 +154,21 @@ class PartyPanel extends PluginPanel
 
 	void drawPlayerPanel(PartyPlayer player)
 	{
+		drawPlayerPanel(player, false);
+	}
+
+	void drawPlayerPanel(PartyPlayer player, boolean hasBreakingBannerChange)
+	{
 		PlayerPanel panel = playerPanelMap.get(player.getMember().getMemberId());
 		if (panel != null)
 		{
-			panel.updatePlayerData(player);
+			panel.updatePlayerData(player, true);
 			return;
 		}
 
 		panel = new PlayerPanel(player, plugin.getConfig(), plugin.spriteManager, plugin.itemManager);
 		playerPanelMap.put(player.getMember().getMemberId(), panel);
-		panel.updatePlayerData(player);
+		panel.updatePlayerData(player, hasBreakingBannerChange);
 		basePanel.add(panel);
 		basePanel.revalidate();
 		basePanel.repaint();

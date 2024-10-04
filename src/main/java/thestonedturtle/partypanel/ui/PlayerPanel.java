@@ -181,7 +181,7 @@ public class PlayerPanel extends JPanel
 				{
 					tabMap.replaceAll((k, v) -> v = false);
 					tabMap.put(spriteID, true);
-					updatePlayerData(player);
+					updatePlayerData(player, false);
 					return true;
 				});
 
@@ -198,20 +198,9 @@ public class PlayerPanel extends JPanel
 		return new ImageIcon(ImageUtil.resizeImage(image, IMAGE_SIZE.width, IMAGE_SIZE.height));
 	}
 
-	public void updatePlayerData(PartyPlayer newPlayer)
-	{
-		updatePlayerData(newPlayer, false);
-	}
-
 	// TODO add smarter ways to update data
 	public void updatePlayerData(PartyPlayer newPlayer, boolean hasBreakingBannerChange)
 	{
-		final String newPlayerName = newPlayer.getUsername() == null ? "" : newPlayer.getUsername();
-		hasBreakingBannerChange = hasBreakingBannerChange
-			|| player.getMember().getMemberId() != newPlayer.getMember().getMemberId()
-			|| !newPlayerName.equals(player.getUsername())
-			|| newPlayer.getWorld() != player.getWorld();
-
 		player = newPlayer;
 		banner.setPlayer(player);
 

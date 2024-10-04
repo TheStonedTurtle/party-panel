@@ -131,7 +131,18 @@ public class PartyBatchedChange extends PartyMemberMessage
 	{
 		return m != null
 			&& m.stream()
-			.anyMatch(e -> e.getT() == PartyMiscChange.PartyMisc.C || e.getT() == PartyMiscChange.PartyMisc.W);
+			.anyMatch(e ->
+			{
+				switch (e.t)
+				{
+					case C:
+					case W:
+					case U:
+						return true;
+				}
+
+				return false;
+			});
 	}
 
 	public boolean hasStatChange()

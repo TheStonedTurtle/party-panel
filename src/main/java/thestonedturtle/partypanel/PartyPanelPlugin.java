@@ -661,7 +661,7 @@ public class PartyPanelPlugin extends Plugin
 
 			SwingUtilities.invokeLater(() ->
 			{
-				panel.drawPlayerPanel(player);
+				panel.drawPlayerPanel(player, e.hasBreakingBannerChange());
 			});
 		});
 	}
