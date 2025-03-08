@@ -423,6 +423,7 @@ public class PartyPanelPlugin extends Plugin
 			myPlayer.setPrayers(new Prayers(client));
 			final Collection<Prayer> available = new ArrayList<>();
 			final Collection<Prayer> enabled = new ArrayList<>();
+			final Collection<Prayer> unlocked = new ArrayList<>();
 			for (final PrayerSprites p : PrayerSprites.values())
 			{
 				final PrayerData data = myPlayer.getPrayers().getPrayerData().get(p.getPrayer());
@@ -435,15 +436,22 @@ public class PartyPanelPlugin extends Plugin
 				{
 					enabled.add(p.getPrayer());
 				}
+
+				if (data.isUnlocked())
+				{
+					unlocked.add(p.getPrayer());
+				}
 			}
 
 			currentChange.setAp(PartyBatchedChange.pack(available));
 			currentChange.setEp(PartyBatchedChange.pack(enabled));
+			currentChange.setUp(PartyBatchedChange.pack(unlocked));
 		}
 		else
 		{
 			final Collection<Prayer> available = new ArrayList<>();
 			final Collection<Prayer> enabled = new ArrayList<>();
+			final Collection<Prayer> unlocked = new ArrayList<>();
 			boolean change = false;
 			for (final PrayerSprites p : PrayerSprites.values())
 			{
@@ -468,6 +476,7 @@ public class PartyPanelPlugin extends Plugin
 			{
 				currentChange.setAp(PartyBatchedChange.pack(available));
 				currentChange.setEp(PartyBatchedChange.pack(enabled));
+				currentChange.setUp(PartyBatchedChange.pack(unlocked));
 			}
 		}
 
@@ -656,7 +665,7 @@ public class PartyPanelPlugin extends Plugin
 		}
 
 		// Create placeholder prayer object
-		if (player.getPrayers() == null && (e.getAp() != null || e.getEp() != null))
+		if (player.getPrayers() == null && (e.getAp() != null || e.getEp() != null || e.getUp() != null))
 		{
 			player.setPrayers(new Prayers());
 		}
@@ -808,6 +817,7 @@ public class PartyPanelPlugin extends Plugin
 		{
 			final Collection<Prayer> available = new ArrayList<>();
 			final Collection<Prayer> enabled = new ArrayList<>();
+			final Collection<Prayer> unlocked = new ArrayList<>();
 			for (final PrayerSprites p : PrayerSprites.values())
 			{
 				final PrayerData data = myPlayer.getPrayers().getPrayerData().get(p.getPrayer());
@@ -820,10 +830,16 @@ public class PartyPanelPlugin extends Plugin
 				{
 					enabled.add(p.getPrayer());
 				}
+
+				if (data.isUnlocked())
+				{
+					unlocked.add(p.getPrayer());
+				}
 			}
 
 			c.setAp(PartyBatchedChange.pack(available));
 			c.setEp(PartyBatchedChange.pack(enabled));
+			c.setUp(PartyBatchedChange.pack(unlocked));
 		}
 
 		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.U, myPlayer.getUsername()));

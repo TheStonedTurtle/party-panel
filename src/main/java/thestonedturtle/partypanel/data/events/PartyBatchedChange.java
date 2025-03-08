@@ -49,6 +49,7 @@ public class PartyBatchedChange extends PartyMemberMessage
 	Collection<PartyMiscChange> m = new ArrayList<>(); // Misc Changes
 	Integer ap; // Available Prayers, bit-packed & contains all available prayers on every change
 	Integer ep; // Enabled Prayers, bit-packed & contains all enabled prayers on every change
+	Integer up; // Unlocked Prayers, bit-packed & contains all unlocked prayers on every change. Only for deadeye/vigour currently
 	int[] rp; // rp itemId and qty
 
 	public boolean isValid()
@@ -59,6 +60,7 @@ public class PartyBatchedChange extends PartyMemberMessage
 			|| (m != null && !m.isEmpty())
 			|| ap != null
 			|| ep != null
+			|| up != null
 			|| rp != null;
 	}
 
@@ -93,7 +95,7 @@ public class PartyBatchedChange extends PartyMemberMessage
 			m.forEach(change -> change.process(player));
 		}
 
-		if (ap != null || ep != null)
+		if (ap != null || ep != null || up != null)
 		{
 			processPrayers(player);
 		}
@@ -114,6 +116,7 @@ public class PartyBatchedChange extends PartyMemberMessage
 		{
 			p.setAvailable(false);
 			p.setEnabled(false);
+			p.setUnlocked(false);
 		});
 
 		for (final Prayer p : unpackActivePrayers())
@@ -124,6 +127,11 @@ public class PartyBatchedChange extends PartyMemberMessage
 		for (final Prayer p : unpackEnabledPrayers())
 		{
 			player.getPrayers().getPrayerData().get(p).setEnabled(true);
+		}
+
+		for (final Prayer p : unpack(up))
+		{
+			player.getPrayers().getPrayerData().get(p).setUnlocked(true);
 		}
 	}
 

@@ -56,6 +56,7 @@ public class PlayerPrayerPanel extends JPanel
 	@Getter
 	private final Map<Prayer, PrayerSlot> slotMap = new HashMap<>();
 	private final JLabel remainingLabel = new JLabel();
+	private final JPanel prayerContainer = new JPanel();
 
 	public PlayerPrayerPanel(final PartyPlayer player, final SpriteManager spriteManager)
 	{
@@ -66,35 +67,26 @@ public class PlayerPrayerPanel extends JPanel
 		setBackground(BACKGROUND);
 		setPreferredSize(PANEL_SIZE);
 
-		add(createPrayerContainer(player.getPrayers(), spriteManager), BorderLayout.NORTH);
+		prayerContainer.setLayout(new GridBagLayout());
+		prayerContainer.setPreferredSize(new Dimension(PANEL_SIZE.width, PANEL_SIZE.height - 25));
+		prayerContainer.setOpaque(false);
+
+		createPrayerSlots(player.getPrayers(), spriteManager);
+
+		add(prayerContainer, BorderLayout.NORTH);
 		add(createPrayerRemainingPanel(spriteManager), BorderLayout.SOUTH);
 		updatePrayerRemaining(player.getSkillBoostedLevel(Skill.PRAYER), player.getSkillRealLevel(Skill.PRAYER));
 	}
 
-	private JPanel createPrayerContainer(final Prayers prayer, final SpriteManager spriteManager)
+	private void createPrayerSlots(final Prayers prayers, final SpriteManager spriteManager)
 	{
-		final JPanel panel = new JPanel();
-		panel.setLayout(new GridBagLayout());
-		panel.setPreferredSize(new Dimension(PANEL_SIZE.width, PANEL_SIZE.height - 25));
-		panel.setOpaque(false);
-
-		final GridBagConstraints c = new GridBagConstraints();
-		c.gridx = 0;
-		c.gridy = 0;
-		c.weighty = .5;
-		c.weightx = .5;
-		c.ipadx = 2;
-		c.ipady = 2;
-		c.anchor = GridBagConstraints.CENTER;
-
-		// Creates and adds the Prayers to the panel
 		for (final PrayerSprites p : PrayerSprites.values())
 		{
 			final PrayerSlot slot = new PrayerSlot(p, spriteManager);
 
-			if (prayer != null)
+			if (prayers != null)
 			{
-				final PrayerData data = prayer.getPrayerData().get(p.getPrayer());
+				final PrayerData data = prayers.getPrayerData().get(p.getPrayer());
 				if (data != null)
 				{
 					slot.updatePrayerData(data);
@@ -102,17 +94,8 @@ public class PlayerPrayerPanel extends JPanel
 			}
 
 			slotMap.put(p.getPrayer(), slot);
-
-			if (c.gridx == MAX_COLUMNS)
-			{
-				c.gridx = 0;
-				c.gridy++;
-			}
-			panel.add(slot, c);
-			c.gridx++;
 		}
-
-		return panel;
+		updateSlots();
 	}
 
 	private JPanel createPrayerRemainingPanel(final SpriteManager spriteManager)
@@ -152,5 +135,38 @@ public class PlayerPrayerPanel extends JPanel
 	public void updatePrayerRemaining(final int remaining, final int maximum)
 	{
 		remainingLabel.setText(remaining + "/" + maximum);
+	}
+
+	public void updateSlots()
+	{
+		prayerContainer.removeAll();
+
+		final GridBagConstraints c = new GridBagConstraints();
+		c.gridx = 0;
+		c.gridy = 0;
+		c.weighty = .5;
+		c.weightx = .5;
+		c.ipadx = 2;
+		c.ipady = 2;
+		c.anchor = GridBagConstraints.CENTER;
+
+		for (final PrayerSprites prayerSprites : PrayerSprites.values())
+		{
+			final PrayerSlot slot = slotMap.get(prayerSprites.getPrayer());
+			if (!slot.getData().isUnlocked())
+			{
+				continue;
+
+			}
+
+			if (c.gridx == MAX_COLUMNS)
+			{
+				c.gridx = 0;
+				c.gridy++;
+			}
+
+			prayerContainer.add(slot, c);
+			c.gridx++;
+		}
 	}
 }

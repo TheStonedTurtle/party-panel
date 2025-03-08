@@ -281,13 +281,21 @@ public class PlayerPanel extends JPanel
 
 		if (player.getPrayers() != null && tabMap.getOrDefault(SpriteID.TAB_PRAYER, false))
 		{
+			boolean unlockChanged = false;
 			for (final Map.Entry<Prayer, PrayerSlot> entry : prayersPanel.getSlotMap().entrySet())
 			{
+				PrayerSlot slot = entry.getValue();
 				final PrayerData data = player.getPrayers().getPrayerData().get(entry.getKey());
 				if (data != null)
 				{
+					unlockChanged = unlockChanged || data.isUnlocked() != slot.getData().isUnlocked();
 					entry.getValue().updatePrayerData(data);
 				}
+			}
+
+			if (unlockChanged)
+			{
+				prayersPanel.updateSlots();
 			}
 
 			prayersPanel.updatePrayerRemaining(player.getSkillBoostedLevel(Skill.PRAYER), player.getSkillRealLevel(Skill.PRAYER));

@@ -28,11 +28,13 @@ import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import lombok.Getter;
 import net.runelite.api.SpriteID;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.util.Text;
 import thestonedturtle.partypanel.ImgUtil;
 import thestonedturtle.partypanel.data.PrayerData;
+import static thestonedturtle.partypanel.data.Prayers.isUnlockedByDefault;
 
 public class PrayerSlot extends JLabel
 {
@@ -42,11 +44,12 @@ public class PrayerSlot extends JLabel
 	private BufferedImage availableImage;
 	private BufferedImage activatedImage;
 
+	@Getter
 	private PrayerData data;
 
 	public PrayerSlot(final PrayerSprites sprites, final SpriteManager spriteManager)
 	{
-		data = new PrayerData(sprites.getPrayer(), false, false);
+		data = new PrayerData(sprites.getPrayer(), false, false, isUnlockedByDefault(sprites.getPrayer()));
 
 		spriteManager.getSpriteAsync(sprites.getUnavailable(), 0, img -> unavailableImage = img);
 		spriteManager.getSpriteAsync(sprites.getAvailable(), 0, img ->
