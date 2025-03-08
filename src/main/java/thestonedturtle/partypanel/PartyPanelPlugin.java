@@ -366,6 +366,11 @@ public class PartyPanelPlugin extends Plugin
 			panel.getPlayerPanelMap().clear();
 			return;
 		}
+		else if (!addedButton)
+		{
+			clientToolbar.addNavigation(navButton);
+			addedButton = true;
+		}
 
 		config.setPreviousPartyId(event.getPassphrase());
 	}
