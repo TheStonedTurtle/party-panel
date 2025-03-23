@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.swing.JOptionPane;
@@ -54,7 +53,6 @@ import net.runelite.client.party.events.UserPart;
 import net.runelite.client.party.messages.UserSync;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
-import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.task.Schedule;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
@@ -110,9 +108,6 @@ public class PartyPanelPlugin extends Plugin
 
 	@Inject
 	private PartyService partyService;
-
-	@Inject
-	private PluginManager pluginManager;
 
 	@Inject
 	SpriteManager spriteManager;
@@ -171,12 +166,6 @@ public class PartyPanelPlugin extends Plugin
 				partyService.send(new UserSync());
 				partyService.send(partyPlayerAsBatchedChange());
 			});
-		}
-
-		final Optional<Plugin> partyPlugin = pluginManager.getPlugins().stream().filter(p -> p.getName().equals("Party")).findFirst();
-		if (partyPlugin.isPresent() && !pluginManager.isPluginEnabled(partyPlugin.get()))
-		{
-			pluginManager.setPluginEnabled(partyPlugin.get(), true);
 		}
 
 		lastLogout = Instant.now();
