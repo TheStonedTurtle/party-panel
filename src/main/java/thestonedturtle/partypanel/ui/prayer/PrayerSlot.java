@@ -85,7 +85,7 @@ public class PrayerSlot extends JLabel
 
 	public void updatePrayerData(final PrayerData updatedData)
 	{
-		if (!data.getPrayer().equals(updatedData.getPrayer()))
+		if (!data.getPrayer().equals(updatedData.getPrayer()) || data.equals(updatedData))
 		{
 			return;
 		}
