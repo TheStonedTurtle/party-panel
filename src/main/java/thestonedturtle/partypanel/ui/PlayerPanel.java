@@ -110,7 +110,7 @@ public class PlayerPanel extends JPanel
 		this.showInfo = config.autoExpandMembers();
 		this.banner = new PlayerBanner(selectedPlayer, showInfo, config.displayPlayerWorlds(), spriteManager);
 		this.inventoryPanel = new PlayerInventoryPanel(selectedPlayer.getInventory(), selectedPlayer.getRunesInPouch(), itemManager);
-		this.equipmentPanel = new PlayerEquipmentPanel(selectedPlayer.getEquipment(), spriteManager, itemManager);
+		this.equipmentPanel = new PlayerEquipmentPanel(selectedPlayer.getEquipment(), selectedPlayer.getQuiver(), spriteManager, itemManager);
 		this.skillsPanel = new PlayerSkillsPanel(selectedPlayer, config.displayVirtualLevels(), spriteManager);
 		this.prayersPanel = new PlayerPrayerPanel(selectedPlayer, spriteManager);
 
@@ -265,6 +265,8 @@ public class PlayerPanel extends JPanel
 					slot.setGameItem(null, null);
 				}
 			}
+
+			this.equipmentPanel.setQuiver(player.getQuiver());
 		}
 
 		if (player.getStats() != null && tabMap.getOrDefault(SpriteID.TAB_STATS, false))

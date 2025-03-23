@@ -31,10 +31,12 @@ import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.Item;
 import net.runelite.api.Prayer;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.party.messages.PartyMemberMessage;
+import thestonedturtle.partypanel.PartyPanelPlugin;
 import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
 
@@ -51,6 +53,7 @@ public class PartyBatchedChange extends PartyMemberMessage
 	Integer ep; // Enabled Prayers, bit-packed & contains all enabled prayers on every change
 	Integer up; // Unlocked Prayers, bit-packed & contains all unlocked prayers on every change. Only for deadeye/vigour currently
 	int[] rp; // rp itemId and qty
+	int[] q; // Quiver itemId and qty
 
 	public boolean isValid()
 	{
@@ -61,7 +64,8 @@ public class PartyBatchedChange extends PartyMemberMessage
 			|| ap != null
 			|| ep != null
 			|| up != null
-			|| rp != null;
+			|| rp != null
+			|| q != null;
 	}
 
 	// Unset unneeded variables to minimize payload
@@ -77,12 +81,32 @@ public class PartyBatchedChange extends PartyMemberMessage
 		{
 			final GameItem[] gameItems = GameItem.convertItemsToGameItems(i, itemManager);
 			player.setInventory(gameItems);
+			player.getQuiver().setInInventory(false);
+			for (final GameItem item : gameItems)
+			{
+				if (item == null)
+				{
+					continue;
+				}
+
+				if (PartyPanelPlugin.DIZANAS_QUIVER_IDS.contains(item.getId()))
+				{
+					player.getQuiver().setInInventory(true);
+					break;
+				}
+			}
 		}
 
 		if (e != null)
 		{
 			final GameItem[] gameItems = GameItem.convertItemsToGameItems(e, itemManager);
 			player.setEquipment(gameItems);
+			player.getQuiver().setBeingWorn(false);
+			if (gameItems.length > EquipmentInventorySlot.CAPE.getSlotIdx())
+			{
+				final GameItem cape = gameItems[EquipmentInventorySlot.CAPE.getSlotIdx()];
+				player.getQuiver().setBeingWorn(cape != null && PartyPanelPlugin.DIZANAS_QUIVER_IDS.contains(cape.getId()));
+			}
 		}
 
 		if (s != null)
@@ -106,6 +130,19 @@ public class PartyBatchedChange extends PartyMemberMessage
 				.mapToObj(PartyBatchedChange::unpackRune)
 				.toArray(Item[]::new);
 			player.setRunesInPouch(GameItem.convertItemsToGameItems(runePouchContents, itemManager));
+		}
+
+		if (q != null)
+		{
+			if (q.length == 0)
+			{
+				player.getQuiver().setQuiverAmmo(null);
+			}
+			else
+			{
+				assert q.length == 2;
+				player.getQuiver().setQuiverAmmo(new GameItem(q[0], q[1], itemManager));
+			}
 		}
 	}
 

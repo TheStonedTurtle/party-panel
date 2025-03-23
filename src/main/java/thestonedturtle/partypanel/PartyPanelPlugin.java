@@ -1,5 +1,6 @@
 package thestonedturtle.partypanel;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
 import java.time.Instant;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -20,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.EnumComposition;
 import net.runelite.api.EnumID;
+import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.Experience;
 import net.runelite.api.GameState;
 import net.runelite.api.InventoryID;
@@ -43,6 +46,7 @@ import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.events.PartyChanged;
 import net.runelite.client.events.PartyMemberAvatar;
 import net.runelite.client.game.ItemManager;
+import net.runelite.client.game.ItemVariationMapping;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.party.PartyService;
 import net.runelite.client.party.WSClient;
@@ -85,6 +89,11 @@ public class PartyPanelPlugin extends Plugin
 	public static final int[] RUNEPOUCH_ITEM_IDS = {
 		ItemID.RUNE_POUCH, ItemID.RUNE_POUCH_L, ItemID.DIVINE_RUNE_POUCH, ItemID.DIVINE_RUNE_POUCH_L
 	};
+	public static final Set<Integer> DIZANAS_QUIVER_IDS = ImmutableSet.<Integer>builder()
+		.addAll(ItemVariationMapping.getVariations(ItemVariationMapping.map(ItemID.DIZANAS_QUIVER)))
+		.addAll(ItemVariationMapping.getVariations(ItemVariationMapping.map(ItemID.BLESSED_DIZANAS_QUIVER)))
+		.addAll(ItemVariationMapping.getVariations(ItemVariationMapping.map(ItemID.DIZANAS_MAX_CAPE)))
+		.build();
 
 	@Inject
 	private Client client;
@@ -184,6 +193,7 @@ public class PartyPanelPlugin extends Plugin
 			cleanUserInfo.setM(Collections.emptySet());
 			cleanUserInfo.setS(Collections.emptySet());
 			cleanUserInfo.setRp(null);
+			cleanUserInfo.setQ(new int[0]);
 			partyService.send(cleanUserInfo);
 		}
 		clientToolbar.removeNavigation(navButton);
@@ -550,12 +560,71 @@ public class PartyPanelPlugin extends Plugin
 				myPlayer.setRunesInPouch(GameItem.convertItemsToGameItems(runesInPouch.toArray(Item[]::new), itemManager));
 				currentChange.setRp(convertRunePouchContentsToPackedInts(runesInPouch));
 			}
+
+			// As long as they have the quiver in their inventory and have already worn it we should keep showing it in the UI
+			boolean hasQuiverInInventory = false;
+			for (final Item item : inventory.getItems())
+			{
+				if (DIZANAS_QUIVER_IDS.contains(item.getId()))
+				{
+					hasQuiverInInventory = true;
+					break;
+				}
+			}
+			myPlayer.getQuiver().setInInventory(hasQuiverInInventory);
+
+			// We may be able to find the quiver ammo when it enters the inventory from a storage container if they've already worn it this game session
+			if (hasQuiverInInventory && myPlayer.getQuiver().getQuiverAmmo() == null)
+			{
+				updateQuiverAmmo();
+			}
 		}
 		else if (c.getContainerId() == InventoryID.EQUIPMENT.getId())
 		{
 			myPlayer.setEquipment(GameItem.convertItemsToGameItems(c.getItemContainer().getItems(), itemManager));
 			int[] items = convertItemsToArray(c.getItemContainer().getItems());
 			currentChange.setE(items);
+
+			final Item cape = c.getItemContainer().getItem(EquipmentInventorySlot.CAPE.getSlotIdx());
+			boolean isWearingQuiver = cape != null && DIZANAS_QUIVER_IDS.contains(cape.getId());
+			myPlayer.getQuiver().setBeingWorn(isWearingQuiver);
+
+			// When they wear the cape we need to update quiver ammo only if we don't yet know it, the var changes handle tracking
+			if (isWearingQuiver && myPlayer.getQuiver().getQuiverAmmo() == null)
+			{
+				updateQuiverAmmo();
+			}
+		}
+	}
+
+	private GameItem getQuiverAmmo()
+	{
+		final int quiverAmmoId = client.getVarpValue(VarPlayer.DIZANAS_QUIVER_ITEM_ID);
+		final int quiverAmmoCount = client.getVarpValue(VarPlayer.DIZANAS_QUIVER_ITEM_COUNT);
+		if (quiverAmmoId == -1 || quiverAmmoCount == 0)
+		{
+			return null;
+		}
+
+		return new GameItem(quiverAmmoId, quiverAmmoCount, itemManager);
+	}
+
+	private void updateQuiverAmmo()
+	{
+		final GameItem quiverAmmo = getQuiverAmmo();
+		if (quiverAmmo == myPlayer.getQuiver().getQuiverAmmo())
+		{
+			return;
+		}
+
+		myPlayer.getQuiver().setQuiverAmmo(quiverAmmo);
+		if (quiverAmmo != null)
+		{
+			currentChange.setQ(new int[]{quiverAmmo.getId(), quiverAmmo.getQty()});
+		}
+		else
+		{
+			currentChange.setQ(new int[0]);
 		}
 	}
 
@@ -644,6 +713,11 @@ public class PartyPanelPlugin extends Plugin
 			List<Item> runePouchContents = getRunePouchContents(client);
 			myPlayer.setRunesInPouch(GameItem.convertItemsToGameItems(runePouchContents.toArray(Item[]::new), itemManager));
 			currentChange.setRp(convertRunePouchContentsToPackedInts(runePouchContents));
+		}
+
+		if (event.getVarpId() == VarPlayer.DIZANAS_QUIVER_ITEM_COUNT || event.getVarpId() == VarPlayer.DIZANAS_QUIVER_ITEM_ID)
+		{
+			updateQuiverAmmo();
 		}
 	}
 
@@ -847,6 +921,16 @@ public class PartyPanelPlugin extends Plugin
 		if (client.isClientThread())
 		{
 			c.setRp(convertRunePouchContentsToPackedInts(getRunePouchContents(client)));
+		}
+
+		final GameItem quiverAmmo = myPlayer.getQuiver().getQuiverAmmo();
+		if (quiverAmmo != null)
+		{
+			c.setQ(new int[]{quiverAmmo.getId(), quiverAmmo.getQty()});
+		}
+		else
+		{
+			c.setQ(new int[0]);
 		}
 
 		c.setMemberId(partyService.getLocalMember().getMemberId()); // Add member ID before sending

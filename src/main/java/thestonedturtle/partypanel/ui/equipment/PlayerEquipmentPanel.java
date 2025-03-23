@@ -47,10 +47,12 @@ import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.AsyncBufferedImage;
 import net.runelite.client.util.ImageUtil;
 import thestonedturtle.partypanel.data.GameItem;
+import thestonedturtle.partypanel.data.Quiver;
 
 public class PlayerEquipmentPanel extends JPanel
 {
 	private static final ImmutableMap<EquipmentInventorySlot, Integer> EQUIPMENT_SLOT_SPRITE_MAP;
+
 	static
 	{
 		final ImmutableMap.Builder<EquipmentInventorySlot, Integer> sprites = new ImmutableMap.Builder<>();
@@ -78,14 +80,17 @@ public class PlayerEquipmentPanel extends JPanel
 
 	@Getter
 	private final Map<EquipmentInventorySlot, EquipmentPanelSlot> panelMap = new HashMap<>();
+	private EquipmentPanelSlot quiverSlot = null;
 
 	private final ItemManager itemManager;
 	private final SpriteManager spriteManager;
+	private Quiver quiver;
 
-	public PlayerEquipmentPanel(final GameItem[] items, final SpriteManager spriteManager, final ItemManager itemManager)
+	public PlayerEquipmentPanel(final GameItem[] items, final Quiver quiver, final SpriteManager spriteManager, final ItemManager itemManager)
 	{
 		super();
 
+		this.quiver = quiver;
 		this.spriteManager = spriteManager;
 		this.itemManager = itemManager;
 
@@ -121,6 +126,10 @@ public class PlayerEquipmentPanel extends JPanel
 		c.gridx = 1;
 		c.gridy = 0;
 		createEquipmentPanelSlot(EquipmentInventorySlot.HEAD, items, background, c);
+		c.anchor = GridBagConstraints.WEST;
+		c.gridx++;
+		// quiver, which should be hidden by default.
+		createEquipmentPanelSlot(null, quiver.getQuiverAmmo(), background, c, null);
 
 		c.gridx = 0;
 		c.gridy++;
@@ -156,6 +165,30 @@ public class PlayerEquipmentPanel extends JPanel
 		this.revalidate();
 		this.repaint();
 	}
+
+	public void setQuiver(final Quiver quiver)
+	{
+		this.quiver = quiver;
+		if (quiverSlot == null)
+		{
+			return;
+		}
+
+		final GameItem quiverAmmoItem = quiver.getQuiverAmmo();
+		quiverSlot.setVisible(quiver.isSlotVisible());
+		if (quiverAmmoItem == null)
+		{
+			quiverSlot.setGameItem(null, null);
+			return;
+		}
+
+		final AsyncBufferedImage img = itemManager.getImage(quiverAmmoItem.getId(), quiverAmmoItem.getQty(), quiverAmmoItem.isStackable());
+
+		// Set now and onLoaded as onLoaded could trigger before the lambda is registered
+		quiverSlot.setGameItem(quiverAmmoItem, img);
+		img.onLoaded(() -> quiverSlot.setGameItem(quiverAmmoItem, img));
+	}
+
 	private void createEquipmentPanelSlot(final EquipmentInventorySlot slot, final GameItem[] items,
 		final BufferedImage background, final GridBagConstraints c)
 	{
@@ -165,12 +198,26 @@ public class PlayerEquipmentPanel extends JPanel
 	private void createEquipmentPanelSlot(final EquipmentInventorySlot slot, final GameItem[] items,
 		final BufferedImage background, final GridBagConstraints constraints, final Border border)
 	{
+		final GameItem item = items.length > slot.getSlotIdx() ? items[slot.getSlotIdx()] : null;
+		createEquipmentPanelSlot(slot, item, background, constraints, border);
+	}
+
+	private void createEquipmentPanelSlot(final EquipmentInventorySlot slot, final GameItem item,
+		final BufferedImage background, final GridBagConstraints constraints, final Border border)
+	{
+		// Quiver support
+		final int spriteID = slot != null ? EQUIPMENT_SLOT_SPRITE_MAP.get(slot) : EQUIPMENT_SLOT_SPRITE_MAP.get(EquipmentInventorySlot.AMMO);
+		createEquipmentPanelSlot(slot, item, background, constraints, border, spriteID);
+	}
+
+	private void createEquipmentPanelSlot(final EquipmentInventorySlot slot, final GameItem item,
+		final BufferedImage background, final GridBagConstraints constraints, final Border border, final int spriteID)
+	{
 		// Clone constraints for async support
 		final GridBagConstraints c = (GridBagConstraints) constraints.clone();
-		final GameItem item = items.length > slot.getSlotIdx() ? items[slot.getSlotIdx()] : null;
 		final AsyncBufferedImage image = item == null ? null : itemManager.getImage(item.getId(), item.getQty(), item.isStackable());
 
-		spriteManager.getSpriteAsync(EQUIPMENT_SLOT_SPRITE_MAP.get(slot), 0, img ->
+		spriteManager.getSpriteAsync(spriteID, 0, img ->
 			SwingUtilities.invokeLater(() ->
 			{
 				final EquipmentPanelSlot panel = new EquipmentPanelSlot(item, image, background, img);
@@ -178,7 +225,16 @@ public class PlayerEquipmentPanel extends JPanel
 				{
 					panel.setBorder(border);
 				}
-				panelMap.put(slot, panel);
+
+				if (slot != null)
+				{
+					panelMap.put(slot, panel);
+				}
+				else
+				{
+					quiverSlot = panel;
+					panel.setVisible(quiver.isSlotVisible());
+				}
 
 				if (image != null)
 				{

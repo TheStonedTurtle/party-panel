@@ -55,6 +55,7 @@ public class PartyPlayer
 	private int disease;
 	private int world;
 	private GameItem[] runesInPouch;
+	private Quiver quiver;
 
 	public PartyPlayer(final PartyMember member)
 	{
@@ -69,6 +70,7 @@ public class PartyPlayer
 		this.disease = 0;
 		this.world = 0;
 		this.runesInPouch = new GameItem[0];
+		this.quiver = new Quiver(null, false, false);
 	}
 
 	public PartyPlayer(final PartyMember member, final Client client, final ItemManager itemManager, final ClientThread clientThread)
@@ -98,17 +100,46 @@ public class PartyPlayer
 				this.inventory = GameItem.convertItemsToGameItems(invi.getItems(), itemManager);
 				final List<Item> runesInPouch = PartyPanelPlugin.getRunePouchContents(client);
 				this.runesInPouch = GameItem.convertItemsToGameItems(runesInPouch.toArray(Item[]::new), itemManager);
+
+				boolean hasQuiverInInventory = false;
+				for (final Item item : invi.getItems())
+				{
+					if (PartyPanelPlugin.DIZANAS_QUIVER_IDS.contains(item.getId()))
+					{
+						hasQuiverInInventory = true;
+						break;
+					}
+				}
+				quiver.setInInventory(hasQuiverInInventory);
 			}
 
 			final ItemContainer equip = client.getItemContainer(InventoryID.EQUIPMENT);
 			if (equip != null)
 			{
 				this.equipment = GameItem.convertItemsToGameItems(equip.getItems(), itemManager);
+
+				final Item cape = equip.getItem(EquipmentInventorySlot.CAPE.getSlotIdx());
+				boolean isWearingQuiver = cape != null && PartyPanelPlugin.DIZANAS_QUIVER_IDS.contains(cape.getId());
+				quiver.setBeingWorn(isWearingQuiver);
 			}
 
 			if (this.prayers == null)
 			{
 				prayers = new Prayers(client);
+			}
+		}
+
+		if (quiver.isSlotVisible())
+		{
+			final int quiverAmmoId = client.getVarpValue(VarPlayer.DIZANAS_QUIVER_ITEM_ID);
+			final int quiverAmmoCount = client.getVarpValue(VarPlayer.DIZANAS_QUIVER_ITEM_COUNT);
+			if (quiverAmmoId == -1 || quiverAmmoCount == 0)
+			{
+				quiver.setQuiverAmmo(null);
+			}
+			else
+			{
+				quiver.setQuiverAmmo(new GameItem(quiverAmmoId, quiverAmmoCount, itemManager));
 			}
 		}
 	}
