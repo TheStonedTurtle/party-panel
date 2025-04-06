@@ -71,7 +71,7 @@ public class PrayerSlot extends JLabel
 		setMaximumSize(SIZE);
 		setMinimumSize(SIZE);
 
-		updatePrayerData(data, true);
+		updatePrayerData(data);
 	}
 
 	private void updateActivatedImage()
@@ -85,12 +85,7 @@ public class PrayerSlot extends JLabel
 
 	public void updatePrayerData(final PrayerData updatedData)
 	{
-		updatePrayerData(updatedData, false);
-	}
-
-	public void updatePrayerData(final PrayerData updatedData, boolean forceUpdate)
-	{
-		if (!data.getPrayer().equals(updatedData.getPrayer()) || (data.equals(updatedData) && !forceUpdate))
+		if (!data.getPrayer().equals(updatedData.getPrayer()))
 		{
 			return;
 		}
