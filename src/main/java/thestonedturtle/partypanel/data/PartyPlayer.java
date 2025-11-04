@@ -166,8 +166,6 @@ public class PartyPlayer
 			return 0;
 		}
 
-		assert skill != Skill.OVERALL;
-
 		return Math.min(stats.getBaseLevels().get(skill), allowVirtualLevels ? 126 : 99);
 	}
 
