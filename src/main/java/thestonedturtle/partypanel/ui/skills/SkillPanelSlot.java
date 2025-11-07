@@ -24,6 +24,16 @@
  */
 package thestonedturtle.partypanel.ui.skills;
 
+import net.runelite.api.Constants;
+import net.runelite.api.gameval.SpriteID;
+import net.runelite.client.game.SpriteManager;
+import net.runelite.client.ui.FontManager;
+import net.runelite.client.util.ImageUtil;
+import thestonedturtle.partypanel.ImgUtil;
+
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -32,19 +42,10 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.image.BufferedImage;
 import java.util.Objects;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
-import net.runelite.api.Constants;
-import net.runelite.api.SpriteID;
-import net.runelite.client.game.SpriteManager;
-import net.runelite.client.ui.FontManager;
-import net.runelite.client.util.ImageUtil;
-import thestonedturtle.partypanel.ImgUtil;
 
 public class SkillPanelSlot extends JPanel
 {
-	private static final Dimension PANEL_HALF_SIZE = new Dimension(Constants.ITEM_SPRITE_WIDTH, Constants.ITEM_SPRITE_HEIGHT + 4);
+	private static final Dimension PANEL_HALF_SIZE = new Dimension(Constants.ITEM_SPRITE_WIDTH, Constants.ITEM_SPRITE_HEIGHT + 3);
 	static final Dimension PANEL_FULL_SIZE = new Dimension(PANEL_HALF_SIZE.width * 2, PANEL_HALF_SIZE.height);
 
 	private final JLabel boostedLabel = new JLabel();
@@ -118,12 +119,12 @@ public class SkillPanelSlot extends JPanel
 
 	void initImages(final BufferedImage skillIcon, final SpriteManager spriteManager)
 	{
-		spriteManager.getSpriteAsync(SpriteID.STATS_TILE_HALF_LEFT, 0, img ->
+		spriteManager.getSpriteAsync(SpriteID.Miscgraphics.STATS_TILE_HALF_LEFT, 0, img ->
 		{
 			skillHalf = ImgUtil.overlapImages(skillIcon, SkillPanelSlot.resize(img), false);
 			updateBackgroundImage();
 		});
-		spriteManager.getSpriteAsync(SpriteID.STATS_TILE_HALF_RIGHT_WITH_SLASH, 0, img ->
+		spriteManager.getSpriteAsync(SpriteID.Miscgraphics.STATS_TILE_HALF_RIGHT_WITH_SLASH, 0, img ->
 		{
 			statHalf = SkillPanelSlot.resize(img);
 			updateBackgroundImage();

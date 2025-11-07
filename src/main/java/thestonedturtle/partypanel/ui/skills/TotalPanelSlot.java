@@ -24,24 +24,33 @@
  */
 package thestonedturtle.partypanel.ui.skills;
 
+import net.runelite.api.gameval.SpriteID;
+import net.runelite.client.game.SpriteManager;
+import net.runelite.client.ui.FontManager;
+import net.runelite.client.util.ImageUtil;
+import thestonedturtle.partypanel.ImgUtil;
+
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.image.BufferedImage;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import net.runelite.api.SpriteID;
-import net.runelite.client.game.SpriteManager;
-import net.runelite.client.ui.FontManager;
-import thestonedturtle.partypanel.ImgUtil;
 
 public class TotalPanelSlot extends JPanel
 {
+	private static final int SLOT_HEIGHT = 22;
+	private static final int SLOT_WIDTH = PlayerSkillsPanel.PANEL_SIZE.width + 7;
+	private static final int _1_5TH_SLOT_WIDTH = SLOT_WIDTH / 5;
+
 	private final JLabel levelLabel = new JLabel();
 	private BufferedImage background;
-	private BufferedImage skillHalf;
-	private BufferedImage statHalf;
+	private BufferedImage backgroundLeft;
+	private BufferedImage backgroundRight;
+	private BufferedImage backgroundCenter;
 
 	@Override
 	protected void paintComponent(Graphics g)
@@ -57,9 +66,10 @@ public class TotalPanelSlot extends JPanel
 
 	private void updateBackgroundImage()
 	{
-		if (skillHalf != null && statHalf != null)
+		if (backgroundLeft != null && backgroundRight != null && backgroundCenter != null)
 		{
-			background = ImgUtil.combineImages(skillHalf, statHalf);
+			final BufferedImage temp = ImgUtil.combineImages(backgroundLeft, backgroundCenter);
+			background = ImgUtil.combineImages(temp, backgroundRight);
 			this.repaint();
 		}
 	}
@@ -69,26 +79,33 @@ public class TotalPanelSlot extends JPanel
 		super();
 		setOpaque(false);
 
-		spriteManager.getSpriteAsync(SpriteID.STATS_TILE_HALF_LEFT_BLACK, 0, img ->
+		spriteManager.getSpriteAsync(SpriteID.Miscgraphics2._4, 0, img ->
 		{
-			skillHalf = SkillPanelSlot.resize(img);
+			backgroundLeft = resize_edge(img);
 			updateBackgroundImage();
 		});
-		spriteManager.getSpriteAsync(SpriteID.STATS_TILE_HALF_RIGHT_BLACK, 0, img ->
+		spriteManager.getSpriteAsync(SpriteID.Miscgraphics2._5, 0, img ->
 		{
-			statHalf = SkillPanelSlot.resize(img);
+			backgroundRight = resize_edge(img);
+			updateBackgroundImage();
+		});
+		spriteManager.getSpriteAsync(SpriteID.Miscgraphics2._6, 0, img ->
+		{
+			backgroundCenter = resize_middle(img);
 			updateBackgroundImage();
 		});
 
-		setPreferredSize(SkillPanelSlot.PANEL_FULL_SIZE);
+		setPreferredSize(new Dimension(PlayerSkillsPanel.PANEL_SIZE.width, SLOT_HEIGHT));
 		setLayout(new GridBagLayout());
 		final GridBagConstraints c = new GridBagConstraints();
 		c.gridx = 0;
 		c.gridy = 0;
+		c.insets = new Insets(3, 0, 0, 0); // shift text down a bit to look centered
 
 		final JLabel textLabel = new JLabel("Total level:");
 		textLabel.setFont(FontManager.getRunescapeSmallFont());
 		textLabel.setForeground(Color.YELLOW);
+		textLabel.setAlignmentY(BOTTOM_ALIGNMENT);
 		add(textLabel, c);
 
 		if (totalLevel > 0)
@@ -97,8 +114,19 @@ public class TotalPanelSlot extends JPanel
 		}
 		levelLabel.setFont(FontManager.getRunescapeSmallFont());
 		levelLabel.setForeground(Color.YELLOW);
-		c.gridy++;
+		levelLabel.setAlignmentY(BOTTOM_ALIGNMENT);
+		c.gridx++;
 		add(levelLabel, c);
+	}
+
+	private BufferedImage resize_edge(final BufferedImage img)
+	{
+		return ImageUtil.resizeImage(img, _1_5TH_SLOT_WIDTH, SLOT_HEIGHT);
+	}
+
+	private BufferedImage resize_middle(final BufferedImage img)
+	{
+		return ImageUtil.resizeImage(img, _1_5TH_SLOT_WIDTH * 3, SLOT_HEIGHT);
 	}
 
 	public void updateTotalLevel(final int level)
