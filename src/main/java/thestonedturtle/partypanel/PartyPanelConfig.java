@@ -92,4 +92,16 @@ public interface PartyPanelConfig extends Config
 		hidden = true
 	)
 	void setPreviousPartyId(String id);
+
+	@ConfigItem(
+		keyName = "predefinedPartyNames",
+		name = "Predefined Party Names",
+		description = "<html>Controls a comma-separated predefined list of party names.<br/>Each name will generate a button in the sidebar as a shortcut to join.",
+		position = 5
+	)
+	default String predefinedPartyNames()
+	{
+		return "";
+	}
+
 }

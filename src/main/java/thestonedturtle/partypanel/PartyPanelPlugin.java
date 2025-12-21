@@ -234,6 +234,9 @@ public class PartyPanelPlugin extends Plugin
 			case "displayPlayerWorlds":
 				panel.updateDisplayPlayerWorlds();
 				break;
+			case "predefinedPartyNames":
+				panel.updatePredefinedPartyNames();
+				break;
 		}
 	}
 

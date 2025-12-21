@@ -25,17 +25,16 @@
  */
 package thestonedturtle.partypanel.ui;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
-import javax.swing.JButton;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
+import javax.swing.*;
+
 import thestonedturtle.partypanel.PartyPanelPlugin;
+
 
 // A copy of the controls from the `net.runelite.client.plugins.party.PartyPanel` class
 public class ControlsPanel extends JPanel
@@ -47,6 +46,9 @@ public class ControlsPanel extends JPanel
 	private final JButton joinPartyButton = new JButton();
 	private final JButton rejoinPartyButton = new JButton();
 	private final JButton copyPartyIdButton = new JButton();
+	private final GridBagConstraints c = new GridBagConstraints();
+	private final JComboBox<String> predefinedPartyNameDropdown = new JComboBox<>();
+	private boolean isDropdownBeingUpdated = false;
 
 	private final PartyPanelPlugin plugin;
 
@@ -55,7 +57,6 @@ public class ControlsPanel extends JPanel
 		this.plugin = plugin;
 		this.setLayout(new GridBagLayout());
 
-		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.insets = new Insets(0, 2, 4, 2);
 
@@ -151,6 +152,34 @@ public class ControlsPanel extends JPanel
 			}
 		});
 
+		predefinedPartyNameDropdown.setSelectedIndex(-1);
+		predefinedPartyNameDropdown.addActionListener(e ->
+		{
+			// Only run the listener when the dropdown options are not being updated; otherwise, when it is cleared and
+			// rebuilt, swing treats it as if the first option is selected and so will constantly rejoin the first party.
+			if (!plugin.isInParty() && !isDropdownBeingUpdated)
+			{
+				plugin.changeParty((String) predefinedPartyNameDropdown.getSelectedItem());
+			}
+		});
+		predefinedPartyNameDropdown.setRenderer(new DefaultListCellRenderer() {
+			@Override
+			public Component getListCellRendererComponent(
+					JList<?> list, Object value, int index,
+					boolean isSelected, boolean cellHasFocus)
+			{
+				JLabel lbl = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+				lbl.setHorizontalAlignment(SwingConstants.CENTER);
+
+				if (index == -1 && value == null)
+				{
+					lbl.setText("-- Select a party --");
+				}
+
+				return lbl;
+			}
+		});
+
 		updateControls();
 	}
 
@@ -160,6 +189,29 @@ public class ControlsPanel extends JPanel
 		joinPartyButton.setVisible(!plugin.isInParty());
 		rejoinPartyButton.setVisible(!plugin.isInParty());
 		copyPartyIdButton.setVisible(plugin.isInParty());
+
+		isDropdownBeingUpdated = true;
+		predefinedPartyNameDropdown.removeAllItems();
+		String predefinedPartyNames = plugin.getConfig().predefinedPartyNames();
+		if (predefinedPartyNames.isEmpty()) {
+			predefinedPartyNameDropdown.setVisible(false);
+		} else {
+			String[] predefinedPartyNameParts = plugin.getConfig().predefinedPartyNames().split(",");
+			for (String predefinedPartyNamePart : predefinedPartyNameParts) {
+				String partyName = predefinedPartyNamePart.trim();
+				predefinedPartyNameDropdown.addItem(partyName);
+			}
+
+			predefinedPartyNameDropdown.setVisible(!plugin.isInParty());
+			predefinedPartyNameDropdown.setSelectedIndex(-1);
+
+			c.gridx = 0;
+			c.gridy = 2;
+			c.gridwidth = 2;
+
+			this.add(predefinedPartyNameDropdown, c);
+		}
+		isDropdownBeingUpdated = false;
 
 		if (!plugin.getConfig().showPartyControls())
 		{
