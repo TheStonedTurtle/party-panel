@@ -37,6 +37,7 @@ import net.runelite.client.util.ImageUtil;
 import thestonedturtle.partypanel.data.PartyPlayer;
 
 import javax.swing.Box;
+import javax.swing.JButton;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -52,6 +53,7 @@ import java.awt.Insets;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.IntConsumer;
 
 public class PlayerBanner extends JPanel
 {
@@ -68,8 +70,12 @@ public class PlayerBanner extends JPanel
 	private final Map<String, JLabel> iconLabels = new HashMap<>();
 	@Getter
 	private final JLabel expandIcon = new JLabel();
+	private final JPanel worldPanel = new JPanel();
 	private final JLabel worldLabel = new JLabel();
 	private final JLabel spellbookIcon = new JLabel();
+	private final JButton hopToWorldButton = new JButton("Hop-to");
+	private boolean displayWorld;
+	private boolean showHopToWorldButton;
 
 	private final ImageIcon expandIconUp;
 	private final ImageIcon expandIconDown;
@@ -82,10 +88,13 @@ public class PlayerBanner extends JPanel
 	private BufferedImage currentHeart = null;
 	private boolean usingStamIcon;
 
-	public PlayerBanner(final PartyPlayer player, boolean expanded, boolean displayWorld, SpriteManager spriteManager)
+	public PlayerBanner(final PartyPlayer player, boolean expanded, boolean displayWorld,
+						boolean showHopToWorldButton, IntConsumer hopToWorld, SpriteManager spriteManager)
 	{
 		super();
 		this.player = player;
+		this.displayWorld = displayWorld;
+		this.showHopToWorldButton = showHopToWorldButton;
 
 		this.setLayout(new GridBagLayout());
 		this.setPreferredSize(new Dimension(PluginPanel.PANEL_WIDTH - 14, 75));
@@ -107,8 +116,13 @@ public class PlayerBanner extends JPanel
 			expandIcon.setIcon(expandIconDown);
 		}
 
+		worldPanel.setLayout(new BorderLayout(4, 0));
+		worldPanel.setOpaque(false);
 		worldLabel.setHorizontalTextPosition(JLabel.LEFT);
-		worldLabel.setVisible(displayWorld);
+		worldPanel.add(worldLabel, BorderLayout.CENTER);
+		hopToWorldButton.setFocusable(false);
+		hopToWorldButton.addActionListener(e -> hopToWorld.accept(this.player.getWorld()));
+		worldPanel.add(hopToWorldButton, BorderLayout.EAST);
 
 		usingStamIcon = player.getStamina() > 0;
 		statsPanel.add(createIconPanel(spriteManager, SpriteID.Staticons.HITPOINTS, Skill.HITPOINTS.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS))));
@@ -181,17 +195,6 @@ public class PlayerBanner extends JPanel
 			usernameLabel.setText(player.getUsername() + levelText);
 		}
 
-		worldLabel.setText("Not logged in");
-		if (Strings.isNullOrEmpty(player.getUsername()))
-		{
-			worldLabel.setText("");
-		}
-		else if (player.getWorld() > 0)
-		{
-
-			worldLabel.setText("World " + player.getWorld());
-		}
-
 		final JPanel topRow = new JPanel(new BorderLayout());
 		topRow.setOpaque(false);
 		topRow.add(usernameLabel, BorderLayout.WEST);
@@ -199,7 +202,8 @@ public class PlayerBanner extends JPanel
 
 		final JPanel bottomRow = new JPanel(new BorderLayout());
 		bottomRow.setOpaque(false);
-		bottomRow.add(worldLabel, BorderLayout.WEST);
+		updateWorld(player.getWorld(), displayWorld, showHopToWorldButton);
+		bottomRow.add(worldPanel, BorderLayout.WEST);
 		bottomRow.add(spellbookIcon, BorderLayout.EAST);
 
 		nameContainer.add(topRow);
@@ -336,10 +340,17 @@ public class PlayerBanner extends JPanel
 		statsPanel.repaint();
 	}
 
-	public void updateWorld(int world, boolean displayWorlds)
+	public void updateWorld(final int world, final boolean displayWorlds, final boolean showHopToWorldButton)
 	{
-		worldLabel.setVisible(displayWorlds);
-		worldLabel.setText("World " + world);
+		this.displayWorld = displayWorlds;
+		this.showHopToWorldButton = showHopToWorldButton;
+
+		final boolean hasWorld = world > 0 && !Strings.isNullOrEmpty(player.getUsername());
+		final boolean displayWorld = this.displayWorld && hasWorld;
+		worldPanel.setVisible(displayWorld);
+		worldLabel.setText(hasWorld ? "World " + world : "");
+		hopToWorldButton.setVisible(displayWorld && this.showHopToWorldButton);
+		hopToWorldButton.setEnabled(hasWorld);
 	}
 
 	void updateSpellbookIcon(int spellbook, SpriteManager spriteManager)

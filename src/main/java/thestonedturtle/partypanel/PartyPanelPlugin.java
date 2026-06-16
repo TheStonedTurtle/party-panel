@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.inject.Provides;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.EnumComposition;
 import net.runelite.api.EnumID;
@@ -15,16 +16,22 @@ import net.runelite.api.ItemContainer;
 import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
 import net.runelite.api.annotations.Varbit;
+import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.gameval.InventoryID;
+import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.chat.ChatColorType;
+import net.runelite.client.chat.ChatMessageBuilder;
+import net.runelite.client.chat.ChatMessageManager;
+import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -33,6 +40,7 @@ import net.runelite.client.events.PartyMemberAvatar;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.ItemVariationMapping;
 import net.runelite.client.game.SpriteManager;
+import net.runelite.client.game.WorldService;
 import net.runelite.client.party.PartyService;
 import net.runelite.client.party.WSClient;
 import net.runelite.client.party.events.UserPart;
@@ -44,6 +52,10 @@ import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ImageUtil;
+import net.runelite.client.util.WorldUtil;
+import net.runelite.http.api.worlds.World;
+import net.runelite.http.api.worlds.WorldResult;
+import net.runelite.http.api.worlds.WorldType;
 import org.apache.commons.lang3.ArrayUtils;
 import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
@@ -78,6 +90,8 @@ import java.util.Set;
 public class PartyPanelPlugin extends Plugin
 {
 	private static final BufferedImage ICON = ImageUtil.loadImageResource(PartyPanelPlugin.class, "icon.png");
+	private static final int DISPLAY_SWITCHER_MAX_ATTEMPTS = 3;
+	private static final String WORLD_SWITCHER_BUSY_MESSAGE = "Please finish what you're doing before using the World Switcher.";
 	private static final int[] RUNEPOUCH_AMOUNT_VARBITS = {
 			VarbitID.RUNE_POUCH_QUANTITY_1, VarbitID.RUNE_POUCH_QUANTITY_2, VarbitID.RUNE_POUCH_QUANTITY_3,
 			VarbitID.RUNE_POUCH_QUANTITY_4, VarbitID.RUNE_POUCH_QUANTITY_5, VarbitID.RUNE_POUCH_QUANTITY_6,
@@ -128,6 +142,12 @@ public class PartyPanelPlugin extends Plugin
 	@Inject
 	private PartyReminderOverlay partyReminderOverlay;
 
+	@Inject
+	private WorldService worldService;
+
+	@Inject
+	private ChatMessageManager chatMessageManager;
+
 	@Provides
 	PartyPanelConfig provideConfig(ConfigManager configManager)
 	{
@@ -145,6 +165,8 @@ public class PartyPanelPlugin extends Plugin
 
 	private PartyPanel panel;
 	private Instant lastLogout;
+	private net.runelite.api.World quickHopTargetWorld;
+	private int displaySwitcherAttempts = 0;
 
 	// All events should be deferred to the next game tick
 	private PartyBatchedChange currentChange = new PartyBatchedChange();
@@ -201,6 +223,7 @@ public class PartyPanelPlugin extends Plugin
 		partyMembers.clear();
 		wsClient.unregisterMessage(PartyBatchedChange.class);
 		currentChange = new PartyBatchedChange();
+		resetQuickHop();
 		panel.getPlayerPanelMap().clear();
 		lastLogout = null;
 		overlayManager.remove(partyReminderOverlay);
@@ -244,6 +267,7 @@ public class PartyPanelPlugin extends Plugin
 				panel.updateDisplayVirtualLevels();
 				break;
 			case "displayPlayerWorlds":
+			case "showHopToWorldButton":
 				panel.updateDisplayPlayerWorlds();
 				break;
 		}
@@ -389,6 +413,11 @@ public class PartyPanelPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(final GameTick tick)
 	{
+		if (quickHopTargetWorld != null)
+		{
+			processQuickHop();
+		}
+
 		if (!isInParty() || client.getLocalPlayer() == null || partyService.getLocalMember() == null)
 		{
 			return;
@@ -503,6 +532,15 @@ public class PartyPanelPlugin extends Plugin
 			partyService.send(currentChange);
 
 			currentChange = new PartyBatchedChange();
+		}
+	}
+
+	@Subscribe
+	public void onChatMessage(final ChatMessage event)
+	{
+		if (event.getType() == ChatMessageType.GAMEMESSAGE && WORLD_SWITCHER_BUSY_MESSAGE.equals(event.getMessage()))
+		{
+			resetQuickHop();
 		}
 	}
 
@@ -826,6 +864,132 @@ public class PartyPanelPlugin extends Plugin
 	{
 		partyService.changeParty(null);
 		panel.updateParty();
+	}
+
+	public void hopToPartyMemberWorld(final int worldId)
+	{
+		clientThread.invoke(() -> hopToWorld(worldId));
+	}
+
+	private void hopToWorld(int worldId)
+	{
+		assert client.isClientThread();
+
+		if (worldId <= 0 || worldId == client.getWorld())
+		{
+			return;
+		}
+
+		final WorldResult worldResult = worldService.getWorlds();
+		if (worldResult == null)
+		{
+			worldService.refresh();
+			queueConsoleMessage("Unable to find world " + worldId + ". Refreshing world list.");
+			return;
+		}
+
+		final World currentWorld = worldResult.findWorld(client.getWorld());
+		final World targetWorld = worldResult.findWorld(worldId);
+		if (targetWorld == null)
+		{
+			queueConsoleMessage("Unknown world " + worldId + ".");
+			return;
+		}
+
+		if (currentWorld != null
+			&& !currentWorld.getTypes().contains(WorldType.PVP)
+			&& targetWorld.getTypes().contains(WorldType.PVP))
+		{
+			queueConsoleMessage("Use the World Switcher to hop to PvP worlds.");
+			return;
+		}
+
+		final net.runelite.api.World rsWorld = client.createWorld();
+		rsWorld.setActivity(targetWorld.getActivity());
+		rsWorld.setAddress(targetWorld.getAddress());
+		rsWorld.setId(targetWorld.getId());
+		rsWorld.setPlayerCount(targetWorld.getPlayers());
+		rsWorld.setLocation(targetWorld.getLocation());
+		rsWorld.setTypes(WorldUtil.toWorldTypes(targetWorld.getTypes()));
+
+		if (client.getGameState() == GameState.LOGIN_SCREEN)
+		{
+			client.changeWorld(rsWorld);
+			return;
+		}
+
+		queueQuickHopMessage(targetWorld.getId());
+		quickHopTargetWorld = rsWorld;
+		displaySwitcherAttempts = 0;
+	}
+
+	private void processQuickHop()
+	{
+		assert client.isClientThread();
+
+		if (client.getWidget(InterfaceID.Worldswitcher.BUTTONS) == null)
+		{
+			client.openWorldHopper();
+
+			if (++displaySwitcherAttempts >= DISPLAY_SWITCHER_MAX_ATTEMPTS)
+			{
+				queueFailedQuickHopMessage();
+				resetQuickHop();
+			}
+
+			return;
+		}
+
+		client.hopToWorld(quickHopTargetWorld);
+		resetQuickHop();
+	}
+
+	private void resetQuickHop()
+	{
+		displaySwitcherAttempts = 0;
+		quickHopTargetWorld = null;
+	}
+
+	private void queueConsoleMessage(final String message)
+	{
+		chatMessageManager.queue(QueuedMessage.builder()
+			.type(ChatMessageType.CONSOLE)
+			.value(message)
+			.build());
+	}
+
+	private void queueQuickHopMessage(final int worldId)
+	{
+		final String chatMessage = new ChatMessageBuilder()
+			.append(ChatColorType.NORMAL)
+			.append("Quick-hopping to World ")
+			.append(ChatColorType.HIGHLIGHT)
+			.append(Integer.toString(worldId))
+			.append(ChatColorType.NORMAL)
+			.append("..")
+			.build();
+
+		chatMessageManager.queue(QueuedMessage.builder()
+			.type(ChatMessageType.CONSOLE)
+			.runeLiteFormattedMessage(chatMessage)
+			.build());
+	}
+
+	private void queueFailedQuickHopMessage()
+	{
+		final String chatMessage = new ChatMessageBuilder()
+			.append(ChatColorType.NORMAL)
+			.append("Failed to quick-hop after ")
+			.append(ChatColorType.HIGHLIGHT)
+			.append(Integer.toString(displaySwitcherAttempts))
+			.append(ChatColorType.NORMAL)
+			.append(" attempts.")
+			.build();
+
+		chatMessageManager.queue(QueuedMessage.builder()
+			.type(ChatMessageType.CONSOLE)
+			.runeLiteFormattedMessage(chatMessage)
+			.build());
 	}
 
 	private int[] convertItemsToArray(Item[] items)
