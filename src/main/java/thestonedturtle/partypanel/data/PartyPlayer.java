@@ -24,21 +24,22 @@
  */
 package thestonedturtle.partypanel.data;
 
-import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import net.runelite.api.Client;
 import net.runelite.api.EquipmentInventorySlot;
-import net.runelite.api.InventoryID;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.Skill;
-import net.runelite.api.VarPlayer;
-import net.runelite.api.Varbits;
+import net.runelite.api.gameval.InventoryID;
+import net.runelite.api.gameval.VarPlayerID;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.party.PartyMember;
 import thestonedturtle.partypanel.PartyPanelPlugin;
+
+import java.util.List;
 
 @Data
 @EqualsAndHashCode
@@ -76,9 +77,9 @@ public class PartyPlayer
 	public PartyPlayer(final PartyMember member, final Client client, final ItemManager itemManager, final ClientThread clientThread)
 	{
 		this(member);
-		this.stamina = client.getVarbitValue(Varbits.STAMINA_EFFECT);
-		this.poison = client.getVarpValue(VarPlayer.POISON);
-		this.disease = client.getVarpValue(VarPlayer.DISEASE_VALUE);
+		this.stamina = client.getVarbitValue(VarbitID.STAMINA_DURATION);
+		this.poison = client.getVarpValue(VarPlayerID.POISON);
+		this.disease = client.getVarpValue(VarPlayerID.DISEASE);
 		this.world = client.getWorld();
 
 		clientThread.invoke(() -> updatePlayerInfo(client, itemManager));
@@ -94,7 +95,7 @@ public class PartyPlayer
 			this.username = client.getLocalPlayer().getName();
 			this.stats = new Stats(client);
 
-			final ItemContainer invi = client.getItemContainer(InventoryID.INVENTORY);
+			final ItemContainer invi = client.getItemContainer(InventoryID.INV);
 			if (invi != null)
 			{
 				this.inventory = GameItem.convertItemsToGameItems(invi.getItems(), itemManager);
@@ -113,7 +114,7 @@ public class PartyPlayer
 				quiver.setInInventory(hasQuiverInInventory);
 			}
 
-			final ItemContainer equip = client.getItemContainer(InventoryID.EQUIPMENT);
+			final ItemContainer equip = client.getItemContainer(InventoryID.WORN);
 			if (equip != null)
 			{
 				this.equipment = GameItem.convertItemsToGameItems(equip.getItems(), itemManager);
@@ -131,8 +132,8 @@ public class PartyPlayer
 
 		if (quiver.isSlotVisible())
 		{
-			final int quiverAmmoId = client.getVarpValue(VarPlayer.DIZANAS_QUIVER_ITEM_ID);
-			final int quiverAmmoCount = client.getVarpValue(VarPlayer.DIZANAS_QUIVER_ITEM_COUNT);
+			final int quiverAmmoId = client.getVarpValue(VarPlayerID.DIZANAS_QUIVER_TEMP_AMMO);
+			final int quiverAmmoCount = client.getVarpValue(VarPlayerID.DIZANAS_QUIVER_TEMP_AMMO_AMOUNT);
 			if (quiverAmmoId == -1 || quiverAmmoCount == 0)
 			{
 				quiver.setQuiverAmmo(null);

@@ -25,6 +25,24 @@
 package thestonedturtle.partypanel.ui;
 
 import com.google.common.base.Strings;
+import lombok.Getter;
+import lombok.Setter;
+import net.runelite.api.Constants;
+import net.runelite.api.Skill;
+import net.runelite.api.gameval.SpriteID;
+import net.runelite.client.game.SpriteManager;
+import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.util.ImageUtil;
+import thestonedturtle.partypanel.data.PartyPlayer;
+
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.OverlayLayout;
+import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.MatteBorder;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -34,23 +52,6 @@ import java.awt.GridLayout;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.OverlayLayout;
-import javax.swing.SwingUtilities;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.MatteBorder;
-import lombok.Getter;
-import lombok.Setter;
-import net.runelite.api.Constants;
-import net.runelite.api.Skill;
-import net.runelite.api.SpriteID;
-import net.runelite.client.game.SpriteManager;
-import net.runelite.client.ui.ColorScheme;
-import net.runelite.client.ui.PluginPanel;
-import net.runelite.client.util.ImageUtil;
-import thestonedturtle.partypanel.data.PartyPlayer;
 
 public class PlayerBanner extends JPanel
 {
@@ -87,7 +88,7 @@ public class PlayerBanner extends JPanel
 
 		this.setLayout(new GridBagLayout());
 		this.setPreferredSize(new Dimension(PluginPanel.PANEL_WIDTH - 14, 68));
-		this.setBorder(new EmptyBorder(5, 5, 0,  5));
+		this.setBorder(new EmptyBorder(5, 5, 0, 5));
 
 		statsPanel.setPreferredSize(new Dimension(PluginPanel.PANEL_WIDTH, 25));
 		statsPanel.setLayout(new GridLayout(0, 4));
@@ -109,12 +110,12 @@ public class PlayerBanner extends JPanel
 		worldLabel.setVisible(displayWorld);
 
 		usingStamIcon = player.getStamina() > 0;
-		statsPanel.add(createIconPanel(spriteManager, SpriteID.SKILL_HITPOINTS, Skill.HITPOINTS.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS))));
-		statsPanel.add(createIconPanel(spriteManager, SpriteID.SKILL_PRAYER, Skill.PRAYER.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER))));
-		statsPanel.add(createIconPanel(spriteManager, SpriteID.MULTI_COMBAT_ZONE_CROSSED_SWORDS, SPECIAL_ATTACK_NAME, player.getStats() == null ? "0" : String.valueOf(player.getStats().getSpecialPercent())));
+		statsPanel.add(createIconPanel(spriteManager, SpriteID.Staticons.HITPOINTS, Skill.HITPOINTS.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS))));
+		statsPanel.add(createIconPanel(spriteManager, SpriteID.Staticons.PRAYER, Skill.PRAYER.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER))));
+		statsPanel.add(createIconPanel(spriteManager, SpriteID.OVERLAY_MULTIWAY, SPECIAL_ATTACK_NAME, player.getStats() == null ? "0" : String.valueOf(player.getStats().getSpecialPercent())));
 		statsPanel.add(createIconPanel(spriteManager,
-			usingStamIcon ? SpriteID.MINIMAP_ORB_RUN_ICON_SLOWED_DEPLETION : SpriteID.MINIMAP_ORB_RUN_ICON,
-			RUN_ENERGY_NAME, player.getStats() == null ? "0" : String.valueOf(player.getStats().getRunEnergy()))
+				usingStamIcon ? SpriteID.OrbIcon.RUN_ICON_SLOWED_DEPLETION : SpriteID.OrbIcon.RUN,
+				RUN_ENERGY_NAME, player.getStats() == null ? "0" : String.valueOf(player.getStats().getRunEnergy()))
 		);
 
 		recreatePanel();
@@ -136,7 +137,7 @@ public class PlayerBanner extends JPanel
 	public void recreatePanel()
 	{
 		removeAll();
-		
+
 		final GridBagConstraints c = new GridBagConstraints();
 		c.anchor = GridBagConstraints.NORTHWEST;
 		c.gridx = 0;
@@ -237,7 +238,7 @@ public class PlayerBanner extends JPanel
 	}
 
 	private JPanel createIconPanel(final SpriteManager spriteManager, final int spriteID, final String name,
-		final String value)
+								   final String value)
 	{
 		final JLabel iconLabel = new JLabel();
 		iconLabel.setPreferredSize(STAT_ICON_SIZE);
@@ -263,19 +264,19 @@ public class PlayerBanner extends JPanel
 	{
 		final JLabel label = iconLabels.get(statLabelKey);
 		spriteManager.getSpriteAsync(spriteID, 0, img ->
-			SwingUtilities.invokeLater(() ->
-			{
-				if (spriteID == SpriteID.SKILL_PRAYER)
+				SwingUtilities.invokeLater(() ->
 				{
-					label.setIcon(new ImageIcon(ImageUtil.resizeImage(img, STAT_ICON_SIZE.width + 2, STAT_ICON_SIZE.height + 2)));
-				}
-				else
-				{
-					label.setIcon(new ImageIcon(ImageUtil.resizeImage(img, STAT_ICON_SIZE.width, STAT_ICON_SIZE.height)));
-				}
-				label.revalidate();
-				label.repaint();
-			}));
+					if (spriteID == SpriteID.Staticons.PRAYER)
+					{
+						label.setIcon(new ImageIcon(ImageUtil.resizeImage(img, STAT_ICON_SIZE.width + 2, STAT_ICON_SIZE.height + 2)));
+					}
+					else
+					{
+						label.setIcon(new ImageIcon(ImageUtil.resizeImage(img, STAT_ICON_SIZE.width, STAT_ICON_SIZE.height)));
+					}
+					label.revalidate();
+					label.repaint();
+				}));
 	}
 
 	private void setBufferedIcon(String statLabelKey, final BufferedImage img)
@@ -292,14 +293,14 @@ public class PlayerBanner extends JPanel
 	public void setCurrentHeart(final BufferedImage img, SpriteManager spriteManager)
 	{
 		// If the new value is the same then do nothing
-		if ( (img == null && currentHeart == null) || (img != null && img.equals(currentHeart)) )
+		if ((img == null && currentHeart == null) || (img != null && img.equals(currentHeart)))
 		{
 			return;
 		}
 		currentHeart = img;
 		if (currentHeart == null)
 		{
-			setSpriteIcon(Skill.HITPOINTS.getName(), SpriteID.SKILL_HITPOINTS, spriteManager);
+			setSpriteIcon(Skill.HITPOINTS.getName(), SpriteID.Staticons.HITPOINTS, spriteManager);
 		}
 		else
 		{
@@ -317,7 +318,7 @@ public class PlayerBanner extends JPanel
 		}
 
 		usingStamIcon = isStaminaPotted;
-		final int id = usingStamIcon ? SpriteID.MINIMAP_ORB_RUN_ICON_SLOWED_DEPLETION : SpriteID.MINIMAP_ORB_RUN_ICON;
+		final int id = usingStamIcon ? SpriteID.OrbIcon.RUN_ICON_SLOWED_DEPLETION : SpriteID.OrbIcon.RUN;
 		setSpriteIcon(RUN_ENERGY_NAME, id, spriteManager);
 		statsPanel.revalidate();
 		statsPanel.repaint();

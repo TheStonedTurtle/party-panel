@@ -24,27 +24,12 @@
  */
 package thestonedturtle.partypanel.ui;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
-import java.util.HashMap;
-import java.util.Map;
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.MatteBorder;
 import lombok.Getter;
 import lombok.Setter;
 import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
-import net.runelite.api.SpriteID;
+import net.runelite.api.gameval.SpriteID;
 import net.runelite.client.game.AlternateSprites;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
@@ -64,13 +49,28 @@ import thestonedturtle.partypanel.ui.prayer.PlayerPrayerPanel;
 import thestonedturtle.partypanel.ui.prayer.PrayerSlot;
 import thestonedturtle.partypanel.ui.skills.PlayerSkillsPanel;
 
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.MatteBorder;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.util.HashMap;
+import java.util.Map;
+
 @Getter
 public class PlayerPanel extends JPanel
 {
 	private static final Dimension IMAGE_SIZE = new Dimension(24, 24);
 	private static final Color BACKGROUND_COLOR = ColorScheme.DARK_GRAY_COLOR;
 	private static final Color BACKGROUND_HOVER_COLOR = ColorScheme.DARKER_GRAY_COLOR;
-	private static final BufferedImage EXPAND_ICON = ImageUtil.loadImageResource(PlayerPanel.class, "expand.png");
 
 	private static final int VENOM_THRESHOLD = 1000000;
 	private static final BufferedImage HEART_DISEASE;
@@ -101,7 +101,7 @@ public class PlayerPanel extends JPanel
 	private final Map<Integer, Boolean> tabMap = new HashMap<>();
 
 	public PlayerPanel(final PartyPlayer selectedPlayer, final PartyPanelConfig config,
-		final SpriteManager spriteManager, final ItemManager itemManager)
+					   final SpriteManager spriteManager, final ItemManager itemManager)
 	{
 		this.player = selectedPlayer;
 		this.config = config;
@@ -168,29 +168,29 @@ public class PlayerPanel extends JPanel
 	private void addTab(final MaterialTabGroup tabGroup, final int spriteID, final JPanel panel, final String tooltip)
 	{
 		spriteManager.getSpriteAsync(spriteID, 0, img ->
-			SwingUtilities.invokeLater(() ->
-			{
-				final MaterialTab tab = new MaterialTab(createImageIcon(img), tabGroup, panel);
-				tab.setToolTipText(tooltip);
-				tabGroup.addTab(tab);
-				tabGroup.revalidate();
-				tabGroup.repaint();
-
-				tabMap.put(spriteID, false);
-				tab.setOnSelectEvent(() ->
+				SwingUtilities.invokeLater(() ->
 				{
-					tabMap.replaceAll((k, v) -> v = false);
-					tabMap.put(spriteID, true);
-					updatePlayerData(player, false);
-					return true;
-				});
+					final MaterialTab tab = new MaterialTab(createImageIcon(img), tabGroup, panel);
+					tab.setToolTipText(tooltip);
+					tabGroup.addTab(tab);
+					tabGroup.revalidate();
+					tabGroup.repaint();
 
-				if (spriteID == SpriteID.TAB_INVENTORY)
-				{
-					tabGroup.select(tab);
-					tabMap.put(spriteID, true);
-				}
-			}));
+					tabMap.put(spriteID, false);
+					tab.setOnSelectEvent(() ->
+					{
+						tabMap.replaceAll((k, v) -> false);
+						tabMap.put(spriteID, true);
+						updatePlayerData(player, false);
+						return true;
+					});
+
+					if (spriteID == SpriteID.SideiconsInterface.INVENTORY)
+					{
+						tabGroup.select(tab);
+						tabMap.put(spriteID, true);
+					}
+				}));
 	}
 
 	private ImageIcon createImageIcon(BufferedImage image)
@@ -235,12 +235,12 @@ public class PlayerPanel extends JPanel
 			return;
 		}
 
-		if (tabMap.getOrDefault(SpriteID.TAB_INVENTORY, false))
+		if (tabMap.getOrDefault(SpriteID.SideiconsInterface.INVENTORY, false))
 		{
 			inventoryPanel.updateInventory(player.getInventory(), player.getRunesInPouch());
 		}
 
-		if (tabMap.getOrDefault(SpriteID.TAB_EQUIPMENT, false))
+		if (tabMap.getOrDefault(SpriteID.SideiconsInterface.INVENTORY, false))
 		{
 			for (final EquipmentInventorySlot equipSlot : EquipmentInventorySlot.values())
 			{
@@ -269,7 +269,7 @@ public class PlayerPanel extends JPanel
 			this.equipmentPanel.setQuiver(player.getQuiver());
 		}
 
-		if (player.getStats() != null && tabMap.getOrDefault(SpriteID.TAB_STATS, false))
+		if (player.getStats() != null && tabMap.getOrDefault(SpriteID.SideiconsInterface.STATS, false))
 		{
 			int totalLevel = 0;
 			for (final Skill s : Skill.values())
@@ -281,7 +281,7 @@ public class PlayerPanel extends JPanel
 			skillsPanel.getTotalLevelPanel().updateTotalLevel(totalLevel);
 		}
 
-		if (player.getPrayers() != null && tabMap.getOrDefault(SpriteID.TAB_PRAYER, false))
+		if (player.getPrayers() != null && tabMap.getOrDefault(SpriteID.SideiconsInterface.PRAYER, false))
 		{
 			boolean unlockChanged = false;
 			for (final Map.Entry<Prayer, PrayerSlot> entry : prayersPanel.getSlotMap().entrySet())
@@ -310,8 +310,8 @@ public class PlayerPanel extends JPanel
 		if (showInfo)
 		{
 			this.setBorder(new CompoundBorder(
-				new MatteBorder(2, 2, 2, 2, new Color(87, 80, 64)),
-				new EmptyBorder(0, 0, 5, 0)
+					new MatteBorder(2, 2, 2, 2, new Color(87, 80, 64)),
+					new EmptyBorder(0, 0, 5, 0)
 			));
 		}
 		else
@@ -325,10 +325,10 @@ public class PlayerPanel extends JPanel
 		tabGroup.setBorder(new EmptyBorder(10, 0, 4, 0));
 
 		tabMap.clear();
-		addTab(tabGroup, SpriteID.TAB_INVENTORY, inventoryPanel, "Inventory");
-		addTab(tabGroup, SpriteID.TAB_EQUIPMENT, equipmentPanel, "Equipment");
-		addTab(tabGroup, SpriteID.TAB_PRAYER, prayersPanel, "Prayers");
-		addTab(tabGroup, SpriteID.TAB_STATS, skillsPanel, "Skills");
+		addTab(tabGroup, SpriteID.SideiconsInterface.INVENTORY, inventoryPanel, "Inventory");
+		addTab(tabGroup, SpriteID.SideiconsInterface.EQUIPMENT, equipmentPanel, "Equipment");
+		addTab(tabGroup, SpriteID.SideiconsInterface.PRAYER, prayersPanel, "Prayers");
+		addTab(tabGroup, SpriteID.SideiconsInterface.STATS, skillsPanel, "Skills");
 
 		setLayout(new DynamicGridLayout(0, 1));
 

@@ -24,10 +24,6 @@
  */
 package thestonedturtle.partypanel.data.events;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -39,6 +35,11 @@ import net.runelite.client.party.messages.PartyMemberMessage;
 import thestonedturtle.partypanel.PartyPanelPlugin;
 import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -58,14 +59,14 @@ public class PartyBatchedChange extends PartyMemberMessage
 	public boolean isValid()
 	{
 		return i != null
-			|| e != null
-			|| (s != null && !s.isEmpty())
-			|| (m != null && !m.isEmpty())
-			|| ap != null
-			|| ep != null
-			|| up != null
-			|| rp != null
-			|| q != null;
+				|| e != null
+				|| (s != null && !s.isEmpty())
+				|| (m != null && !m.isEmpty())
+				|| ap != null
+				|| ep != null
+				|| up != null
+				|| rp != null
+				|| q != null;
 	}
 
 	// Unset unneeded variables to minimize payload
@@ -127,8 +128,8 @@ public class PartyBatchedChange extends PartyMemberMessage
 		if (rp != null)
 		{
 			Item[] runePouchContents = Arrays.stream(rp)
-				.mapToObj(PartyBatchedChange::unpackRune)
-				.toArray(Item[]::new);
+					.mapToObj(PartyBatchedChange::unpackRune)
+					.toArray(Item[]::new);
 			player.setRunesInPouch(GameItem.convertItemsToGameItems(runePouchContents, itemManager));
 		}
 
@@ -175,29 +176,29 @@ public class PartyBatchedChange extends PartyMemberMessage
 	public boolean hasBreakingBannerChange()
 	{
 		return m != null
-			&& m.stream()
-			.anyMatch(e ->
-			{
-				switch (e.t)
+				&& m.stream()
+				.anyMatch(e ->
 				{
-					case C:
-					case W:
-					case U:
-						return true;
-				}
+					switch (e.t)
+					{
+						case C:
+						case W:
+						case U:
+							return true;
+					}
 
-				return false;
-			});
+					return false;
+				});
 	}
 
 	public boolean hasStatChange()
 	{
 		return (s != null && !s.isEmpty())
-			|| (m != null && m.stream().anyMatch(e ->
-			e.getT() == PartyMiscChange.PartyMisc.S
-				|| e.getT() == PartyMiscChange.PartyMisc.R
-				|| e.getT() == PartyMiscChange.PartyMisc.C
-				|| e.getT() == PartyMiscChange.PartyMisc.T)
+				|| (m != null && m.stream().anyMatch(e ->
+				e.getT() == PartyMiscChange.PartyMisc.S
+						|| e.getT() == PartyMiscChange.PartyMisc.R
+						|| e.getT() == PartyMiscChange.PartyMisc.C
+						|| e.getT() == PartyMiscChange.PartyMisc.T)
 		);
 	}
 
