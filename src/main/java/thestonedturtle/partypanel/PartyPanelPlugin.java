@@ -42,6 +42,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.task.Schedule;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
+import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ImageUtil;
 import org.apache.commons.lang3.ArrayUtils;
 import thestonedturtle.partypanel.data.GameItem;
@@ -121,6 +122,12 @@ public class PartyPanelPlugin extends Plugin
 	@Inject
 	private WSClient wsClient;
 
+	@Inject
+	private OverlayManager overlayManager;
+
+	@Inject
+	private PartyReminderOverlay partyReminderOverlay;
+
 	@Provides
 	PartyPanelConfig provideConfig(ConfigManager configManager)
 	{
@@ -172,6 +179,7 @@ public class PartyPanelPlugin extends Plugin
 		}
 
 		lastLogout = Instant.now();
+		overlayManager.add(partyReminderOverlay);
 	}
 
 	@Override
@@ -195,6 +203,7 @@ public class PartyPanelPlugin extends Plugin
 		currentChange = new PartyBatchedChange();
 		panel.getPlayerPanelMap().clear();
 		lastLogout = null;
+		overlayManager.remove(partyReminderOverlay);
 	}
 
 	@Subscribe

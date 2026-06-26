@@ -73,6 +73,17 @@ public interface PartyPanelConfig extends Config
 	}
 
 
+	@ConfigItem(
+			keyName = "displayPartyReminderOverlay",
+			name = "Display Party Reminder",
+			description = "Displays an overlay when you are not in a party",
+			position = 5
+	)
+	default boolean displayPartyReminderOverlay()
+	{
+		return false;
+	}
+
 
 	@ConfigItem(
 			keyName = "previousPartyId",
