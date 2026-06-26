@@ -2,20 +2,6 @@ package thestonedturtle.partypanel;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Provides;
-import java.awt.image.BufferedImage;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import javax.inject.Inject;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
@@ -24,20 +10,20 @@ import net.runelite.api.EnumID;
 import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.Experience;
 import net.runelite.api.GameState;
-import net.runelite.api.InventoryID;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
-import net.runelite.api.ItemID;
 import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
-import net.runelite.api.VarPlayer;
-import net.runelite.api.Varbits;
 import net.runelite.api.annotations.Varbit;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.gameval.InventoryID;
+import net.runelite.api.gameval.ItemID;
+import net.runelite.api.gameval.VarPlayerID;
+import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -69,29 +55,46 @@ import thestonedturtle.partypanel.data.events.PartyStatChange;
 import thestonedturtle.partypanel.ui.PlayerPanel;
 import thestonedturtle.partypanel.ui.prayer.PrayerSprites;
 
+import javax.inject.Inject;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import java.awt.image.BufferedImage;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
 @Slf4j
 @PluginDescriptor(
-	name = "Hub Party Panel"
+		name = "Hub Party Panel"
 )
 public class PartyPanelPlugin extends Plugin
 {
 	private static final BufferedImage ICON = ImageUtil.loadImageResource(PartyPanelPlugin.class, "icon.png");
 	private static final int[] RUNEPOUCH_AMOUNT_VARBITS = {
-		Varbits.RUNE_POUCH_AMOUNT1, Varbits.RUNE_POUCH_AMOUNT2, Varbits.RUNE_POUCH_AMOUNT3, Varbits.RUNE_POUCH_AMOUNT4,
-		Varbits.RUNE_POUCH_AMOUNT5, Varbits.RUNE_POUCH_AMOUNT6
+			VarbitID.RUNE_POUCH_QUANTITY_1, VarbitID.RUNE_POUCH_QUANTITY_2, VarbitID.RUNE_POUCH_QUANTITY_3,
+			VarbitID.RUNE_POUCH_QUANTITY_4, VarbitID.RUNE_POUCH_QUANTITY_5, VarbitID.RUNE_POUCH_QUANTITY_6,
 	};
 	private static final int[] RUNEPOUCH_RUNE_VARBITS = {
-		Varbits.RUNE_POUCH_RUNE1, Varbits.RUNE_POUCH_RUNE2, Varbits.RUNE_POUCH_RUNE3, Varbits.RUNE_POUCH_RUNE4,
-		Varbits.RUNE_POUCH_RUNE5, Varbits.RUNE_POUCH_RUNE6
+
+			VarbitID.RUNE_POUCH_TYPE_1, VarbitID.RUNE_POUCH_TYPE_2, VarbitID.RUNE_POUCH_TYPE_3,
+			VarbitID.RUNE_POUCH_TYPE_4, VarbitID.RUNE_POUCH_TYPE_5, VarbitID.RUNE_POUCH_TYPE_6,
 	};
 	public static final int[] RUNEPOUCH_ITEM_IDS = {
-		ItemID.RUNE_POUCH, ItemID.RUNE_POUCH_L, ItemID.DIVINE_RUNE_POUCH, ItemID.DIVINE_RUNE_POUCH_L
+
+			ItemID.BH_RUNE_POUCH, ItemID.BH_RUNE_POUCH_TROUVER, ItemID.DIVINE_RUNE_POUCH, ItemID.DIVINE_RUNE_POUCH_TROUVER,
 	};
 	public static final Set<Integer> DIZANAS_QUIVER_IDS = ImmutableSet.<Integer>builder()
-		.addAll(ItemVariationMapping.getVariations(ItemVariationMapping.map(ItemID.DIZANAS_QUIVER)))
-		.addAll(ItemVariationMapping.getVariations(ItemVariationMapping.map(ItemID.BLESSED_DIZANAS_QUIVER)))
-		.addAll(ItemVariationMapping.getVariations(ItemVariationMapping.map(ItemID.DIZANAS_MAX_CAPE)))
-		.build();
+			.addAll(ItemVariationMapping.getVariations(ItemVariationMapping.map(ItemID.DIZANAS_QUIVER_CHARGED)))
+			.addAll(ItemVariationMapping.getVariations(ItemVariationMapping.map(ItemID.DIZANAS_QUIVER_INFINITE)))
+			.addAll(ItemVariationMapping.getVariations(ItemVariationMapping.map(ItemID.SKILLCAPE_MAX_DIZANAS)))
+			.build();
 
 	@Inject
 	private Client client;
@@ -144,11 +147,11 @@ public class PartyPanelPlugin extends Plugin
 	{
 		panel = new PartyPanel(this);
 		navButton = NavigationButton.builder()
-			.tooltip("Hub Party Panel")
-			.icon(ICON)
-			.priority(7)
-			.panel(panel)
-			.build();
+				.tooltip("Hub Party Panel")
+				.icon(ICON)
+				.priority(7)
+				.panel(panel)
+				.build();
 
 		wsClient.registerMessage(PartyBatchedChange.class);
 
@@ -304,7 +307,7 @@ public class PartyPanelPlugin extends Plugin
 			SwingUtilities.invokeLater(() -> panel.removePartyPlayer(removed));
 		}
 
-		if (addedButton && (!isInParty() || partyService.getMembers().size() == 0) && !config.alwaysShowIcon())
+		if (addedButton && (!isInParty() || partyService.getMembers().isEmpty()) && !config.alwaysShowIcon())
 		{
 			clientToolbar.removeNavigation(navButton);
 			addedButton = false;
@@ -500,7 +503,7 @@ public class PartyPanelPlugin extends Plugin
 		// Always store the players "real" level using their virtual level so when they change the config the data still exists
 		final Skill s = event.getSkill();
 		if (myPlayer.getSkillBoostedLevel(s) == event.getBoostedLevel() &&
-			Experience.getLevelForXp(event.getXp()) == myPlayer.getSkillRealLevel(s))
+				Experience.getLevelForXp(event.getXp()) == myPlayer.getSkillRealLevel(s))
 		{
 			return;
 		}
@@ -536,7 +539,7 @@ public class PartyPanelPlugin extends Plugin
 			return;
 		}
 
-		if (c.getContainerId() == InventoryID.INVENTORY.getId())
+		if (c.getContainerId() == InventoryID.INV)
 		{
 			final ItemContainer inventory = c.getItemContainer();
 			myPlayer.setInventory(GameItem.convertItemsToGameItems(inventory.getItems(), itemManager));
@@ -568,7 +571,7 @@ public class PartyPanelPlugin extends Plugin
 				updateQuiverAmmo();
 			}
 		}
-		else if (c.getContainerId() == InventoryID.EQUIPMENT.getId())
+		else if (c.getContainerId() == InventoryID.WORN)
 		{
 			myPlayer.setEquipment(GameItem.convertItemsToGameItems(c.getItemContainer().getItems(), itemManager));
 			int[] items = convertItemsToArray(c.getItemContainer().getItems());
@@ -588,8 +591,9 @@ public class PartyPanelPlugin extends Plugin
 
 	private GameItem getQuiverAmmo()
 	{
-		final int quiverAmmoId = client.getVarpValue(VarPlayer.DIZANAS_QUIVER_ITEM_ID);
-		final int quiverAmmoCount = client.getVarpValue(VarPlayer.DIZANAS_QUIVER_ITEM_COUNT);
+
+		final int quiverAmmoId = client.getVarpValue(VarPlayerID.DIZANAS_QUIVER_TEMP_AMMO);
+		final int quiverAmmoCount = client.getVarpValue(VarPlayerID.DIZANAS_QUIVER_TEMP_AMMO_AMOUNT);
 		if (quiverAmmoId == -1 || quiverAmmoCount == 0)
 		{
 			return null;
@@ -609,7 +613,7 @@ public class PartyPanelPlugin extends Plugin
 		myPlayer.getQuiver().setQuiverAmmo(quiverAmmo);
 		if (quiverAmmo != null)
 		{
-			currentChange.setQ(new int[]{quiverAmmo.getId(), quiverAmmo.getQty()});
+			currentChange.setQ(new int[] {quiverAmmo.getId(), quiverAmmo.getQty()});
 		}
 		else
 		{
@@ -632,8 +636,8 @@ public class PartyPanelPlugin extends Plugin
 	public int[] convertRunePouchContentsToPackedInts(final List<Item> runesInPouch)
 	{
 		return runesInPouch.stream()
-			.mapToInt(PartyBatchedChange::packRune)
-			.toArray();
+				.mapToInt(PartyBatchedChange::packRune)
+				.toArray();
 	}
 
 	public static List<Item> getRunePouchContents(Client client)
@@ -669,28 +673,28 @@ public class PartyPanelPlugin extends Plugin
 			return;
 		}
 
-		final int specialPercent = client.getVarpValue(VarPlayer.SPECIAL_ATTACK_PERCENT) / 10;
+		final int specialPercent = client.getVarpValue(VarPlayerID.SA_ENERGY) / 10;
 		if (specialPercent != myPlayer.getStats().getSpecialPercent())
 		{
 			myPlayer.getStats().setSpecialPercent(specialPercent);
 			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.S, specialPercent));
 		}
 
-		final int stamina = client.getVarbitValue(Varbits.STAMINA_EFFECT);
+		final int stamina = client.getVarbitValue(VarbitID.STAMINA_DURATION);
 		if (stamina != myPlayer.getStamina())
 		{
 			myPlayer.setStamina(stamina);
 			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.ST, stamina));
 		}
 
-		final int poison = client.getVarpValue(VarPlayer.POISON);
+		final int poison = client.getVarpValue(VarPlayerID.POISON);
 		if (poison != myPlayer.getPoison())
 		{
 			myPlayer.setPoison(poison);
 			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.P, poison));
 		}
 
-		final int disease = client.getVarpValue(VarPlayer.DISEASE_VALUE);
+		final int disease = client.getVarpValue(VarPlayerID.DISEASE);
 		if (disease != myPlayer.getDisease())
 		{
 			myPlayer.setDisease(disease);
@@ -704,7 +708,7 @@ public class PartyPanelPlugin extends Plugin
 			currentChange.setRp(convertRunePouchContentsToPackedInts(runePouchContents));
 		}
 
-		if (event.getVarpId() == VarPlayer.DIZANAS_QUIVER_ITEM_COUNT || event.getVarpId() == VarPlayer.DIZANAS_QUIVER_ITEM_ID)
+		if (event.getVarpId() == VarPlayerID.DIZANAS_QUIVER_TEMP_AMMO_AMOUNT || event.getVarpId() == VarPlayerID.DIZANAS_QUIVER_TEMP_AMMO)
 		{
 			updateQuiverAmmo();
 		}
@@ -766,7 +770,7 @@ public class PartyPanelPlugin extends Plugin
 	public void changeParty(String passphrase)
 	{
 		passphrase = passphrase.replace(" ", "-").trim();
-		if (passphrase.length() == 0)
+		if (passphrase.isEmpty())
 		{
 			return;
 		}
@@ -777,9 +781,9 @@ public class PartyPanelPlugin extends Plugin
 			if (!Character.isLetter(ch) && !Character.isDigit(ch) && ch != '-')
 			{
 				JOptionPane.showMessageDialog(panel.getControlsPanel(),
-					"Party passphrase must be a combination of alphanumeric or hyphen characters.",
-					"Invalid party passphrase",
-					JOptionPane.ERROR_MESSAGE);
+						"Party passphrase must be a combination of alphanumeric or hyphen characters.",
+						"Invalid party passphrase",
+						JOptionPane.ERROR_MESSAGE);
 				return;
 			}
 		}
@@ -915,7 +919,7 @@ public class PartyPanelPlugin extends Plugin
 		final GameItem quiverAmmo = myPlayer.getQuiver().getQuiverAmmo();
 		if (quiverAmmo != null)
 		{
-			c.setQ(new int[]{quiverAmmo.getId(), quiverAmmo.getQty()});
+			c.setQ(new int[] {quiverAmmo.getId(), quiverAmmo.getQty()});
 		}
 		else
 		{
@@ -929,8 +933,8 @@ public class PartyPanelPlugin extends Plugin
 	}
 
 	@Schedule(
-		period = 10,
-		unit = ChronoUnit.SECONDS
+			period = 10,
+			unit = ChronoUnit.SECONDS
 	)
 	public void checkIdle()
 	{
@@ -940,7 +944,7 @@ public class PartyPanelPlugin extends Plugin
 		}
 
 		if (lastLogout != null && lastLogout.isBefore(Instant.now().minus(30, ChronoUnit.MINUTES))
-			&& partyService.isInParty())
+				&& partyService.isInParty())
 		{
 			log.info("Leaving party due to inactivity");
 			partyService.changeParty(null);
