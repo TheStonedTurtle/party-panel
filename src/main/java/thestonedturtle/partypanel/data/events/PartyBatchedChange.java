@@ -184,6 +184,7 @@ public class PartyBatchedChange extends PartyMemberMessage
 						case C:
 						case W:
 						case U:
+						case SP:
 							return true;
 					}
 

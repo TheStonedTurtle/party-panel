@@ -206,6 +206,8 @@ public class PlayerPanel extends JPanel
 
 		if (hasBreakingBannerChange)
 		{
+			// spellbook is a breaking change, so lets always refetch the sprite
+			banner.updateSpellbookIcon(player.getSpellbook(), spriteManager);
 			banner.recreatePanel();
 		}
 

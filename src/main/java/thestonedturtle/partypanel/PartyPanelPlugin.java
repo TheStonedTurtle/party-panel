@@ -491,6 +491,11 @@ public class PartyPanelPlugin extends Plugin
 			}
 		}
 
+		if (myPlayer.getSpellbook() == -1)
+		{
+			updateSpellbook();
+		}
+
 		if (currentChange.isValid())
 		{
 			currentChange.setMemberId(partyService.getLocalMember().getMemberId()); // Add member ID before sending
@@ -720,6 +725,11 @@ public class PartyPanelPlugin extends Plugin
 		if (event.getVarpId() == VarPlayerID.DIZANAS_QUIVER_TEMP_AMMO_AMOUNT || event.getVarpId() == VarPlayerID.DIZANAS_QUIVER_TEMP_AMMO)
 		{
 			updateQuiverAmmo();
+		}
+
+		if (event.getVarbitId() == VarbitID.SPELLBOOK)
+		{
+			updateSpellbook();
 		}
 	}
 
@@ -965,5 +975,12 @@ public class PartyPanelPlugin extends Plugin
 		// introduce a tick delay for each member >6
 		// Default the message frequency to every 2 ticks since this plugin sends a lot of data
 		return Math.max(2, partySize - 6);
+	}
+
+	private void updateSpellbook()
+	{
+		int spellbook = client.getVarbitValue(VarbitID.SPELLBOOK);
+		myPlayer.setSpellbook(spellbook);
+		currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.SP, spellbook));
 	}
 }

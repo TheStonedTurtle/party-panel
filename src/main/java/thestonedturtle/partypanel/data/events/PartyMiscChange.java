@@ -48,6 +48,7 @@ public class PartyMiscChange implements PartyProcess
 		D, // Disease
 		W, // World
 		U, // Username
+		SP, // Spellbook
 	}
 
 	public PartyMiscChange(PartyMisc t, Integer v)
@@ -96,6 +97,8 @@ public class PartyMiscChange implements PartyProcess
 			case U:
 				p.setUsername(s);
 				break;
+			case SP:
+				p.setSpellbook(v);
 			default:
 				log.warn("Unhandled misc change type for event: {}", this);
 		}

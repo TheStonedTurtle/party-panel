@@ -57,6 +57,8 @@ public class PartyPlayer
 	private int world;
 	private GameItem[] runesInPouch;
 	private Quiver quiver;
+	// 0=Standard, 1=Ancient, 2=Lunar, 3=Arceuus
+	private int spellbook;
 
 	public PartyPlayer(final PartyMember member)
 	{
@@ -72,6 +74,7 @@ public class PartyPlayer
 		this.world = 0;
 		this.runesInPouch = new GameItem[0];
 		this.quiver = new Quiver(null, false, false);
+		this.spellbook = -1;
 	}
 
 	public PartyPlayer(final PartyMember member, final Client client, final ItemManager itemManager, final ClientThread clientThread)

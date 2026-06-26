@@ -36,19 +36,19 @@ import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.ImageUtil;
 import thestonedturtle.partypanel.data.PartyPlayer;
 
+import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.OverlayLayout;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
@@ -56,7 +56,7 @@ import java.util.Map;
 public class PlayerBanner extends JPanel
 {
 	private static final Dimension STAT_ICON_SIZE = new Dimension(18, 18);
-	private static final Dimension ICON_SIZE = new Dimension(Constants.ITEM_SPRITE_WIDTH - 6, Constants.ITEM_SPRITE_HEIGHT - 4);
+	private static final Dimension ICON_SIZE = new Dimension(Constants.ITEM_SPRITE_WIDTH - 4, Constants.ITEM_SPRITE_HEIGHT);
 	private static final BufferedImage EXPAND_ICON = ImageUtil.loadImageResource(PlayerPanel.class, "expand.png");
 	private static final String SPECIAL_ATTACK_NAME = "Special Attack";
 	private static final String RUN_ENERGY_NAME = "Run Energy";
@@ -69,6 +69,7 @@ public class PlayerBanner extends JPanel
 	@Getter
 	private final JLabel expandIcon = new JLabel();
 	private final JLabel worldLabel = new JLabel();
+	private final JLabel spellbookIcon = new JLabel();
 
 	private final ImageIcon expandIconUp;
 	private final ImageIcon expandIconDown;
@@ -87,8 +88,8 @@ public class PlayerBanner extends JPanel
 		this.player = player;
 
 		this.setLayout(new GridBagLayout());
-		this.setPreferredSize(new Dimension(PluginPanel.PANEL_WIDTH - 14, 68));
-		this.setBorder(new EmptyBorder(5, 5, 0, 5));
+		this.setPreferredSize(new Dimension(PluginPanel.PANEL_WIDTH - 14, 75));
+		this.setBorder(new EmptyBorder(2, 5, 2, 5));
 
 		statsPanel.setPreferredSize(new Dimension(PluginPanel.PANEL_WIDTH, 25));
 		statsPanel.setLayout(new GridLayout(0, 4));
@@ -118,6 +119,8 @@ public class PlayerBanner extends JPanel
 				RUN_ENERGY_NAME, player.getStats() == null ? "0" : String.valueOf(player.getStats().getRunEnergy()))
 		);
 
+		updateSpellbookIcon(player.getSpellbook(), spriteManager);
+
 		recreatePanel();
 	}
 
@@ -143,7 +146,7 @@ public class PlayerBanner extends JPanel
 		c.gridx = 0;
 		c.gridy = 0;
 		c.weightx = 0;
-		c.weighty = 1.0;
+		c.weighty = 0;
 		c.ipady = 4;
 
 		// Add avatar label regardless of if one exists just to have UI matching
@@ -158,7 +161,9 @@ public class PlayerBanner extends JPanel
 			addIcon();
 		}
 
-		add(iconLabel, c);
+		final GridBagConstraints iconConstraints = (GridBagConstraints) c.clone();
+		iconConstraints.insets = new Insets(2, 0, 0, 0);
+		add(iconLabel, iconConstraints);
 		c.gridx++;
 
 		final JPanel nameContainer = new JPanel(new GridLayout(2, 1));
@@ -166,8 +171,6 @@ public class PlayerBanner extends JPanel
 		nameContainer.setOpaque(false);
 
 		final JLabel usernameLabel = new JLabel();
-		usernameLabel.setLayout(new OverlayLayout(usernameLabel));
-		usernameLabel.setHorizontalTextPosition(JLabel.LEFT);
 		if (Strings.isNullOrEmpty(player.getUsername()))
 		{
 			usernameLabel.setText("Not logged in");
@@ -177,11 +180,6 @@ public class PlayerBanner extends JPanel
 			final String levelText = player.getStats() == null ? "" : " (level-" + player.getStats().getCombatLevel() + ")";
 			usernameLabel.setText(player.getUsername() + levelText);
 		}
-
-		expandIcon.setAlignmentX(Component.RIGHT_ALIGNMENT);
-		usernameLabel.add(expandIcon, BorderLayout.EAST);
-		nameContainer.add(usernameLabel);
-
 
 		worldLabel.setText("Not logged in");
 		if (Strings.isNullOrEmpty(player.getUsername()))
@@ -193,8 +191,19 @@ public class PlayerBanner extends JPanel
 
 			worldLabel.setText("World " + player.getWorld());
 		}
-		nameContainer.add(worldLabel);
 
+		final JPanel topRow = new JPanel(new BorderLayout());
+		topRow.setOpaque(false);
+		topRow.add(usernameLabel, BorderLayout.WEST);
+		topRow.add(expandIcon, BorderLayout.EAST);
+
+		final JPanel bottomRow = new JPanel(new BorderLayout());
+		bottomRow.setOpaque(false);
+		bottomRow.add(worldLabel, BorderLayout.WEST);
+		bottomRow.add(spellbookIcon, BorderLayout.EAST);
+
+		nameContainer.add(topRow);
+		nameContainer.add(bottomRow);
 
 		c.weightx = 1.0;
 		c.fill = GridBagConstraints.HORIZONTAL;
@@ -207,13 +216,16 @@ public class PlayerBanner extends JPanel
 		c.gridwidth = 2;
 		add(statsPanel, c);
 
+		c.weighty = 1.0;
+		add(Box.createGlue(), c);
+
 		revalidate();
 		repaint();
 	}
 
 	private void addIcon()
 	{
-		final BufferedImage resized = ImageUtil.resizeImage(player.getMember().getAvatar(), Constants.ITEM_SPRITE_WIDTH - 8, Constants.ITEM_SPRITE_HEIGHT - 4);
+		final BufferedImage resized = ImageUtil.resizeImage(player.getMember().getAvatar(), Constants.ITEM_SPRITE_WIDTH - 4, Constants.ITEM_SPRITE_HEIGHT);
 		iconLabel.setIcon(new ImageIcon(resized));
 	}
 
@@ -328,5 +340,36 @@ public class PlayerBanner extends JPanel
 	{
 		worldLabel.setVisible(displayWorlds);
 		worldLabel.setText("World " + world);
+	}
+
+	void updateSpellbookIcon(int spellbook, SpriteManager spriteManager)
+	{
+		int spriteID;
+		String name;
+		switch (spellbook)
+		{
+			case 3:
+				spriteID = SpriteID.SideIcons.SPELLBOOK_ARCEUUS;
+				name = "Arceuus Spellbook";
+				break;
+			case 2:
+				spriteID = SpriteID.SideIcons.SPELLBOOK_LUNAR;
+				name = "Lunar Spellbook";
+				break;
+			case 1:
+				spriteID = SpriteID.SideIcons.SPELLBOOK_ANCIENT_MAGICKS;
+				name = "Ancient Magick";
+				break;
+			case 0:
+			default:
+				spriteID = SpriteID.SideIcons.MAGIC;
+				name = "Standard Spellbook";
+		}
+		spriteManager.getSpriteAsync(spriteID, 0, img ->
+		{
+			final BufferedImage resized = ImageUtil.resizeImage(img, 20, 20);
+			SwingUtilities.invokeLater(() -> spellbookIcon.setIcon(new ImageIcon(resized)));
+		});
+		spellbookIcon.setToolTipText(name);
 	}
 }
