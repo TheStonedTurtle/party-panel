@@ -37,10 +37,12 @@ import net.runelite.client.util.ImageUtil;
 import thestonedturtle.partypanel.data.PartyPlayer;
 
 import javax.swing.Box;
-import javax.swing.JButton;
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
@@ -73,9 +75,10 @@ public class PlayerBanner extends JPanel
 	private final JPanel worldPanel = new JPanel();
 	private final JLabel worldLabel = new JLabel();
 	private final JLabel spellbookIcon = new JLabel();
-	private final JButton hopToWorldButton = new JButton("Hop-to");
+	private final JPopupMenu hopToWorldPopupMenu = new JPopupMenu();
+	private final JMenuItem hopToWorldMenuItem = new JMenuItem();
 	private boolean displayWorld;
-	private boolean showHopToWorldButton;
+	private boolean showHopToWorldMenuOption;
 
 	private final ImageIcon expandIconUp;
 	private final ImageIcon expandIconDown;
@@ -89,12 +92,12 @@ public class PlayerBanner extends JPanel
 	private boolean usingStamIcon;
 
 	public PlayerBanner(final PartyPlayer player, boolean expanded, boolean displayWorld,
-						boolean showHopToWorldButton, IntConsumer hopToWorld, SpriteManager spriteManager)
+						boolean showHopToWorldMenuOption, IntConsumer hopToWorld, SpriteManager spriteManager)
 	{
 		super();
 		this.player = player;
 		this.displayWorld = displayWorld;
-		this.showHopToWorldButton = showHopToWorldButton;
+		this.showHopToWorldMenuOption = showHopToWorldMenuOption;
 
 		this.setLayout(new GridBagLayout());
 		this.setPreferredSize(new Dimension(PluginPanel.PANEL_WIDTH - 14, 75));
@@ -104,6 +107,7 @@ public class PlayerBanner extends JPanel
 		statsPanel.setLayout(new GridLayout(0, 4));
 		statsPanel.setBorder(new EmptyBorder(5, 0, 0, 0));
 		statsPanel.setOpaque(true);
+		inheritBannerPopup(statsPanel);
 
 		expandIconDown = new ImageIcon(EXPAND_ICON);
 		expandIconUp = new ImageIcon(ImageUtil.rotateImage(EXPAND_ICON, Math.PI));
@@ -120,9 +124,8 @@ public class PlayerBanner extends JPanel
 		worldPanel.setOpaque(false);
 		worldLabel.setHorizontalTextPosition(JLabel.LEFT);
 		worldPanel.add(worldLabel, BorderLayout.CENTER);
-		hopToWorldButton.setFocusable(false);
-		hopToWorldButton.addActionListener(e -> hopToWorld.accept(this.player.getWorld()));
-		worldPanel.add(hopToWorldButton, BorderLayout.EAST);
+		hopToWorldMenuItem.addActionListener(e -> hopToWorld.accept(this.player.getWorld()));
+		hopToWorldPopupMenu.add(hopToWorldMenuItem);
 
 		usingStamIcon = player.getStamina() > 0;
 		statsPanel.add(createIconPanel(spriteManager, SpriteID.Staticons.HITPOINTS, Skill.HITPOINTS.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS))));
@@ -168,6 +171,7 @@ public class PlayerBanner extends JPanel
 		iconLabel.setPreferredSize(ICON_SIZE);
 		iconLabel.setMinimumSize(ICON_SIZE);
 		iconLabel.setOpaque(false);
+		inheritBannerPopup(iconLabel);
 
 		checkIcon = player.getMember().getAvatar() == null;
 		if (!checkIcon)
@@ -183,8 +187,10 @@ public class PlayerBanner extends JPanel
 		final JPanel nameContainer = new JPanel(new GridLayout(2, 1));
 		nameContainer.setBorder(new EmptyBorder(0, 5, 0, 0));
 		nameContainer.setOpaque(false);
+		inheritBannerPopup(nameContainer);
 
 		final JLabel usernameLabel = new JLabel();
+		inheritBannerPopup(usernameLabel);
 		if (Strings.isNullOrEmpty(player.getUsername()))
 		{
 			usernameLabel.setText("Not logged in");
@@ -197,12 +203,18 @@ public class PlayerBanner extends JPanel
 
 		final JPanel topRow = new JPanel(new BorderLayout());
 		topRow.setOpaque(false);
+		inheritBannerPopup(topRow);
 		topRow.add(usernameLabel, BorderLayout.WEST);
 		topRow.add(expandIcon, BorderLayout.EAST);
+		inheritBannerPopup(expandIcon);
 
 		final JPanel bottomRow = new JPanel(new BorderLayout());
 		bottomRow.setOpaque(false);
-		updateWorld(player.getWorld(), displayWorld, showHopToWorldButton);
+		inheritBannerPopup(bottomRow);
+		inheritBannerPopup(worldPanel);
+		inheritBannerPopup(worldLabel);
+		inheritBannerPopup(spellbookIcon);
+		updateWorld(player.getWorld(), displayWorld, showHopToWorldMenuOption);
 		bottomRow.add(worldPanel, BorderLayout.WEST);
 		bottomRow.add(spellbookIcon, BorderLayout.EAST);
 
@@ -231,6 +243,11 @@ public class PlayerBanner extends JPanel
 	{
 		final BufferedImage resized = ImageUtil.resizeImage(player.getMember().getAvatar(), Constants.ITEM_SPRITE_WIDTH - 4, Constants.ITEM_SPRITE_HEIGHT);
 		iconLabel.setIcon(new ImageIcon(resized));
+	}
+
+	private void inheritBannerPopup(final JComponent component)
+	{
+		component.setInheritsPopupMenu(true);
 	}
 
 	public void refreshStats()
@@ -272,6 +289,9 @@ public class PlayerBanner extends JPanel
 		panel.add(textLabel, BorderLayout.CENTER);
 		panel.setOpaque(false);
 		panel.setToolTipText(name);
+		inheritBannerPopup(panel);
+		inheritBannerPopup(iconLabel);
+		inheritBannerPopup(textLabel);
 
 		return panel;
 	}
@@ -340,17 +360,18 @@ public class PlayerBanner extends JPanel
 		statsPanel.repaint();
 	}
 
-	public void updateWorld(final int world, final boolean displayWorlds, final boolean showHopToWorldButton)
+	public void updateWorld(final int world, final boolean displayWorlds, final boolean showHopToWorldMenuOption)
 	{
 		this.displayWorld = displayWorlds;
-		this.showHopToWorldButton = showHopToWorldButton;
+		this.showHopToWorldMenuOption = showHopToWorldMenuOption;
 
 		final boolean hasWorld = world > 0 && !Strings.isNullOrEmpty(player.getUsername());
 		final boolean displayWorld = this.displayWorld && hasWorld;
 		worldPanel.setVisible(displayWorld);
 		worldLabel.setText(hasWorld ? "World " + world : "");
-		hopToWorldButton.setVisible(displayWorld && this.showHopToWorldButton);
-		hopToWorldButton.setEnabled(hasWorld);
+		hopToWorldMenuItem.setText(hasWorld ? "Hop-to World " + world : "Hop-to World");
+		hopToWorldMenuItem.setEnabled(displayWorld && this.showHopToWorldMenuOption);
+		setComponentPopupMenu(displayWorld && this.showHopToWorldMenuOption ? hopToWorldPopupMenu : null);
 	}
 
 	void updateSpellbookIcon(int spellbook, SpriteManager spriteManager)

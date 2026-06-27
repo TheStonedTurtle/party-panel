@@ -249,7 +249,7 @@ public class PartyPanelPlugin extends Plugin
 				panel.updateDisplayVirtualLevels();
 				break;
 			case "displayPlayerWorlds":
-			case "showHopToWorldButton":
+			case "showHopToWorldMenuOption":
 				panel.updateDisplayPlayerWorlds();
 				break;
 		}

@@ -64,7 +64,7 @@ public interface PartyPanelConfig extends Config
 	@ConfigItem(
 			keyName = "displayPlayerWorlds",
 			name = "Display Player Worlds",
-			description = "<html>Controls whether we display the world a player is currently on<br/>Disabling this also hides the hop-to world button</html>",
+			description = "<html>Controls whether we display the world a player is currently on<br/>Disabling this also hides the hop-to world menu option</html>",
 			position = 4
 	)
 	default boolean displayPlayerWorlds()
@@ -73,12 +73,12 @@ public interface PartyPanelConfig extends Config
 	}
 
 	@ConfigItem(
-			keyName = "showHopToWorldButton",
-			name = "Show Hop-to World Button",
-			description = "<html>Controls whether a button is displayed to hop to a party member's current world<br/>Only applies when Display Player Worlds is enabled</html>",
+			keyName = "showHopToWorldMenuOption",
+			name = "Show Hop-to World Menu Option",
+			description = "<html>Controls whether a right-click option is displayed to hop to a party member's current world<br/>Only applies when Display Player Worlds is enabled</html>",
 			position = 5
 	)
-	default boolean showHopToWorldButton()
+	default boolean showHopToWorldMenuOption()
 	{
 		return false;
 	}

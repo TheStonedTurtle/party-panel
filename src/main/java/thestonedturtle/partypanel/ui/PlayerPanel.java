@@ -110,7 +110,7 @@ public class PlayerPanel extends JPanel
 		this.itemManager = itemManager;
 		this.showInfo = config.autoExpandMembers();
 		this.banner = new PlayerBanner(selectedPlayer, showInfo, config.displayPlayerWorlds(),
-			config.showHopToWorldButton(), hopToWorld, spriteManager);
+			config.showHopToWorldMenuOption(), hopToWorld, spriteManager);
 		this.inventoryPanel = new PlayerInventoryPanel(selectedPlayer.getInventory(), selectedPlayer.getRunesInPouch(), itemManager);
 		this.equipmentPanel = new PlayerEquipmentPanel(selectedPlayer.getEquipment(), selectedPlayer.getQuiver(), spriteManager, itemManager);
 		this.skillsPanel = new PlayerSkillsPanel(selectedPlayer, config.displayVirtualLevels(), spriteManager);
@@ -367,6 +367,6 @@ public class PlayerPanel extends JPanel
 
 	public void updateWorld()
 	{
-		banner.updateWorld(player.getWorld(), config.displayPlayerWorlds(), config.showHopToWorldButton());
+		banner.updateWorld(player.getWorld(), config.displayPlayerWorlds(), config.showHopToWorldMenuOption());
 	}
 }
