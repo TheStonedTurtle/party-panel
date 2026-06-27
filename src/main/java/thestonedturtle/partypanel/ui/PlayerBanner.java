@@ -47,6 +47,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -75,7 +76,7 @@ public class PlayerBanner extends JPanel
 	private final JPanel worldPanel = new JPanel();
 	private final JLabel worldLabel = new JLabel();
 	private final JLabel spellbookIcon = new JLabel();
-	private final JPopupMenu hopToWorldPopupMenu = new JPopupMenu();
+	private final JPopupMenu hopToWorldPopupMenu = new CenteredPopupMenu();
 	private final JMenuItem hopToWorldMenuItem = new JMenuItem();
 	private boolean displayWorld;
 	private boolean showHopToWorldMenuOption;
@@ -248,6 +249,15 @@ public class PlayerBanner extends JPanel
 	private void inheritBannerPopup(final JComponent component)
 	{
 		component.setInheritsPopupMenu(true);
+	}
+
+	private static class CenteredPopupMenu extends JPopupMenu
+	{
+		@Override
+		public void show(final Component invoker, final int x, final int y)
+		{
+			super.show(invoker, x - getPreferredSize().width / 2, y);
+		}
 	}
 
 	public void refreshStats()
