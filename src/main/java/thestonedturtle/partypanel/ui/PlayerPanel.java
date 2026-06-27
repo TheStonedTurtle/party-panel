@@ -64,6 +64,7 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.IntConsumer;
 
 @Getter
 public class PlayerPanel extends JPanel
@@ -100,7 +101,7 @@ public class PlayerPanel extends JPanel
 	private boolean showInfo;
 	private final Map<Integer, Boolean> tabMap = new HashMap<>();
 
-	public PlayerPanel(final PartyPlayer selectedPlayer, final PartyPanelConfig config,
+	public PlayerPanel(final PartyPlayer selectedPlayer, final PartyPanelConfig config, final IntConsumer hopToWorld,
 					   final SpriteManager spriteManager, final ItemManager itemManager)
 	{
 		this.player = selectedPlayer;
@@ -108,7 +109,8 @@ public class PlayerPanel extends JPanel
 		this.spriteManager = spriteManager;
 		this.itemManager = itemManager;
 		this.showInfo = config.autoExpandMembers();
-		this.banner = new PlayerBanner(selectedPlayer, showInfo, config.displayPlayerWorlds(), spriteManager);
+		this.banner = new PlayerBanner(selectedPlayer, showInfo, config.displayPlayerWorlds(),
+			config.showHopToWorldMenuOption(), hopToWorld, spriteManager);
 		this.inventoryPanel = new PlayerInventoryPanel(selectedPlayer.getInventory(), selectedPlayer.getRunesInPouch(), itemManager);
 		this.equipmentPanel = new PlayerEquipmentPanel(selectedPlayer.getEquipment(), selectedPlayer.getQuiver(), spriteManager, itemManager);
 		this.skillsPanel = new PlayerSkillsPanel(selectedPlayer, config.displayVirtualLevels(), spriteManager);
@@ -363,8 +365,8 @@ public class PlayerPanel extends JPanel
 		skillsPanel.getTotalLevelPanel().updateTotalLevel(totalLevel);
 	}
 
-	public void updateDisplayPlayerWorlds()
+	public void updateWorld()
 	{
-		banner.updateWorld(player.getWorld(), config.displayPlayerWorlds());
+		banner.updateWorld(player.getWorld(), config.displayPlayerWorlds(), config.showHopToWorldMenuOption());
 	}
 }

@@ -166,7 +166,8 @@ class PartyPanel extends PluginPanel
 			return;
 		}
 
-		panel = new PlayerPanel(player, plugin.getConfig(), plugin.spriteManager, plugin.itemManager);
+		panel = new PlayerPanel(player, plugin.getConfig(), plugin::hopToPartyMemberWorld,
+			plugin.spriteManager, plugin.itemManager);
 		playerPanelMap.put(player.getMember().getMemberId(), panel);
 		panel.updatePlayerData(player, hasBreakingBannerChange);
 		basePanel.add(panel);
@@ -221,6 +222,6 @@ class PartyPanel extends PluginPanel
 
 	public void updateDisplayPlayerWorlds()
 	{
-		playerPanelMap.values().forEach(PlayerPanel::updateDisplayPlayerWorlds);
+		playerPanelMap.values().forEach(PlayerPanel::updateWorld);
 	}
 }

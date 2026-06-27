@@ -15,6 +15,7 @@ import net.runelite.api.ItemContainer;
 import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
 import net.runelite.api.annotations.Varbit;
+import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
@@ -128,6 +129,9 @@ public class PartyPanelPlugin extends Plugin
 	@Inject
 	private PartyReminderOverlay partyReminderOverlay;
 
+	@Inject
+	private WorldHopService worldHopService;
+
 	@Provides
 	PartyPanelConfig provideConfig(ConfigManager configManager)
 	{
@@ -201,6 +205,7 @@ public class PartyPanelPlugin extends Plugin
 		partyMembers.clear();
 		wsClient.unregisterMessage(PartyBatchedChange.class);
 		currentChange = new PartyBatchedChange();
+		worldHopService.reset();
 		panel.getPlayerPanelMap().clear();
 		lastLogout = null;
 		overlayManager.remove(partyReminderOverlay);
@@ -244,6 +249,7 @@ public class PartyPanelPlugin extends Plugin
 				panel.updateDisplayVirtualLevels();
 				break;
 			case "displayPlayerWorlds":
+			case "showHopToWorldMenuOption":
 				panel.updateDisplayPlayerWorlds();
 				break;
 		}
@@ -389,6 +395,8 @@ public class PartyPanelPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(final GameTick tick)
 	{
+		worldHopService.processQuickHop();
+
 		if (!isInParty() || client.getLocalPlayer() == null || partyService.getLocalMember() == null)
 		{
 			return;
@@ -504,6 +512,12 @@ public class PartyPanelPlugin extends Plugin
 
 			currentChange = new PartyBatchedChange();
 		}
+	}
+
+	@Subscribe
+	public void onChatMessage(final ChatMessage event)
+	{
+		worldHopService.onChatMessage(event);
 	}
 
 	@Subscribe
@@ -826,6 +840,11 @@ public class PartyPanelPlugin extends Plugin
 	{
 		partyService.changeParty(null);
 		panel.updateParty();
+	}
+
+	public void hopToPartyMemberWorld(final int worldId)
+	{
+		worldHopService.hopToWorld(worldId);
 	}
 
 	private int[] convertItemsToArray(Item[] items)
