@@ -897,6 +897,7 @@ public class PartyPanelPlugin extends Plugin
 		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.P, myPlayer.getPoison()));
 		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.D, myPlayer.getDisease()));
 		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.W, myPlayer.getWorld()));
+		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.SP, myPlayer.getSpellbook()));
 
 		// Prayers
 		if (myPlayer.getPrayers() != null)
