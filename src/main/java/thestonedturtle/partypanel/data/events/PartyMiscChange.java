@@ -99,6 +99,7 @@ public class PartyMiscChange implements PartyProcess
 				break;
 			case SP:
 				p.setSpellbook(v);
+				break;
 			default:
 				log.warn("Unhandled misc change type for event: {}", this);
 		}
