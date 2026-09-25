@@ -39,7 +39,6 @@ public class GameItem
 	int qty;
 	String name;
 	boolean stackable;
-	int price;
 
 	public GameItem(final Item item, final ItemManager itemManager)
 	{
@@ -55,7 +54,6 @@ public class GameItem
 
 		this.name = c.getName();
 		this.stackable = c.isStackable();
-		this.price = itemManager.getItemPrice(c.getNote() != -1 ? c.getLinkedNoteId() : id);
 	}
 
 	public static GameItem[] convertItemsToGameItems(final int[] items, final ItemManager itemManager)
