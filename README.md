@@ -16,6 +16,8 @@ The **Show AFK Indicator** setting is enabled by default and can be turned off. 
 Zzz to see the rounded-up time since the member became AFK. Only the rounded-up AFK duration
 is shared with party members, not mouse positions or keys.
 
+The white Zzz icon is bundled with the plugin, so it renders consistently across operating systems.
+
 To learn more about joining a party please read
 the [RuneLite Wiki Page](https://github.com/runelite/runelite/wiki/Party#how-to-create-a-party) about this.
 
