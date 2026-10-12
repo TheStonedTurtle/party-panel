@@ -60,7 +60,7 @@ public class PartyPlayer
 	// 0=Standard, 1=Ancient, 2=Lunar, 3=Arceuus
 	private int spellbook;
 	private boolean afk;
-	private int afkMinutes;
+	private int afkTenths;
 
 	public PartyPlayer(final PartyMember member)
 	{

@@ -347,18 +347,23 @@ public class PlayerBanner extends JPanel
 		statsPanel.repaint();
 	}
 
-	static String formatAfkTooltip(final int minutes)
+	static String formatAfkTooltip(final int encodedTenths)
 	{
-		return minutes <= 0 ? null : "AFK for " + minutes + (minutes == 1 ? " minute" : " minutes");
+		if (encodedTenths <= 0)
+		{
+			return null;
+		}
+		final int tenths = encodedTenths - 1;
+		return "AFK for " + (tenths / 10) + "." + (tenths % 10) + " min";
 	}
 
-	public void updateAfkIndicator(final int minutes)
+	public void updateAfkIndicator(final int encodedTenths)
 	{
 		SwingUtilities.invokeLater(() ->
 		{
-			if (minutes > 0)
+			if (encodedTenths > 0)
 			{
-				afkLabel.setToolTipText(formatAfkTooltip(minutes));
+				afkLabel.setToolTipText(formatAfkTooltip(encodedTenths));
 				afkLabel.setVisible(true);
 			}
 			else

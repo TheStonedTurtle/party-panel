@@ -144,7 +144,7 @@ public class PartyPanelPlugin extends Plugin
 	private final AfkTracker afkTracker = new AfkTracker();
 	private MouseAdapter mouseListener;
 	private KeyListener keyListener;
-	private int lastSentAfkMinutes;
+	private int lastSentAfkTenths;
 
 	@Provides
 	PartyPanelConfig provideConfig(ConfigManager configManager)
@@ -230,7 +230,7 @@ public class PartyPanelPlugin extends Plugin
 		overlayManager.remove(partyReminderOverlay);
 
 		unregisterActivityListeners();
-		lastSentAfkMinutes = 0;
+		lastSentAfkTenths = 0;
 	}
 
 	@Subscribe
@@ -282,7 +282,7 @@ public class PartyPanelPlugin extends Plugin
 				else
 				{
 					unregisterActivityListeners();
-					lastSentAfkMinutes = 0;
+					lastSentAfkTenths = 0;
 					if (isInParty())
 					{
 						currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.AFK, 0));
@@ -407,7 +407,7 @@ public class PartyPanelPlugin extends Plugin
 			panel.renderSidebar();
 		});
 		myPlayer = null;
-		lastSentAfkMinutes = 0;
+		lastSentAfkTenths = 0;
 
 		panel.updateParty();
 
@@ -945,9 +945,9 @@ public class PartyPanelPlugin extends Plugin
 		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.D, myPlayer.getDisease()));
 		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.W, myPlayer.getWorld()));
 		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.SP, myPlayer.getSpellbook()));
-		final int afkMinutes = config.showAfkIndicator() ? afkTracker.getAfkMinutes(AFK_THRESHOLD_MINUTES) : 0;
-		lastSentAfkMinutes = afkMinutes;
-		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.AFK, afkMinutes));
+		final int afkTenths = config.showAfkIndicator() ? afkTracker.getAfkTenths(AFK_THRESHOLD_MINUTES) : 0;
+		lastSentAfkTenths = afkTenths;
+		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.AFK, afkTenths));
 
 		// Prayers
 		if (myPlayer.getPrayers() != null)
@@ -1104,14 +1104,14 @@ public class PartyPanelPlugin extends Plugin
 			return;
 		}
 
-		final int afkMinutes = afkTracker.getAfkMinutes(AFK_THRESHOLD_MINUTES);
-		if (afkMinutes == lastSentAfkMinutes)
+		final int afkTenths = afkTracker.getAfkTenths(AFK_THRESHOLD_MINUTES);
+		if (afkTenths == lastSentAfkTenths)
 		{
 			return;
 		}
 
-		lastSentAfkMinutes = afkMinutes;
-		currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.AFK, afkMinutes));
+		lastSentAfkTenths = afkTenths;
+		currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.AFK, afkTenths));
 	}
 
 	private void updateSpellbook()

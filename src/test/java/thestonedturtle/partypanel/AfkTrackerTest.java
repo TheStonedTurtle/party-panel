@@ -97,18 +97,20 @@ public class AfkTrackerTest
 	}
 
 	@Test
-	public void testAfkMinutesRoundUpOnlyAfterThreshold()
+	public void testAfkTenthsTrackElapsedMinutesWithoutRoundingUp()
 	{
 		AtomicLong now = new AtomicLong(1_000_000L);
 		tracker = new AfkTracker(now::get);
-		assertEquals(0, tracker.getAfkMinutes(1));
+		assertEquals(0, tracker.getAfkTenths(1));
 		now.addAndGet(60_000L);
-		assertEquals(1, tracker.getAfkMinutes(1));
-		now.addAndGet(60_000L);
-		assertEquals(1, tracker.getAfkMinutes(1));
+		assertEquals(1, tracker.getAfkTenths(1)); // AFK for 0.0 min
+		now.addAndGet(5_999L);
+		assertEquals(1, tracker.getAfkTenths(1));
 		now.incrementAndGet();
-		assertEquals(2, tracker.getAfkMinutes(1));
+		assertEquals(2, tracker.getAfkTenths(1)); // AFK for 0.1 min
+		now.addAndGet(54_000L);
+		assertEquals(11, tracker.getAfkTenths(1)); // AFK for 1.0 min
 		tracker.recordActivity();
-		assertEquals(0, tracker.getAfkMinutes(1));
+		assertEquals(0, tracker.getAfkTenths(1));
 	}
 }

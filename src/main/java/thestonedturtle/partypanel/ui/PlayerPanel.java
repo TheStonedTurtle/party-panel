@@ -231,7 +231,7 @@ public class PlayerPanel extends JPanel
 		}
 		banner.setCurrentHeart(heart, spriteManager);
 		banner.setUsingStamIcon(player.getStamina() > 0, spriteManager);
-		banner.updateAfkIndicator(config.showAfkIndicator() ? player.getAfkMinutes() : 0);
+		banner.updateAfkIndicator(config.showAfkIndicator() ? player.getAfkTenths() : 0);
 
 		if (!showInfo)
 		{
@@ -371,6 +371,6 @@ public class PlayerPanel extends JPanel
 
 	public void updateDisplayAfkIndicator()
 	{
-		banner.updateAfkIndicator(config.showAfkIndicator() ? player.getAfkMinutes() : 0);
+		banner.updateAfkIndicator(config.showAfkIndicator() ? player.getAfkTenths() : 0);
 	}
 }

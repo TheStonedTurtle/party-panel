@@ -49,7 +49,7 @@ public class PartyMiscChange implements PartyProcess
 		W, // World
 		U, // Username
 		SP, // Spellbook
-		AFK, // Rounded-up minutes AFK; 0 = active
+		AFK, // 0 = active; otherwise 1 + elapsed tenths of a minute AFK
 	}
 
 	public PartyMiscChange(PartyMisc t, Integer v)
@@ -102,7 +102,7 @@ public class PartyMiscChange implements PartyProcess
 				p.setSpellbook(v);
 				break;
 			case AFK:
-				p.setAfkMinutes(Math.max(0, v));
+				p.setAfkTenths(Math.max(0, v));
 				p.setAfk(v > 0);
 				break;
 			default:

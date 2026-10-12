@@ -11,10 +11,11 @@ import java.awt.image.BufferedImage;
 public class PlayerBannerAfkTest
 {
 	@Test
-	public void testTooltipUsesSingularAndPluralMinutes()
+	public void testTooltipShowsElapsedMinutesToOneDecimal()
 	{
-		assertEquals("AFK for 1 minute", PlayerBanner.formatAfkTooltip(1));
-		assertEquals("AFK for 2 minutes", PlayerBanner.formatAfkTooltip(2));
+		assertEquals("AFK for 0.0 min", PlayerBanner.formatAfkTooltip(1));
+		assertEquals("AFK for 0.1 min", PlayerBanner.formatAfkTooltip(2));
+		assertEquals("AFK for 1.5 min", PlayerBanner.formatAfkTooltip(16));
 		assertNull(PlayerBanner.formatAfkTooltip(0));
 	}
 
