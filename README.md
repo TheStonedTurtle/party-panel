@@ -13,7 +13,7 @@ the RuneLite Party Plugin to remove the in-game overlays if you just want to use
 
 The panel marks party members with Zzz after 1 minute of inactivity in the RuneLite game window.
 The **Show AFK Indicator** setting is enabled by default and can be turned off. Hover over
-Zzz to see time since the member became AFK in 0.1-minute steps. Only that AFK duration
+Zzz to see minutes of inactivity rounded to the nearest whole minute. Only that AFK duration
 is shared with party members, not mouse positions or keys.
 
 The white Zzz icon is bundled with the plugin, so it renders consistently across operating systems.

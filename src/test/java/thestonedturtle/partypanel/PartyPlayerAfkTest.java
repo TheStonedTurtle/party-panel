@@ -58,13 +58,13 @@ public class PartyPlayerAfkTest
 	}
 
 	@Test
-	public void testAfkMessageCarriesTenthsOfMinutesAndClears()
+	public void testAfkMessageCarriesWholeMinutesAndClears()
 	{
 		PartyPlayer player = createPlayer();
-		new PartyMiscChange(PartyMiscChange.PartyMisc.AFK, 16).process(player);
-		assertEquals(16, player.getAfkTenths()); // 1.5 minutes AFK
+		new PartyMiscChange(PartyMiscChange.PartyMisc.AFK, 2).process(player);
+		assertEquals(2, player.getAfkMinutes());
 		new PartyMiscChange(PartyMiscChange.PartyMisc.AFK, 0).process(player);
-		assertEquals(0, player.getAfkTenths());
+		assertEquals(0, player.getAfkMinutes());
 	}
 
 	private PartyPlayer createPlayer()

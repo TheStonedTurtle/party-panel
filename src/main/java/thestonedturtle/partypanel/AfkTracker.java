@@ -5,7 +5,7 @@ import java.util.function.Supplier;
 /**
  * Tracks user mouse/keyboard activity to determine AFK status.
  * Uses an injectable clock for testability.
- * Records only event timing; the plugin shares elapsed AFK time in tenths of minutes.
+ * Records only event timing; the plugin shares inactivity rounded to whole minutes.
  */
 public class AfkTracker
 {
@@ -51,21 +51,22 @@ public class AfkTracker
 	 */
 	public boolean isAfk(final int thresholdMinutes)
 	{
-		return getAfkTenths(thresholdMinutes) > 0;
+		return getAfkMinutes(thresholdMinutes) > 0;
 	}
 
 	/**
-	 * Elapsed tenths of a minute after the threshold, encoded as 1 + tenths.
-	 * Zero means active; one means AFK for 0.0 minutes.
+	 * Returns inactivity rounded to the nearest whole minute once AFK.
+	 * Zero means active; one means at least one minute without input.
 	 */
-	public int getAfkTenths(final int thresholdMinutes)
+	public int getAfkMinutes(final int thresholdMinutes)
 	{
-		final long sinceThreshold = clock.get() - lastActivityTime - Math.max(1, thresholdMinutes) * 60_000L;
-		if (sinceThreshold < 0)
+		final long elapsed = clock.get() - lastActivityTime;
+		if (elapsed < Math.max(1, thresholdMinutes) * 60_000L)
 		{
 			return 0;
 		}
-		return (int) Math.min(Integer.MAX_VALUE, 1 + sinceThreshold / 6_000L);
+		final long nearestMinute = elapsed / 60_000L + (elapsed % 60_000L >= 30_000L ? 1 : 0);
+		return (int) Math.min(Integer.MAX_VALUE, nearestMinute);
 	}
 
 	/**
