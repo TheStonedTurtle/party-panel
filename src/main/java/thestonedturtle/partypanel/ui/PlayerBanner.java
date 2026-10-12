@@ -44,7 +44,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -60,7 +63,7 @@ public class PlayerBanner extends JPanel
 	private static final BufferedImage EXPAND_ICON = ImageUtil.loadImageResource(PlayerPanel.class, "expand.png");
 	private static final String SPECIAL_ATTACK_NAME = "Special Attack";
 	private static final String RUN_ENERGY_NAME = "Run Energy";
-	private static final String AFK_INDICATOR = "💤";
+	private static final String AFK_INDICATOR = "Zzz";
 
 	@Getter
 	private final JPanel statsPanel = new JPanel();
@@ -99,6 +102,9 @@ public class PlayerBanner extends JPanel
 		statsPanel.setOpaque(true);
 
 		afkLabel.setVisible(false);
+		afkLabel.setForeground(new Color(170, 190, 245));
+		afkLabel.setFont(afkLabel.getFont().deriveFont(Font.BOLD, 12f));
+		afkLabel.setBorder(new EmptyBorder(0, 4, 0, 2));
 
 		expandIconDown = new ImageIcon(EXPAND_ICON);
 		expandIconUp = new ImageIcon(ImageUtil.rotateImage(EXPAND_ICON, Math.PI));
@@ -199,8 +205,11 @@ public class PlayerBanner extends JPanel
 		final JPanel topRow = new JPanel(new BorderLayout());
 		topRow.setOpaque(false);
 		topRow.add(usernameLabel, BorderLayout.WEST);
-		topRow.add(afkLabel, BorderLayout.CENTER);
-		topRow.add(expandIcon, BorderLayout.EAST);
+		final JPanel statusAndExpand = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
+		statusAndExpand.setOpaque(false);
+		statusAndExpand.add(afkLabel);
+		statusAndExpand.add(expandIcon);
+		topRow.add(statusAndExpand, BorderLayout.EAST);
 
 		final JPanel bottomRow = new JPanel(new BorderLayout());
 		bottomRow.setOpaque(false);
@@ -341,18 +350,25 @@ public class PlayerBanner extends JPanel
 		statsPanel.repaint();
 	}
 
-	public void updateAfkIndicator(final boolean isAfk)
+	static String formatAfkTooltip(final int minutes)
+	{
+		return minutes <= 0 ? null : "AFK for " + minutes + (minutes == 1 ? " minute" : " minutes");
+	}
+
+	public void updateAfkIndicator(final int minutes)
 	{
 		SwingUtilities.invokeLater(() ->
 		{
-			if (isAfk)
+			if (minutes > 0)
 			{
 				afkLabel.setText(AFK_INDICATOR);
+				afkLabel.setToolTipText(formatAfkTooltip(minutes));
 				afkLabel.setVisible(true);
 			}
 			else
 			{
 				afkLabel.setText("");
+				afkLabel.setToolTipText(null);
 				afkLabel.setVisible(false);
 			}
 			revalidate();

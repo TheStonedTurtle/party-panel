@@ -3,7 +3,6 @@ package thestonedturtle.partypanel;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
-import net.runelite.client.config.Range;
 
 @ConfigGroup("partypanel")
 public interface PartyPanelConfig extends Config
@@ -88,24 +87,12 @@ public interface PartyPanelConfig extends Config
 	@ConfigItem(
 			keyName = "showAfkIndicator",
 			name = "Show AFK Indicator",
-			description = "<html>Displays a sleeping emoji beside party members who have been idle for longer than the AFK threshold</html>",
+			description = "<html>Shows Zzz beside party members after 1 minute of inactivity</html>",
 			position = 6
 	)
 	default boolean showAfkIndicator()
 	{
 		return true;
-	}
-
-	@Range(min = 1, max = 60)
-	@ConfigItem(
-			keyName = "afkThresholdMinutes",
-			name = "AFK Threshold (minutes)",
-			description = "<html>Number of minutes of mouse/keyboard inactivity before a party member is marked as AFK</html>",
-			position = 7
-	)
-	default int afkThresholdMinutes()
-	{
-		return 5;
 	}
 
 

@@ -1,14 +1,13 @@
 package thestonedturtle.partypanel;
 
 import net.runelite.client.config.ConfigItem;
-import net.runelite.client.config.Range;
 import org.junit.Test;
 import java.lang.reflect.Method;
 import static org.junit.Assert.*;
 
 /**
  * Tests that AFK config items exist with correct annotations.
- * Checks the setting defaults and the allowed threshold range.
+ * Checks the default-on toggle and absence of a threshold input.
  */
 public class PartyPanelConfigAfkTest
 {
@@ -24,17 +23,17 @@ public class PartyPanelConfigAfkTest
 	public void testAfkDefaults()
 	{
 		assertTrue(defaults.showAfkIndicator());
-		assertEquals(5, defaults.afkThresholdMinutes());
 	}
 
 	@Test
-	public void testThresholdRange() throws Exception
+	public void testNoThresholdSetting()
 	{
-		Range range = PartyPanelConfig.class.getMethod("afkThresholdMinutes").getAnnotation(Range.class);
-		assertNotNull(range);
-		assertEquals(1, range.min());
-		assertEquals(60, range.max());
+		for (Method method : PartyPanelConfig.class.getDeclaredMethods())
+		{
+			assertNotEquals("afkThresholdMinutes", method.getName());
+		}
 	}
+
 	@Test
 	public void testShowAfkIndicatorMethodExists() throws Exception
 	{
@@ -42,15 +41,6 @@ public class PartyPanelConfigAfkTest
 		ConfigItem annotation = method.getAnnotation(ConfigItem.class);
 		assertNotNull("showAfkIndicator must have @ConfigItem", annotation);
 		assertFalse("showAfkIndicator should not be hidden", annotation.hidden());
-	}
-
-	@Test
-	public void testAfkThresholdMinutesMethodExists() throws Exception
-	{
-		Method method = PartyPanelConfig.class.getMethod("afkThresholdMinutes");
-		ConfigItem annotation = method.getAnnotation(ConfigItem.class);
-		assertNotNull("afkThresholdMinutes must have @ConfigItem", annotation);
-		assertFalse("afkThresholdMinutes should not be hidden", annotation.hidden());
 	}
 
 	@Test
@@ -62,24 +52,10 @@ public class PartyPanelConfigAfkTest
 	}
 
 	@Test
-	public void testAfkThresholdMinutesKeyname() throws Exception
-	{
-		Method method = PartyPanelConfig.class.getMethod("afkThresholdMinutes");
-		ConfigItem annotation = method.getAnnotation(ConfigItem.class);
-		assertEquals("afkThresholdMinutes", annotation.keyName());
-	}
-
-	@Test
 	public void testShowAfkIndicatorReturnType() throws Exception
 	{
 		Method method = PartyPanelConfig.class.getMethod("showAfkIndicator");
 		assertEquals("Return type must be boolean", boolean.class, method.getReturnType());
 	}
 
-	@Test
-	public void testAfkThresholdMinutesReturnType() throws Exception
-	{
-		Method method = PartyPanelConfig.class.getMethod("afkThresholdMinutes");
-		assertEquals("Return type must be int", int.class, method.getReturnType());
-	}
 }

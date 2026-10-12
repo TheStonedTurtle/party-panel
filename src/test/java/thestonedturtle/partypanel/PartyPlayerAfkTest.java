@@ -57,6 +57,16 @@ public class PartyPlayerAfkTest
 		assertFalse(player.isAfk());
 	}
 
+	@Test
+	public void testAfkMessageCarriesRoundedUpDurationAndClears()
+	{
+		PartyPlayer player = createPlayer();
+		new PartyMiscChange(PartyMiscChange.PartyMisc.AFK, 3).process(player);
+		assertEquals(3, player.getAfkMinutes());
+		new PartyMiscChange(PartyMiscChange.PartyMisc.AFK, 0).process(player);
+		assertEquals(0, player.getAfkMinutes());
+	}
+
 	private PartyPlayer createPlayer()
 	{
 		// Create a minimal PartyPlayer without needing a real PartyMember

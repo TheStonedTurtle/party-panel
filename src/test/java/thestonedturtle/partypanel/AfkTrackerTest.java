@@ -2,6 +2,7 @@ package thestonedturtle.partypanel;
 
 import org.junit.Test;
 import org.junit.Before;
+import java.util.concurrent.atomic.AtomicLong;
 import static org.junit.Assert.*;
 
 public class AfkTrackerTest
@@ -93,5 +94,21 @@ public class AfkTrackerTest
 		tracker = new AfkTracker(30 * 1000);
 		assertFalse(tracker.isAfk(0));
 		assertFalse(tracker.isAfk(-1));
+	}
+
+	@Test
+	public void testAfkMinutesRoundUpOnlyAfterThreshold()
+	{
+		AtomicLong now = new AtomicLong(1_000_000L);
+		tracker = new AfkTracker(now::get);
+		assertEquals(0, tracker.getAfkMinutes(1));
+		now.addAndGet(60_000L);
+		assertEquals(1, tracker.getAfkMinutes(1));
+		now.addAndGet(60_000L);
+		assertEquals(1, tracker.getAfkMinutes(1));
+		now.incrementAndGet();
+		assertEquals(2, tracker.getAfkMinutes(1));
+		tracker.recordActivity();
+		assertEquals(0, tracker.getAfkMinutes(1));
 	}
 }

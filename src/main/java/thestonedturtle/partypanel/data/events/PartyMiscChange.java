@@ -49,7 +49,7 @@ public class PartyMiscChange implements PartyProcess
 		W, // World
 		U, // Username
 		SP, // Spellbook
-		AFK, // AFK status (boolean: 1=afk, 0=active)
+		AFK, // Rounded-up minutes AFK; 0 = active
 	}
 
 	public PartyMiscChange(PartyMisc t, Integer v)
@@ -102,7 +102,8 @@ public class PartyMiscChange implements PartyProcess
 				p.setSpellbook(v);
 				break;
 			case AFK:
-				p.setAfk(v != 0);
+				p.setAfkMinutes(Math.max(0, v));
+				p.setAfk(v > 0);
 				break;
 			default:
 				log.warn("Unhandled misc change type for event: {}", this);
