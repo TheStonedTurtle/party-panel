@@ -60,6 +60,7 @@ public class PlayerBanner extends JPanel
 	private static final BufferedImage EXPAND_ICON = ImageUtil.loadImageResource(PlayerPanel.class, "expand.png");
 	private static final String SPECIAL_ATTACK_NAME = "Special Attack";
 	private static final String RUN_ENERGY_NAME = "Run Energy";
+	private static final String AFK_INDICATOR = "💤";
 
 	@Getter
 	private final JPanel statsPanel = new JPanel();
@@ -70,6 +71,7 @@ public class PlayerBanner extends JPanel
 	private final JLabel expandIcon = new JLabel();
 	private final JLabel worldLabel = new JLabel();
 	private final JLabel spellbookIcon = new JLabel();
+	private final JLabel afkLabel = new JLabel();
 
 	private final ImageIcon expandIconUp;
 	private final ImageIcon expandIconDown;
@@ -95,6 +97,8 @@ public class PlayerBanner extends JPanel
 		statsPanel.setLayout(new GridLayout(0, 4));
 		statsPanel.setBorder(new EmptyBorder(5, 0, 0, 0));
 		statsPanel.setOpaque(true);
+
+		afkLabel.setVisible(false);
 
 		expandIconDown = new ImageIcon(EXPAND_ICON);
 		expandIconUp = new ImageIcon(ImageUtil.rotateImage(EXPAND_ICON, Math.PI));
@@ -195,6 +199,7 @@ public class PlayerBanner extends JPanel
 		final JPanel topRow = new JPanel(new BorderLayout());
 		topRow.setOpaque(false);
 		topRow.add(usernameLabel, BorderLayout.WEST);
+		topRow.add(afkLabel, BorderLayout.CENTER);
 		topRow.add(expandIcon, BorderLayout.EAST);
 
 		final JPanel bottomRow = new JPanel(new BorderLayout());
@@ -250,7 +255,7 @@ public class PlayerBanner extends JPanel
 	}
 
 	private JPanel createIconPanel(final SpriteManager spriteManager, final int spriteID, final String name,
-								   final String value)
+									final String value)
 	{
 		final JLabel iconLabel = new JLabel();
 		iconLabel.setPreferredSize(STAT_ICON_SIZE);
@@ -334,6 +339,25 @@ public class PlayerBanner extends JPanel
 		setSpriteIcon(RUN_ENERGY_NAME, id, spriteManager);
 		statsPanel.revalidate();
 		statsPanel.repaint();
+	}
+
+	public void updateAfkIndicator(final boolean isAfk)
+	{
+		SwingUtilities.invokeLater(() ->
+		{
+			if (isAfk)
+			{
+				afkLabel.setText(AFK_INDICATOR);
+				afkLabel.setVisible(true);
+			}
+			else
+			{
+				afkLabel.setText("");
+				afkLabel.setVisible(false);
+			}
+			revalidate();
+			repaint();
+		});
 	}
 
 	public void updateWorld(int world, boolean displayWorlds)

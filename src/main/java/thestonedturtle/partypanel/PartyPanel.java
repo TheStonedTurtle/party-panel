@@ -223,4 +223,9 @@ class PartyPanel extends PluginPanel
 	{
 		playerPanelMap.values().forEach(PlayerPanel::updateDisplayPlayerWorlds);
 	}
+
+	public void updateDisplayAfkIndicators()
+	{
+		playerPanelMap.values().forEach(PlayerPanel::updateDisplayAfkIndicator);
+	}
 }

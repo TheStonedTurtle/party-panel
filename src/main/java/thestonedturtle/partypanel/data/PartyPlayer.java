@@ -59,6 +59,7 @@ public class PartyPlayer
 	private Quiver quiver;
 	// 0=Standard, 1=Ancient, 2=Lunar, 3=Arceuus
 	private int spellbook;
+	private boolean afk;
 
 	public PartyPlayer(final PartyMember member)
 	{

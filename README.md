@@ -11,6 +11,11 @@ I recommend enabling the [RuneLite Party Plugin](https://github.com/runelite/run
 features, such as tile pinging. I would recommend disabling the `Stats` option for
 the RuneLite Party Plugin to remove the in-game overlays if you just want to use this party plugin.
 
+The panel marks party members with 💤 after they have been inactive in the RuneLite game window.
+The **Show AFK Indicator** setting is enabled by default; you can turn it off or change the
+**AFK Threshold (minutes)** (default: 5, range: 1–60). Only the AFK/active status is shared
+with party members, not mouse positions or keys.
+
 To learn more about joining a party please read
 the [RuneLite Wiki Page](https://github.com/runelite/runelite/wiki/Party#how-to-create-a-party) about this.
 

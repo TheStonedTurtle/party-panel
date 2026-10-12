@@ -37,6 +37,10 @@ import net.runelite.client.party.PartyService;
 import net.runelite.client.party.WSClient;
 import net.runelite.client.party.events.UserPart;
 import net.runelite.client.party.messages.UserSync;
+import net.runelite.client.input.KeyListener;
+import net.runelite.client.input.KeyManager;
+import net.runelite.client.input.MouseAdapter;
+import net.runelite.client.input.MouseManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.task.Schedule;
@@ -59,6 +63,8 @@ import thestonedturtle.partypanel.ui.prayer.PrayerSprites;
 import javax.inject.Inject;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -128,6 +134,17 @@ public class PartyPanelPlugin extends Plugin
 	@Inject
 	private PartyReminderOverlay partyReminderOverlay;
 
+	@Inject
+	private MouseManager mouseManager;
+
+	@Inject
+	private KeyManager keyManager;
+
+	private final AfkTracker afkTracker = new AfkTracker();
+	private MouseAdapter mouseListener;
+	private KeyListener keyListener;
+	private boolean afkIndicatorActive = false;
+
 	@Provides
 	PartyPanelConfig provideConfig(ConfigManager configManager)
 	{
@@ -180,6 +197,12 @@ public class PartyPanelPlugin extends Plugin
 
 		lastLogout = Instant.now();
 		overlayManager.add(partyReminderOverlay);
+
+		if (config.showAfkIndicator())
+		{
+			afkTracker.reset();
+			registerActivityListeners();
+		}
 	}
 
 	@Override
@@ -204,6 +227,9 @@ public class PartyPanelPlugin extends Plugin
 		panel.getPlayerPanelMap().clear();
 		lastLogout = null;
 		overlayManager.remove(partyReminderOverlay);
+
+		unregisterActivityListeners();
+		afkIndicatorActive = false;
 	}
 
 	@Subscribe
@@ -245,6 +271,26 @@ public class PartyPanelPlugin extends Plugin
 				break;
 			case "displayPlayerWorlds":
 				panel.updateDisplayPlayerWorlds();
+				break;
+		case "showAfkIndicator":
+				if (config.showAfkIndicator())
+				{
+					afkTracker.reset();
+					registerActivityListeners();
+				}
+				else
+				{
+					unregisterActivityListeners();
+					afkIndicatorActive = false;
+					if (isInParty())
+					{
+						currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.AFK, 0));
+					}
+				}
+				panel.updateDisplayAfkIndicators();
+				break;
+		case "afkThresholdMinutes":
+				updateAfkStatus();
 				break;
 		}
 	}
@@ -363,6 +409,7 @@ public class PartyPanelPlugin extends Plugin
 			panel.renderSidebar();
 		});
 		myPlayer = null;
+		afkIndicatorActive = false;
 
 		panel.updateParty();
 
@@ -495,6 +542,8 @@ public class PartyPanelPlugin extends Plugin
 		{
 			updateSpellbook();
 		}
+
+		updateAfkStatus();
 
 		if (currentChange.isValid())
 		{
@@ -898,6 +947,9 @@ public class PartyPanelPlugin extends Plugin
 		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.D, myPlayer.getDisease()));
 		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.W, myPlayer.getWorld()));
 		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.SP, myPlayer.getSpellbook()));
+		final boolean isAfk = config.showAfkIndicator() && afkTracker.isAfk(config.afkThresholdMinutes());
+		afkIndicatorActive = isAfk;
+		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.AFK, isAfk ? 1 : 0));
 
 		// Prayers
 		if (myPlayer.getPrayers() != null)
@@ -976,6 +1028,92 @@ public class PartyPanelPlugin extends Plugin
 		// introduce a tick delay for each member >6
 		// Default the message frequency to every 2 ticks since this plugin sends a lot of data
 		return Math.max(2, partySize - 6);
+	}
+
+	private void registerActivityListeners()
+	{
+		if (mouseListener != null || keyListener != null)
+		{
+			return;
+		}
+
+		mouseListener = new MouseAdapter()
+		{
+			@Override
+			public MouseEvent mousePressed(MouseEvent mouseEvent)
+			{
+				afkTracker.recordActivity();
+				return mouseEvent;
+			}
+
+			@Override
+			public MouseEvent mouseMoved(MouseEvent mouseEvent)
+			{
+				afkTracker.recordActivity();
+				return mouseEvent;
+			}
+
+			@Override
+			public MouseEvent mouseDragged(MouseEvent mouseEvent)
+			{
+				afkTracker.recordActivity();
+				return mouseEvent;
+			}
+		};
+
+		keyListener = new KeyListener()
+		{
+			@Override
+			public void keyPressed(KeyEvent keyEvent)
+			{
+				afkTracker.recordActivity();
+			}
+
+			@Override
+			public void keyReleased(KeyEvent keyEvent)
+			{
+			}
+
+			@Override
+			public void keyTyped(KeyEvent keyEvent)
+			{
+			}
+		};
+
+		mouseManager.registerMouseListener(mouseListener);
+		keyManager.registerKeyListener(keyListener);
+	}
+
+	private void unregisterActivityListeners()
+	{
+		if (mouseListener != null)
+		{
+			mouseManager.unregisterMouseListener(mouseListener);
+			mouseListener = null;
+		}
+
+		if (keyListener != null)
+		{
+			keyManager.unregisterKeyListener(keyListener);
+			keyListener = null;
+		}
+	}
+
+	private void updateAfkStatus()
+	{
+		if (!config.showAfkIndicator())
+		{
+			return;
+		}
+
+		final boolean isNowAfk = afkTracker.isAfk(config.afkThresholdMinutes());
+		if (isNowAfk == afkIndicatorActive)
+		{
+			return;
+		}
+
+		afkIndicatorActive = isNowAfk;
+		currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.AFK, isNowAfk ? 1 : 0));
 	}
 
 	private void updateSpellbook()
