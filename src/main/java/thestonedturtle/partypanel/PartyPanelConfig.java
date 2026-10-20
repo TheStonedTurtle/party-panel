@@ -84,6 +84,17 @@ public interface PartyPanelConfig extends Config
 		return false;
 	}
 
+	@ConfigItem(
+			keyName = "showAfkIndicator",
+			name = "Show AFK Indicator",
+			description = "<html>Shows Zzz beside party members after 1 minute of inactivity</html>",
+			position = 6
+	)
+	default boolean showAfkIndicator()
+	{
+		return true;
+	}
+
 
 	@ConfigItem(
 			keyName = "previousPartyId",

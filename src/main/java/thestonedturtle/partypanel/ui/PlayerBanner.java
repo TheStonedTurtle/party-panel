@@ -45,6 +45,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -60,6 +61,7 @@ public class PlayerBanner extends JPanel
 	private static final BufferedImage EXPAND_ICON = ImageUtil.loadImageResource(PlayerPanel.class, "expand.png");
 	private static final String SPECIAL_ATTACK_NAME = "Special Attack";
 	private static final String RUN_ENERGY_NAME = "Run Energy";
+	private static final BufferedImage AFK_ICON = ImageUtil.loadImageResource(PlayerBanner.class, "zzz.png");
 
 	@Getter
 	private final JPanel statsPanel = new JPanel();
@@ -70,6 +72,7 @@ public class PlayerBanner extends JPanel
 	private final JLabel expandIcon = new JLabel();
 	private final JLabel worldLabel = new JLabel();
 	private final JLabel spellbookIcon = new JLabel();
+	private final JLabel afkLabel = new JLabel();
 
 	private final ImageIcon expandIconUp;
 	private final ImageIcon expandIconDown;
@@ -95,6 +98,10 @@ public class PlayerBanner extends JPanel
 		statsPanel.setLayout(new GridLayout(0, 4));
 		statsPanel.setBorder(new EmptyBorder(5, 0, 0, 0));
 		statsPanel.setOpaque(true);
+
+		afkLabel.setVisible(false);
+		afkLabel.setIcon(new ImageIcon(AFK_ICON));
+		afkLabel.setBorder(new EmptyBorder(0, 2, 0, 2));
 
 		expandIconDown = new ImageIcon(EXPAND_ICON);
 		expandIconUp = new ImageIcon(ImageUtil.rotateImage(EXPAND_ICON, Math.PI));
@@ -195,7 +202,11 @@ public class PlayerBanner extends JPanel
 		final JPanel topRow = new JPanel(new BorderLayout());
 		topRow.setOpaque(false);
 		topRow.add(usernameLabel, BorderLayout.WEST);
-		topRow.add(expandIcon, BorderLayout.EAST);
+		final JPanel statusAndExpand = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
+		statusAndExpand.setOpaque(false);
+		statusAndExpand.add(afkLabel);
+		statusAndExpand.add(expandIcon);
+		topRow.add(statusAndExpand, BorderLayout.EAST);
 
 		final JPanel bottomRow = new JPanel(new BorderLayout());
 		bottomRow.setOpaque(false);
@@ -250,7 +261,7 @@ public class PlayerBanner extends JPanel
 	}
 
 	private JPanel createIconPanel(final SpriteManager spriteManager, final int spriteID, final String name,
-								   final String value)
+									final String value)
 	{
 		final JLabel iconLabel = new JLabel();
 		iconLabel.setPreferredSize(STAT_ICON_SIZE);
@@ -334,6 +345,34 @@ public class PlayerBanner extends JPanel
 		setSpriteIcon(RUN_ENERGY_NAME, id, spriteManager);
 		statsPanel.revalidate();
 		statsPanel.repaint();
+	}
+
+	static String formatAfkTooltip(final int minutes)
+	{
+		if (minutes <= 0)
+		{
+			return null;
+		}
+		return "AFK for " + minutes + (minutes == 1 ? " minute" : " minutes");
+	}
+
+	public void updateAfkIndicator(final int minutes)
+	{
+		SwingUtilities.invokeLater(() ->
+		{
+			if (minutes > 0)
+			{
+				afkLabel.setToolTipText(formatAfkTooltip(minutes));
+				afkLabel.setVisible(true);
+			}
+			else
+			{
+				afkLabel.setToolTipText(null);
+				afkLabel.setVisible(false);
+			}
+			revalidate();
+			repaint();
+		});
 	}
 
 	public void updateWorld(int world, boolean displayWorlds)

@@ -101,7 +101,7 @@ public class PlayerPanel extends JPanel
 	private final Map<Integer, Boolean> tabMap = new HashMap<>();
 
 	public PlayerPanel(final PartyPlayer selectedPlayer, final PartyPanelConfig config,
-					   final SpriteManager spriteManager, final ItemManager itemManager)
+						final SpriteManager spriteManager, final ItemManager itemManager)
 	{
 		this.player = selectedPlayer;
 		this.config = config;
@@ -231,6 +231,7 @@ public class PlayerPanel extends JPanel
 		}
 		banner.setCurrentHeart(heart, spriteManager);
 		banner.setUsingStamIcon(player.getStamina() > 0, spriteManager);
+		banner.updateAfkIndicator(config.showAfkIndicator() ? player.getAfkMinutes() : 0);
 
 		if (!showInfo)
 		{
@@ -366,5 +367,10 @@ public class PlayerPanel extends JPanel
 	public void updateDisplayPlayerWorlds()
 	{
 		banner.updateWorld(player.getWorld(), config.displayPlayerWorlds());
+	}
+
+	public void updateDisplayAfkIndicator()
+	{
+		banner.updateAfkIndicator(config.showAfkIndicator() ? player.getAfkMinutes() : 0);
 	}
 }
