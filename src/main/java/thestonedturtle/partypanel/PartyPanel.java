@@ -223,4 +223,8 @@ class PartyPanel extends PluginPanel
 	{
 		playerPanelMap.values().forEach(PlayerPanel::updateDisplayPlayerWorlds);
 	}
+
+	public void updatePredefinedPartyNames() {
+		controlsPanel.updateControls();
+	}
 }
