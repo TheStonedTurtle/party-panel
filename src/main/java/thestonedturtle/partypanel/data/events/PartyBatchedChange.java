@@ -46,7 +46,7 @@ public class PartyBatchedChange extends PartyMemberMessage
 {
 	Collection<PartyMiscChange> m = new ArrayList<>(); // Misc Changes
 	Integer ap; // Available Prayers, bit-packed & contains all available prayers on every change
-	Integer up; // Available Prayers, bit-packed & contains all unlocked prayers on every change
+	Integer up; // Unlocked Prayers, bit-packed & contains all unlocked prayers on every change
 	int[] rp; // rp itemId and qty
 	int[] q; // Quiver itemId and qty
 
