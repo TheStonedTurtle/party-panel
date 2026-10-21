@@ -482,9 +482,13 @@ public class PartyPanelPlugin extends Plugin
 
 		final PartyMember newData = partyService.getMemberById(event.getMemberId());
 
-		final boolean breakingChange = partyPlayer.updateMemberInfo(newData, itemManager);
 
-		handlePlayerDataUpdate(event.getMemberId(), breakingChange);
+		clientThread.invoke(() ->
+		{
+			final boolean breakingChange = partyPlayer.updateMemberInfo(newData, itemManager);
+
+			handlePlayerDataUpdate(event.getMemberId(), breakingChange);
+		});
 	}
 
 	private void handlePlayerDataUpdate(long memberId, boolean breakingBannerChange)
@@ -501,12 +505,9 @@ public class PartyPanelPlugin extends Plugin
 			return;
 		}
 
-		clientThread.invoke(() ->
+		SwingUtilities.invokeLater(() ->
 		{
-			SwingUtilities.invokeLater(() ->
-			{
-				panel.drawPlayerPanel(player, breakingBannerChange);
-			});
+			panel.drawPlayerPanel(player, breakingBannerChange);
 		});
 	}
 
