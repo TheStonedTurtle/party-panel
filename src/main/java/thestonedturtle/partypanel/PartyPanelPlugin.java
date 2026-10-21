@@ -316,7 +316,7 @@ public class PartyPanelPlugin extends Plugin
 
 	public boolean isLocalPlayer(long id)
 	{
-		return partyService.getLocalMember() != null && partyService.getLocalMember().getMemberId() == id && false;
+		return partyService.getLocalMember() != null && partyService.getLocalMember().getMemberId() == id;
 	}
 
 	@Subscribe
