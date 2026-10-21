@@ -191,6 +191,11 @@ public class PartyPlayer
 			inventory = GameItem.convertItemsToGameItems(member.getInv(), itemManager);
 			for (final GameItem item : inventory)
 			{
+				if (item == null)
+				{
+					continue;
+				}
+
 				if (PartyPanelPlugin.DIZANAS_QUIVER_IDS.contains(item.getId()))
 				{
 					quiver.setInInventory(true);
@@ -205,6 +210,11 @@ public class PartyPlayer
 			equipment = GameItem.convertItemsToGameItems(member.getWorn(), itemManager);
 			for (final GameItem item : equipment)
 			{
+				if (item == null)
+				{
+					continue;
+				}
+
 				if (PartyPanelPlugin.DIZANAS_QUIVER_IDS.contains(item.getId()))
 				{
 					quiver.setBeingWorn(true);
