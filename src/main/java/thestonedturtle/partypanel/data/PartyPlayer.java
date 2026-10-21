@@ -204,7 +204,6 @@ public class PartyPlayer
 			}
 		}
 
-
 		if (member.getWorn() != null)
 		{
 			equipment = GameItem.convertItemsToGameItems(member.getWorn(), itemManager);

@@ -242,7 +242,7 @@ public class PlayerPanel extends JPanel
 			inventoryPanel.updateInventory(player.getInventory(), player.getRunesInPouch());
 		}
 
-		if (tabMap.getOrDefault(SpriteID.SideiconsInterface.INVENTORY, false))
+		if (tabMap.getOrDefault(SpriteID.SideiconsInterface.EQUIPMENT, false))
 		{
 			for (final EquipmentInventorySlot equipSlot : EquipmentInventorySlot.values())
 			{

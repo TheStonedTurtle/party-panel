@@ -477,6 +477,10 @@ public class PartyPanelPlugin extends Plugin
 	@Subscribe
 	public void onPartyDataMessage(final PartyDataMessage event)
 	{
+		// PartyDataService tracks data for the local player (since it transmits it for us anyway)
+		// In theory we could ignore these updates, but I am keeping this data locally for backwards compatibility reasons
+		// Mainly this allows us to view ourselves in the side panel by setting isLocalPlayer to always return false
+		// Which means we can test the plugin by viewing our own player without needing to multi-log
 		final PartyPlayer partyPlayer = partyMembers.computeIfAbsent(
 				event.getMemberId(), k -> new PartyPlayer());
 
@@ -549,7 +553,6 @@ public class PartyPanelPlugin extends Plugin
 		}
 		else if (c.getContainerId() == InventoryID.WORN)
 		{
-			myPlayer.setEquipment(GameItem.convertItemsToGameItems(c.getItemContainer().getItems(), itemManager));
 			final Item cape = c.getItemContainer().getItem(EquipmentInventorySlot.CAPE.getSlotIdx());
 			boolean isWearingQuiver = cape != null && DIZANAS_QUIVER_IDS.contains(cape.getId());
 			myPlayer.getQuiver().setBeingWorn(isWearingQuiver);
