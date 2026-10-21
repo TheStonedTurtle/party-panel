@@ -39,15 +39,10 @@ public class PartyMiscChange implements PartyProcess
 
 	public enum PartyMisc
 	{
-		S, // Special
-		R, // RUN
-		C, // Combat
-		T, // Total
 		ST, // Stamina duration
 		P, // Poison
 		D, // Disease
 		W, // World
-		U, // Username
 		SP, // Spellbook
 	}
 
@@ -70,18 +65,6 @@ public class PartyMiscChange implements PartyProcess
 	{
 		switch (t)
 		{
-			case S:
-				p.getStats().setSpecialPercent(v);
-				break;
-			case C:
-				p.getStats().setCombatLevel(v);
-				break;
-			case T:
-				p.getStats().setTotalLevel(v);
-				break;
-			case R:
-				p.getStats().setRunEnergy(v);
-				break;
 			case ST:
 				p.setStamina(v);
 				break;
@@ -93,9 +76,6 @@ public class PartyMiscChange implements PartyProcess
 				break;
 			case W:
 				p.setWorld(v);
-				break;
-			case U:
-				p.setUsername(s);
 				break;
 			case SP:
 				p.setSpellbook(v);

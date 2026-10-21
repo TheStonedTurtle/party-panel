@@ -27,6 +27,7 @@ package thestonedturtle.partypanel.data;
 import lombok.Getter;
 import net.runelite.api.Client;
 import net.runelite.api.Prayer;
+import net.runelite.client.party.PartyMember;
 import thestonedturtle.partypanel.ui.prayer.PrayerSprites;
 
 import java.util.HashMap;
@@ -108,5 +109,15 @@ public class Prayers
 	public static boolean isUnlockedByDefault(Prayer p)
 	{
 		return !p.name().equals("DEADEYE") && !p.name().equals("MYSTIC_VIGOUR");
+	}
+
+	// PartyDataService handles transmitting currently enabled prayers
+	public void updateFromPartyMember(final PartyMember member)
+	{
+		for (final Prayer p : Prayer.values())
+		{
+			PrayerData data = prayerData.get(p);
+			data.setEnabled(member.getPrayers().contains(p));
+		}
 	}
 }

@@ -24,15 +24,16 @@
  */
 package thestonedturtle.partypanel.data;
 
-import java.util.HashMap;
-import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 import net.runelite.api.Client;
 import net.runelite.api.Experience;
 import net.runelite.api.Skill;
 import net.runelite.api.VarPlayer;
-import thestonedturtle.partypanel.data.events.PartyStatChange;
+import net.runelite.client.party.PartyMember;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -43,7 +44,6 @@ public class Stats
 	private int specialPercent;
 	private int runEnergy;
 	private int combatLevel;
-	private int totalLevel;
 
 	public Stats()
 	{
@@ -56,11 +56,9 @@ public class Stats
 		baseLevels.put(Skill.HITPOINTS, 10);
 		boostedLevels.put(Skill.HITPOINTS, 10);
 
-		combatLevel = 3;
 		specialPercent = 0;
 		runEnergy = 0;
 		combatLevel = 0;
-		totalLevel = 0;
 	}
 
 	public Stats(final Client client)
@@ -76,27 +74,35 @@ public class Stats
 		recalculateCombatLevel();
 
 		specialPercent = client.getVarpValue(VarPlayer.SPECIAL_ATTACK_PERCENT) / 10;
-		totalLevel = client.getTotalLevel();
 		runEnergy = client.getEnergy();
 	}
 
 	public int recalculateCombatLevel()
 	{
 		combatLevel = Experience.getCombatLevel(
-			Math.min(baseLevels.get(Skill.ATTACK), 99),
-			Math.min(baseLevels.get(Skill.STRENGTH), 99),
-			Math.min(baseLevels.get(Skill.DEFENCE), 99),
-			Math.min(baseLevels.get(Skill.HITPOINTS), 99),
-			Math.min(baseLevels.get(Skill.MAGIC), 99),
-			Math.min(baseLevels.get(Skill.RANGED), 99),
-			Math.min(baseLevels.get(Skill.PRAYER), 99)
+				Math.min(baseLevels.get(Skill.ATTACK), 99),
+				Math.min(baseLevels.get(Skill.STRENGTH), 99),
+				Math.min(baseLevels.get(Skill.DEFENCE), 99),
+				Math.min(baseLevels.get(Skill.HITPOINTS), 99),
+				Math.min(baseLevels.get(Skill.MAGIC), 99),
+				Math.min(baseLevels.get(Skill.RANGED), 99),
+				Math.min(baseLevels.get(Skill.PRAYER), 99)
 		);
 
 		return combatLevel;
 	}
 
-	public PartyStatChange createPartyStatChangeForSkill(Skill s)
+	public void handleMemberUpdate(final PartyMember member)
 	{
-		return new PartyStatChange(s.ordinal(), baseLevels.get(s), boostedLevels.get(s));
+		for (final Skill s : Skill.values())
+		{
+			baseLevels.put(s, member.getStatBase(s));
+			boostedLevels.put(s, member.getStatBoost(s));
+		}
+
+		recalculateCombatLevel();
+
+		specialPercent = member.getSpecEnergy();
+		runEnergy = member.getRunEnergy();
 	}
 }

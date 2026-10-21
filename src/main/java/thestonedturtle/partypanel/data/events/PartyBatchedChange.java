@@ -27,12 +27,10 @@ package thestonedturtle.partypanel.data.events;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.Item;
 import net.runelite.api.Prayer;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.party.messages.PartyMemberMessage;
-import thestonedturtle.partypanel.PartyPanelPlugin;
 import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
 
@@ -46,25 +44,15 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class PartyBatchedChange extends PartyMemberMessage
 {
-	int[] i; // Inventory
-	int[] e; // equipment
-	Collection<PartyStatChange> s = new ArrayList<>(); // Stat Changes
 	Collection<PartyMiscChange> m = new ArrayList<>(); // Misc Changes
 	Integer ap; // Available Prayers, bit-packed & contains all available prayers on every change
-	Integer ep; // Enabled Prayers, bit-packed & contains all enabled prayers on every change
-	Integer up; // Unlocked Prayers, bit-packed & contains all unlocked prayers on every change. Only for deadeye/vigour currently
 	int[] rp; // rp itemId and qty
 	int[] q; // Quiver itemId and qty
 
 	public boolean isValid()
 	{
-		return i != null
-				|| e != null
-				|| (s != null && !s.isEmpty())
-				|| (m != null && !m.isEmpty())
+		return (m != null && !m.isEmpty())
 				|| ap != null
-				|| ep != null
-				|| up != null
 				|| rp != null
 				|| q != null;
 	}
@@ -72,55 +60,19 @@ public class PartyBatchedChange extends PartyMemberMessage
 	// Unset unneeded variables to minimize payload
 	public void removeDefaults()
 	{
-		s = (s == null || s.isEmpty()) ? null : s;
 		m = (m == null || m.isEmpty()) ? null : m;
 	}
 
 	public void process(PartyPlayer player, ItemManager itemManager)
 	{
-		if (i != null)
-		{
-			final GameItem[] gameItems = GameItem.convertItemsToGameItems(i, itemManager);
-			player.setInventory(gameItems);
-			player.getQuiver().setInInventory(false);
-			for (final GameItem item : gameItems)
-			{
-				if (item == null)
-				{
-					continue;
-				}
-
-				if (PartyPanelPlugin.DIZANAS_QUIVER_IDS.contains(item.getId()))
-				{
-					player.getQuiver().setInInventory(true);
-					break;
-				}
-			}
-		}
-
-		if (e != null)
-		{
-			final GameItem[] gameItems = GameItem.convertItemsToGameItems(e, itemManager);
-			player.setEquipment(gameItems);
-			player.getQuiver().setBeingWorn(false);
-			if (gameItems.length > EquipmentInventorySlot.CAPE.getSlotIdx())
-			{
-				final GameItem cape = gameItems[EquipmentInventorySlot.CAPE.getSlotIdx()];
-				player.getQuiver().setBeingWorn(cape != null && PartyPanelPlugin.DIZANAS_QUIVER_IDS.contains(cape.getId()));
-			}
-		}
-
-		if (s != null)
-		{
-			s.forEach(change -> change.process(player));
-		}
-
+		// A lot of this data is now handled by the PartyDataService
 		if (m != null)
 		{
 			m.forEach(change -> change.process(player));
 		}
 
-		if (ap != null || ep != null || up != null)
+		// TODO: Prayers
+		if (ap != null)
 		{
 			processPrayers(player);
 		}
@@ -177,30 +129,7 @@ public class PartyBatchedChange extends PartyMemberMessage
 	{
 		return m != null
 				&& m.stream()
-				.anyMatch(e ->
-				{
-					switch (e.t)
-					{
-						case C:
-						case W:
-						case U:
-						case SP:
-							return true;
-					}
-
-					return false;
-				});
-	}
-
-	public boolean hasStatChange()
-	{
-		return (s != null && !s.isEmpty())
-				|| (m != null && m.stream().anyMatch(e ->
-				e.getT() == PartyMiscChange.PartyMisc.S
-						|| e.getT() == PartyMiscChange.PartyMisc.R
-						|| e.getT() == PartyMiscChange.PartyMisc.C
-						|| e.getT() == PartyMiscChange.PartyMisc.T)
-		);
+				.anyMatch(e -> e.t.equals(PartyMiscChange.PartyMisc.W));
 	}
 
 	public static <E extends Enum<E>> int pack(Collection<E> items)

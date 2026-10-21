@@ -8,17 +8,14 @@ import net.runelite.api.Client;
 import net.runelite.api.EnumComposition;
 import net.runelite.api.EnumID;
 import net.runelite.api.EquipmentInventorySlot;
-import net.runelite.api.Experience;
 import net.runelite.api.GameState;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
-import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
 import net.runelite.api.annotations.Varbit;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
-import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.ItemID;
@@ -33,9 +30,13 @@ import net.runelite.client.events.PartyMemberAvatar;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.ItemVariationMapping;
 import net.runelite.client.game.SpriteManager;
+import net.runelite.client.party.PartyDataService;
+import net.runelite.client.party.PartyDataType;
+import net.runelite.client.party.PartyMember;
 import net.runelite.client.party.PartyService;
 import net.runelite.client.party.WSClient;
 import net.runelite.client.party.events.UserPart;
+import net.runelite.client.party.messages.PartyDataMessage;
 import net.runelite.client.party.messages.UserSync;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -47,14 +48,9 @@ import net.runelite.client.util.ImageUtil;
 import org.apache.commons.lang3.ArrayUtils;
 import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
-import thestonedturtle.partypanel.data.PrayerData;
-import thestonedturtle.partypanel.data.Prayers;
-import thestonedturtle.partypanel.data.Stats;
 import thestonedturtle.partypanel.data.events.PartyBatchedChange;
 import thestonedturtle.partypanel.data.events.PartyMiscChange;
-import thestonedturtle.partypanel.data.events.PartyStatChange;
 import thestonedturtle.partypanel.ui.PlayerPanel;
-import thestonedturtle.partypanel.ui.prayer.PrayerSprites;
 
 import javax.inject.Inject;
 import javax.swing.JOptionPane;
@@ -63,7 +59,6 @@ import java.awt.image.BufferedImage;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -114,6 +109,9 @@ public class PartyPanelPlugin extends Plugin
 	private PartyService partyService;
 
 	@Inject
+	private PartyDataService partyDataService;
+
+	@Inject
 	SpriteManager spriteManager;
 
 	@Inject
@@ -161,6 +159,15 @@ public class PartyPanelPlugin extends Plugin
 				.build();
 
 		wsClient.registerMessage(PartyBatchedChange.class);
+		partyDataService.subscribe(this,
+				PartyDataType.CHARACTER_NAME,
+				PartyDataType.ENERGY,
+				PartyDataType.SPEC,
+				PartyDataType.INV,
+				PartyDataType.WORN,
+				PartyDataType.ACTIVE_PRAYERS
+		);
+		partyDataService.subscribe(this, Skill.values());
 
 		if (isInParty() || config.alwaysShowIcon())
 		{
@@ -188,18 +195,18 @@ public class PartyPanelPlugin extends Plugin
 		if (isInParty())
 		{
 			final PartyBatchedChange cleanUserInfo = partyPlayerAsBatchedChange();
-			cleanUserInfo.setI(new int[0]);
-			cleanUserInfo.setE(new int[0]);
 			cleanUserInfo.setM(Collections.emptySet());
-			cleanUserInfo.setS(Collections.emptySet());
 			cleanUserInfo.setRp(null);
 			cleanUserInfo.setQ(new int[0]);
 			partyService.send(cleanUserInfo);
 		}
+
 		clientToolbar.removeNavigation(navButton);
 		addedButton = false;
 		partyMembers.clear();
 		wsClient.unregisterMessage(PartyBatchedChange.class);
+		partyDataService.unsubscribe(this, PartyDataType.values());
+		partyDataService.unsubscribe(this, Skill.values());
 		currentChange = new PartyBatchedChange();
 		panel.getPlayerPanelMap().clear();
 		lastLogout = null;
@@ -400,7 +407,7 @@ public class PartyPanelPlugin extends Plugin
 			return;
 		}
 
-		// First time logging in or they changed accounts so resend the entire player object
+		// First time logging in, or they changed accounts so resend the entire player object
 		if (myPlayer == null || !Objects.equals(client.getLocalPlayer().getName(), myPlayer.getUsername()))
 		{
 			myPlayer = new PartyPlayer(partyService.getLocalMember(), client, itemManager, clientThread);
@@ -409,88 +416,7 @@ public class PartyPanelPlugin extends Plugin
 			return;
 		}
 
-		if (myPlayer.getStats() == null)
-		{
-			myPlayer.updatePlayerInfo(client, itemManager);
-
-			for (final Skill s : Skill.values())
-			{
-				currentChange.getS().add(myPlayer.getStats().createPartyStatChangeForSkill(s));
-			}
-		}
-		else
-		{
-			// We only need to check energy every tick as the special attack and stat levels are handled in their respective events
-			final int energy = (client.getEnergy() / 100);
-			if (myPlayer.getStats().getRunEnergy() != energy)
-			{
-				myPlayer.getStats().setRunEnergy(energy);
-				currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.R, energy));
-			}
-		}
-
-		if (myPlayer.getPrayers() == null)
-		{
-			myPlayer.setPrayers(new Prayers(client));
-			final Collection<Prayer> available = new ArrayList<>();
-			final Collection<Prayer> enabled = new ArrayList<>();
-			final Collection<Prayer> unlocked = new ArrayList<>();
-			for (final PrayerSprites p : PrayerSprites.values())
-			{
-				final PrayerData data = myPlayer.getPrayers().getPrayerData().get(p.getPrayer());
-				if (data.isAvailable())
-				{
-					available.add(p.getPrayer());
-				}
-
-				if (data.isEnabled())
-				{
-					enabled.add(p.getPrayer());
-				}
-
-				if (data.isUnlocked())
-				{
-					unlocked.add(p.getPrayer());
-				}
-			}
-
-			currentChange.setAp(PartyBatchedChange.pack(available));
-			currentChange.setEp(PartyBatchedChange.pack(enabled));
-			currentChange.setUp(PartyBatchedChange.pack(unlocked));
-		}
-		else
-		{
-			final Collection<Prayer> available = new ArrayList<>();
-			final Collection<Prayer> enabled = new ArrayList<>();
-			final Collection<Prayer> unlocked = new ArrayList<>();
-			boolean change = false;
-			for (final PrayerSprites p : PrayerSprites.values())
-			{
-				change = myPlayer.getPrayers().updatePrayerState(p, client) || change;
-
-				// Store the data for this prayer regardless of if it changes since any update
-				// will assume all prayers are not available & disabled
-				final PrayerData data = myPlayer.getPrayers().getPrayerData().get(p.getPrayer());
-				if (data.isAvailable())
-				{
-					available.add(p.getPrayer());
-				}
-
-				if (data.isEnabled())
-				{
-					enabled.add(p.getPrayer());
-				}
-			}
-
-			// Send both arrays as bit-packed ints whenever any prayer has changed.
-			if (change)
-			{
-				currentChange.setAp(PartyBatchedChange.pack(available));
-				currentChange.setEp(PartyBatchedChange.pack(enabled));
-				currentChange.setUp(PartyBatchedChange.pack(unlocked));
-			}
-		}
-
+		// TODO: Determine when best to check for available prayers
 		if (myPlayer.getSpellbook() == -1)
 		{
 			updateSpellbook();
@@ -507,42 +433,39 @@ public class PartyPanelPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onStatChanged(final StatChanged event)
+	public void onPartyDataMessage(final PartyDataMessage event)
 	{
-		if (myPlayer == null || myPlayer.getStats() == null || !isInParty())
+		final PartyPlayer partyPlayer = partyMembers.computeIfAbsent(
+				event.getMemberId(), k -> new PartyPlayer());
+
+		final PartyMember newData = partyService.getMemberById(event.getMemberId());
+
+		final boolean breakingChange = partyPlayer.updateMemberInfo(newData, itemManager);
+
+		handlePlayerDataUpdate(event.getMemberId(), breakingChange);
+	}
+
+	private void handlePlayerDataUpdate(long memberId, boolean breakingBannerChange)
+	{
+		if (isLocalPlayer(memberId))
 		{
 			return;
 		}
 
-		// Always store the players "real" level using their virtual level so when they change the config the data still exists
-		final Skill s = event.getSkill();
-		if (myPlayer.getSkillBoostedLevel(s) == event.getBoostedLevel() &&
-				Experience.getLevelForXp(event.getXp()) == myPlayer.getSkillRealLevel(s))
+		final PartyPlayer player = partyMembers.get(memberId);
+		if (player == null)
 		{
+			log.info("UNKNOWN MEMBER UPDATE: {}", memberId);
 			return;
 		}
 
-		final int virtualLvl = Experience.getLevelForXp(event.getXp());
-
-		myPlayer.setSkillsBoostedLevel(event.getSkill(), event.getBoostedLevel());
-		myPlayer.setSkillsRealLevel(event.getSkill(), virtualLvl);
-
-		currentChange.getS().add(new PartyStatChange(event.getSkill().ordinal(), virtualLvl, event.getBoostedLevel()));
-
-		// Total level change
-		if (myPlayer.getStats().getTotalLevel() != client.getTotalLevel())
+		clientThread.invoke(() ->
 		{
-			myPlayer.getStats().setTotalLevel(client.getTotalLevel());
-			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.T, myPlayer.getStats().getTotalLevel()));
-		}
-
-		// Combat level change
-		final int oldCombatLevel = myPlayer.getStats().getCombatLevel();
-		myPlayer.getStats().recalculateCombatLevel();
-		if (myPlayer.getStats().getCombatLevel() != oldCombatLevel)
-		{
-			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.C, myPlayer.getStats().getCombatLevel()));
-		}
+			SwingUtilities.invokeLater(() ->
+			{
+				panel.drawPlayerPanel(player, breakingBannerChange);
+			});
+		});
 	}
 
 	@Subscribe
@@ -556,10 +479,6 @@ public class PartyPanelPlugin extends Plugin
 		if (c.getContainerId() == InventoryID.INV)
 		{
 			final ItemContainer inventory = c.getItemContainer();
-			myPlayer.setInventory(GameItem.convertItemsToGameItems(inventory.getItems(), itemManager));
-			int[] items = convertItemsToArray(c.getItemContainer().getItems());
-			currentChange.setI(items);
-
 			if (itemContainerHasRunePouch(inventory))
 			{
 				final List<Item> runesInPouch = getRunePouchContents(client);
@@ -588,9 +507,6 @@ public class PartyPanelPlugin extends Plugin
 		else if (c.getContainerId() == InventoryID.WORN)
 		{
 			myPlayer.setEquipment(GameItem.convertItemsToGameItems(c.getItemContainer().getItems(), itemManager));
-			int[] items = convertItemsToArray(c.getItemContainer().getItems());
-			currentChange.setE(items);
-
 			final Item cape = c.getItemContainer().getItem(EquipmentInventorySlot.CAPE.getSlotIdx());
 			boolean isWearingQuiver = cape != null && DIZANAS_QUIVER_IDS.contains(cape.getId());
 			myPlayer.getQuiver().setBeingWorn(isWearingQuiver);
@@ -687,13 +603,6 @@ public class PartyPanelPlugin extends Plugin
 			return;
 		}
 
-		final int specialPercent = client.getVarpValue(VarPlayerID.SA_ENERGY) / 10;
-		if (specialPercent != myPlayer.getStats().getSpecialPercent())
-		{
-			myPlayer.getStats().setSpecialPercent(specialPercent);
-			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.S, specialPercent));
-		}
-
 		final int stamina = client.getVarbitValue(VarbitID.STAMINA_DURATION);
 		if (stamina != myPlayer.getStamina())
 		{
@@ -742,19 +651,12 @@ public class PartyPanelPlugin extends Plugin
 		}
 
 		// create new PartyPlayer for this member if they don't already exist
-		final PartyPlayer player = partyMembers.computeIfAbsent(e.getMemberId(), k -> new PartyPlayer(partyService.getMemberById(e.getMemberId())));
+		final PartyPlayer player = partyMembers.computeIfAbsent(
+				e.getMemberId(),
+				k -> new PartyPlayer(partyService.getMemberById(e.getMemberId()), itemManager));
 
-		// Create placeholder stats object
-		if (player.getStats() == null && e.hasStatChange())
-		{
-			player.setStats(new Stats());
-		}
+		// TODO: Figure out prayers
 
-		// Create placeholder prayer object
-		if (player.getPrayers() == null && (e.getAp() != null || e.getEp() != null || e.getUp() != null))
-		{
-			player.setPrayers(new Prayers());
-		}
 		clientThread.invoke(() ->
 		{
 			e.process(player, itemManager);
@@ -775,7 +677,7 @@ public class PartyPanelPlugin extends Plugin
 		}
 
 		final PartyPlayer player = partyMembers.get(e.getMemberId());
-		player.getMember().setAvatar(e.getImage());
+		player.setMember(partyService.getMemberById(e.getMemberId()));
 		SwingUtilities.invokeLater(() ->
 		{
 			final PlayerPanel p = panel.getPlayerPanelMap().get(e.getMemberId());
@@ -828,44 +730,6 @@ public class PartyPanelPlugin extends Plugin
 		panel.updateParty();
 	}
 
-	private int[] convertItemsToArray(Item[] items)
-	{
-		int[] eles = new int[items.length * 2];
-		for (int i = 0; i < items.length * 2; i += 2)
-		{
-			if (items[i / 2] == null)
-			{
-				eles[i] = -1;
-				eles[i + 1] = 0;
-				continue;
-			}
-
-			eles[i] = items[i / 2].getId();
-			eles[i + 1] = items[i / 2].getQuantity();
-		}
-
-		return eles;
-	}
-
-	private int[] convertGameItemsToArray(GameItem[] items)
-	{
-		int[] eles = new int[items.length * 2];
-		for (int i = 0; i < items.length * 2; i += 2)
-		{
-			if (items[i / 2] == null)
-			{
-				eles[i] = -1;
-				eles[i + 1] = 0;
-				continue;
-			}
-
-			eles[i] = items[i / 2].getId();
-			eles[i + 1] = items[i / 2].getQty();
-		}
-
-		return eles;
-	}
-
 	public PartyBatchedChange partyPlayerAsBatchedChange()
 	{
 		final PartyBatchedChange c = new PartyBatchedChange();
@@ -874,23 +738,7 @@ public class PartyPanelPlugin extends Plugin
 			return c;
 		}
 
-		// Inventories
-		c.setI(convertGameItemsToArray(myPlayer.getInventory()));
-		c.setE(convertGameItemsToArray(myPlayer.getEquipment()));
-
-		// Stats
-		if (myPlayer.getStats() != null)
-		{
-			for (final Skill s : Skill.values())
-			{
-				c.getS().add(myPlayer.getStats().createPartyStatChangeForSkill(s));
-			}
-
-			c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.S, myPlayer.getStats().getSpecialPercent()));
-			c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.R, myPlayer.getStats().getRunEnergy()));
-			c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.C, myPlayer.getStats().getCombatLevel()));
-			c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.T, myPlayer.getStats().getTotalLevel()));
-		}
+		// A lot of this data is now handled by the PartyDataService
 
 		// Misc
 		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.ST, myPlayer.getStamina()));
@@ -899,38 +747,7 @@ public class PartyPanelPlugin extends Plugin
 		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.W, myPlayer.getWorld()));
 		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.SP, myPlayer.getSpellbook()));
 
-		// Prayers
-		if (myPlayer.getPrayers() != null)
-		{
-			final Collection<Prayer> available = new ArrayList<>();
-			final Collection<Prayer> enabled = new ArrayList<>();
-			final Collection<Prayer> unlocked = new ArrayList<>();
-			for (final PrayerSprites p : PrayerSprites.values())
-			{
-				final PrayerData data = myPlayer.getPrayers().getPrayerData().get(p.getPrayer());
-				if (data.isAvailable())
-				{
-					available.add(p.getPrayer());
-				}
-
-				if (data.isEnabled())
-				{
-					enabled.add(p.getPrayer());
-				}
-
-				if (data.isUnlocked())
-				{
-					unlocked.add(p.getPrayer());
-				}
-			}
-
-			c.setAp(PartyBatchedChange.pack(available));
-			c.setEp(PartyBatchedChange.pack(enabled));
-			c.setUp(PartyBatchedChange.pack(unlocked));
-		}
-
-		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.U, myPlayer.getUsername()));
-
+		// TODO: Figure out available/unlocked prayers
 		if (client.isClientThread())
 		{
 			c.setRp(convertRunePouchContentsToPackedInts(getRunePouchContents(client)));
