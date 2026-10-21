@@ -97,6 +97,7 @@ public class Prayers
 		{
 			changed = data.isAvailable() != available || data.isUnlocked() != unlocked;
 			data.setAvailable(available);
+			data.setUnlocked(unlocked);
 		}
 
 		prayerData.put(data.getPrayer(), data);

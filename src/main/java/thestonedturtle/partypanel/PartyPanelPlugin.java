@@ -423,6 +423,7 @@ public class PartyPanelPlugin extends Plugin
 
 		if (myPlayer.getPrayers() == null)
 		{
+			myPlayer.setPrayers(new Prayers(client));
 			includeAvailableAndUnlockedPrayersInBatchedChange(currentChange);
 		}
 		else
@@ -777,7 +778,6 @@ public class PartyPanelPlugin extends Plugin
 
 	private void includeAvailableAndUnlockedPrayersInBatchedChange(final PartyBatchedChange change)
 	{
-		myPlayer.setPrayers(new Prayers(client));
 		final Collection<Prayer> available = new ArrayList<>();
 		final Collection<Prayer> unlocked = new ArrayList<>();
 		for (final PrayerSprites p : PrayerSprites.values())

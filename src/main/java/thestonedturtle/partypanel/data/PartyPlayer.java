@@ -40,6 +40,7 @@ import net.runelite.client.party.PartyMember;
 import thestonedturtle.partypanel.PartyPanelPlugin;
 
 import java.util.List;
+import java.util.Objects;
 
 @Data
 @EqualsAndHashCode
@@ -90,7 +91,10 @@ public class PartyPlayer
 		this.disease = client.getVarpValue(VarPlayerID.DISEASE);
 		this.world = client.getWorld();
 
-		updateMemberInfo(member, itemManager);
+		if (member != null)
+		{
+			updateMemberInfo(member, itemManager);
+		}
 
 		clientThread.invoke(() -> updatePlayerInfo(client, itemManager));
 	}
@@ -181,22 +185,29 @@ public class PartyPlayer
 		final PartyMember oldMember = member;
 		member = newData;
 
-		inventory = GameItem.convertItemsToGameItems(member.getInv(), itemManager);
-		for (final GameItem item : inventory)
+		if (member.getInv() != null)
 		{
-			if (PartyPanelPlugin.DIZANAS_QUIVER_IDS.contains(item.getId()))
+			inventory = GameItem.convertItemsToGameItems(member.getInv(), itemManager);
+			for (final GameItem item : inventory)
 			{
-				quiver.setInInventory(true);
-				break;
+				if (PartyPanelPlugin.DIZANAS_QUIVER_IDS.contains(item.getId()))
+				{
+					quiver.setInInventory(true);
+					break;
+				}
 			}
 		}
 
-		equipment = GameItem.convertItemsToGameItems(member.getWorn(), itemManager);
-		for (final GameItem item : equipment)
+
+		if (member.getWorn() != null)
 		{
-			if (PartyPanelPlugin.DIZANAS_QUIVER_IDS.contains(item.getId()))
+			equipment = GameItem.convertItemsToGameItems(member.getWorn(), itemManager);
+			for (final GameItem item : equipment)
 			{
-				quiver.setBeingWorn(true);
+				if (PartyPanelPlugin.DIZANAS_QUIVER_IDS.contains(item.getId()))
+				{
+					quiver.setBeingWorn(true);
+				}
 			}
 		}
 
@@ -204,7 +215,11 @@ public class PartyPlayer
 		{
 			prayers = new Prayers();
 		}
-		prayers.updateFromPartyMember(member);
+
+		if (member.getPrayers() != null)
+		{
+			prayers.updateFromPartyMember(member);
+		}
 
 		if (stats == null)
 		{
@@ -224,6 +239,13 @@ public class PartyPlayer
 
 	public String getUsername()
 	{
-		return member == null ? null : member.getDisplayName();
+		final String username = member == null ? null : member.getDisplayName();
+
+		if (Objects.equals(username, "<unknown>"))
+		{
+			return null;
+		}
+
+		return username;
 	}
 }
