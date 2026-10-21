@@ -11,6 +11,7 @@ import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.GameState;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
+import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
 import net.runelite.api.annotations.Varbit;
 import net.runelite.api.events.GameStateChanged;
@@ -48,9 +49,12 @@ import net.runelite.client.util.ImageUtil;
 import org.apache.commons.lang3.ArrayUtils;
 import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
+import thestonedturtle.partypanel.data.PrayerData;
+import thestonedturtle.partypanel.data.Prayers;
 import thestonedturtle.partypanel.data.events.PartyBatchedChange;
 import thestonedturtle.partypanel.data.events.PartyMiscChange;
 import thestonedturtle.partypanel.ui.PlayerPanel;
+import thestonedturtle.partypanel.ui.prayer.PrayerSprites;
 
 import javax.inject.Inject;
 import javax.swing.JOptionPane;
@@ -59,6 +63,7 @@ import java.awt.image.BufferedImage;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -416,7 +421,43 @@ public class PartyPanelPlugin extends Plugin
 			return;
 		}
 
-		// TODO: Determine when best to check for available prayers
+		if (myPlayer.getPrayers() == null)
+		{
+			includeAvailableAndUnlockedPrayersInBatchedChange(currentChange);
+		}
+		else
+		{
+			// TODO: Find a better way to do this that isn't every game tick since we no longer track enabled prayers
+			final Collection<Prayer> available = new ArrayList<>();
+			final Collection<Prayer> unlocked = new ArrayList<>();
+			boolean change = false;
+			for (final PrayerSprites p : PrayerSprites.values())
+			{
+				change = myPlayer.getPrayers().updatePrayerState(p, client) || change;
+
+				// Store the data for this prayer regardless of if it changes since any update
+				// will assume all prayers are not available & disabled
+				final PrayerData data = myPlayer.getPrayers().getPrayerData().get(p.getPrayer());
+				if (data.isAvailable())
+				{
+					available.add(p.getPrayer());
+				}
+
+				if (data.isUnlocked())
+				{
+					unlocked.add(p.getPrayer());
+				}
+			}
+
+			// Send both arrays as bit-packed ints whenever any prayer has changed.
+			if (change)
+			{
+				currentChange.setAp(PartyBatchedChange.pack(available));
+				currentChange.setUp(PartyBatchedChange.pack(unlocked));
+			}
+		}
+
+
 		if (myPlayer.getSpellbook() == -1)
 		{
 			updateSpellbook();
@@ -655,7 +696,11 @@ public class PartyPanelPlugin extends Plugin
 				e.getMemberId(),
 				k -> new PartyPlayer(partyService.getMemberById(e.getMemberId()), itemManager));
 
-		// TODO: Figure out prayers
+		// Create placeholder prayer object
+		if (player.getPrayers() == null && (e.getAp() != null || e.getUp() != null))
+		{
+			player.setPrayers(new Prayers());
+		}
 
 		clientThread.invoke(() ->
 		{
@@ -730,6 +775,29 @@ public class PartyPanelPlugin extends Plugin
 		panel.updateParty();
 	}
 
+	private void includeAvailableAndUnlockedPrayersInBatchedChange(final PartyBatchedChange change)
+	{
+		myPlayer.setPrayers(new Prayers(client));
+		final Collection<Prayer> available = new ArrayList<>();
+		final Collection<Prayer> unlocked = new ArrayList<>();
+		for (final PrayerSprites p : PrayerSprites.values())
+		{
+			final PrayerData data = myPlayer.getPrayers().getPrayerData().get(p.getPrayer());
+			if (data.isAvailable())
+			{
+				available.add(p.getPrayer());
+			}
+
+			if (data.isUnlocked())
+			{
+				unlocked.add(p.getPrayer());
+			}
+		}
+
+		change.setAp(PartyBatchedChange.pack(available));
+		change.setUp(PartyBatchedChange.pack(unlocked));
+	}
+
 	public PartyBatchedChange partyPlayerAsBatchedChange()
 	{
 		final PartyBatchedChange c = new PartyBatchedChange();
@@ -747,7 +815,11 @@ public class PartyPanelPlugin extends Plugin
 		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.W, myPlayer.getWorld()));
 		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.SP, myPlayer.getSpellbook()));
 
-		// TODO: Figure out available/unlocked prayers
+		if (myPlayer.getPrayers() != null)
+		{
+			includeAvailableAndUnlockedPrayersInBatchedChange(c);
+		}
+
 		if (client.isClientThread())
 		{
 			c.setRp(convertRunePouchContentsToPackedInts(getRunePouchContents(client)));

@@ -46,6 +46,7 @@ public class PartyBatchedChange extends PartyMemberMessage
 {
 	Collection<PartyMiscChange> m = new ArrayList<>(); // Misc Changes
 	Integer ap; // Available Prayers, bit-packed & contains all available prayers on every change
+	Integer up; // Available Prayers, bit-packed & contains all available prayers on every change
 	int[] rp; // rp itemId and qty
 	int[] q; // Quiver itemId and qty
 
@@ -53,6 +54,7 @@ public class PartyBatchedChange extends PartyMemberMessage
 	{
 		return (m != null && !m.isEmpty())
 				|| ap != null
+				|| up != null
 				|| rp != null
 				|| q != null;
 	}
@@ -71,8 +73,7 @@ public class PartyBatchedChange extends PartyMemberMessage
 			m.forEach(change -> change.process(player));
 		}
 
-		// TODO: Prayers
-		if (ap != null)
+		if (ap != null || up != null)
 		{
 			processPrayers(player);
 		}
@@ -109,14 +110,10 @@ public class PartyBatchedChange extends PartyMemberMessage
 			p.setUnlocked(false);
 		});
 
-		for (final Prayer p : unpackActivePrayers())
+		// enabled prayers are handled by PartyDataService
+		for (final Prayer p : unpack(ap))
 		{
 			player.getPrayers().getPrayerData().get(p).setAvailable(true);
-		}
-
-		for (final Prayer p : unpackEnabledPrayers())
-		{
-			player.getPrayers().getPrayerData().get(p).setEnabled(true);
 		}
 
 		for (final Prayer p : unpack(up))
@@ -185,15 +182,5 @@ public class PartyBatchedChange extends PartyMemberMessage
 		final int itemId = packed & 0x3FFFF;
 
 		return new Item(itemId, qty);
-	}
-
-	public Collection<Prayer> unpackActivePrayers()
-	{
-		return unpack(ap);
-	}
-
-	public Collection<Prayer> unpackEnabledPrayers()
-	{
-		return unpack(ep);
 	}
 }
