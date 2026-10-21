@@ -59,6 +59,7 @@ public class PartyPlayer
 	private Quiver quiver;
 	// 0=Standard, 1=Ancient, 2=Lunar, 3=Arceuus
 	private int spellbook;
+	private transient MemberBannerSnapshot snapshot;
 
 	public PartyPlayer()
 	{
@@ -225,14 +226,12 @@ public class PartyPlayer
 		{
 			stats = new Stats();
 		}
-
-		final int oldCombatLevel = stats.getCombatLevel();
 		stats.handleMemberUpdate(member);
 
-		final boolean hasBreakingChange = oldMember == null
-				|| oldCombatLevel != stats.getCombatLevel()
-				|| !member.getDisplayName().equals(oldMember.getDisplayName())
-				|| member.getSpecEnergy() != oldMember.getSpecEnergy();
+		final MemberBannerSnapshot newSnapshot = MemberBannerSnapshot.of(member, stats.getCombatLevel());
+		final boolean hasBreakingChange = oldMember == null || !newSnapshot.equals(snapshot);
+
+		snapshot = newSnapshot;
 
 		return hasBreakingChange;
 	}
