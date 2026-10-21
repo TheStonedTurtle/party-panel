@@ -102,7 +102,7 @@ public class TotalPanelSlot extends JPanel
 		c.gridy = 0;
 		c.insets = new Insets(3, 0, 0, 0); // shift text down a bit to look centered
 
-		final JLabel textLabel = new JLabel("Total level:");
+		final JLabel textLabel = new JLabel("Total level: ");
 		textLabel.setFont(FontManager.getRunescapeSmallFont());
 		textLabel.setForeground(Color.YELLOW);
 		textLabel.setAlignmentY(BOTTOM_ALIGNMENT);
