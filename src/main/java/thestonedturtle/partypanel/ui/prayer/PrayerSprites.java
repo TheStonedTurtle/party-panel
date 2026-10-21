@@ -114,7 +114,7 @@ public enum PrayerSprites
 				@Override
 				public boolean isUnlocked(Client client)
 				{
-					return client.getVarbitValue(VarbitID.PRAYER_ZEAL_UNLOCKED) == 0;
+					return client.getVarbitValue(VarbitID.PRAYER_ZEAL_UNLOCKED) != 0;
 				}
 			},
 	RIGOUR(Prayer.RIGOUR, SpriteID.Prayeron.RIGOUR, SpriteID.Prayeroff.RIGOUR_DISABLED, 20827),
