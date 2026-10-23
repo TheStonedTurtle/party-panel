@@ -106,7 +106,15 @@ public class Prayers
 
 	public static boolean isUnlockedByDefault(Prayer p)
 	{
-		return !p.name().equals("DEADEYE") && !p.name().equals("MYSTIC_VIGOUR");
+		switch (p)
+		{
+			case DEADEYE:
+			case MYSTIC_VIGOUR:
+			case ZEAL:
+				return false;
+			default:
+				return true;
+		}
 	}
 
 	// PartyDataService handles transmitting currently enabled prayers
