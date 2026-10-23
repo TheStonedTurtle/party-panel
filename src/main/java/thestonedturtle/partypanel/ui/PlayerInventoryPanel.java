@@ -24,19 +24,19 @@
  */
 package thestonedturtle.partypanel.ui;
 
+import net.runelite.client.game.ItemManager;
+import net.runelite.client.ui.DynamicGridLayout;
+import net.runelite.client.ui.PluginPanel;
+import thestonedturtle.partypanel.PartyPanelPlugin;
+import thestonedturtle.partypanel.data.GameItem;
+
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import net.runelite.client.game.ItemManager;
-import net.runelite.client.ui.DynamicGridLayout;
-import net.runelite.client.ui.PluginPanel;
-import org.apache.commons.lang3.ArrayUtils;
-import thestonedturtle.partypanel.PartyPanelPlugin;
-import thestonedturtle.partypanel.data.GameItem;
 
 public class PlayerInventoryPanel extends JPanel
 {
@@ -74,7 +74,7 @@ public class PlayerInventoryPanel extends JPanel
 			if (i != null)
 			{
 				String tooltip;
-				if (ArrayUtils.contains(PartyPanelPlugin.RUNEPOUCH_ITEM_IDS, i.getId()))
+				if (PartyPanelPlugin.RUNEPOUCH_ITEM_IDS.contains(i.getId()))
 				{
 					tooltip = getRunePouchHoverText(i, runePouchContents);
 				}
@@ -106,9 +106,9 @@ public class PlayerInventoryPanel extends JPanel
 	public String getRunePouchHoverText(final GameItem runePouch, final GameItem[] contents)
 	{
 		final String contentNames = Arrays.stream(contents)
-			.filter(Objects::nonNull)
-			.map(GameItem::getDisplayName)
-			.collect(Collectors.joining("<br>"));
+				.filter(Objects::nonNull)
+				.map(GameItem::getDisplayName)
+				.collect(Collectors.joining("<br>"));
 
 		if (contentNames.isEmpty())
 		{
@@ -116,9 +116,9 @@ public class PlayerInventoryPanel extends JPanel
 		}
 
 		return "<html>"
-			+ runePouch.getDisplayName()
-			+ "<br><br>"
-			+ contentNames
-			+ "</html>";
+				+ runePouch.getDisplayName()
+				+ "<br><br>"
+				+ contentNames
+				+ "</html>";
 	}
 }

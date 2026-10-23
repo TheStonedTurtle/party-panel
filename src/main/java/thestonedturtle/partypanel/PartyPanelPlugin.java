@@ -5,20 +5,12 @@ import com.google.inject.Provides;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
-import net.runelite.api.EnumComposition;
-import net.runelite.api.EnumID;
-import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.GameState;
-import net.runelite.api.Item;
-import net.runelite.api.ItemContainer;
 import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
-import net.runelite.api.annotations.Varbit;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
-import net.runelite.api.events.ItemContainerChanged;
 import net.runelite.api.events.VarbitChanged;
-import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.gameval.VarbitID;
@@ -46,8 +38,6 @@ import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ImageUtil;
-import org.apache.commons.lang3.ArrayUtils;
-import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
 import thestonedturtle.partypanel.data.PrayerData;
 import thestonedturtle.partypanel.data.Prayers;
@@ -66,7 +56,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -78,19 +67,9 @@ import java.util.Set;
 public class PartyPanelPlugin extends Plugin
 {
 	private static final BufferedImage ICON = ImageUtil.loadImageResource(PartyPanelPlugin.class, "icon.png");
-	private static final int[] RUNEPOUCH_AMOUNT_VARBITS = {
-			VarbitID.RUNE_POUCH_QUANTITY_1, VarbitID.RUNE_POUCH_QUANTITY_2, VarbitID.RUNE_POUCH_QUANTITY_3,
-			VarbitID.RUNE_POUCH_QUANTITY_4, VarbitID.RUNE_POUCH_QUANTITY_5, VarbitID.RUNE_POUCH_QUANTITY_6,
-	};
-	private static final int[] RUNEPOUCH_RUNE_VARBITS = {
-
-			VarbitID.RUNE_POUCH_TYPE_1, VarbitID.RUNE_POUCH_TYPE_2, VarbitID.RUNE_POUCH_TYPE_3,
-			VarbitID.RUNE_POUCH_TYPE_4, VarbitID.RUNE_POUCH_TYPE_5, VarbitID.RUNE_POUCH_TYPE_6,
-	};
-	public static final int[] RUNEPOUCH_ITEM_IDS = {
-
-			ItemID.BH_RUNE_POUCH, ItemID.BH_RUNE_POUCH_TROUVER, ItemID.DIVINE_RUNE_POUCH, ItemID.DIVINE_RUNE_POUCH_TROUVER,
-	};
+	public static final Set<Integer> RUNEPOUCH_ITEM_IDS = ImmutableSet.of(
+			ItemID.BH_RUNE_POUCH, ItemID.BH_RUNE_POUCH_TROUVER, ItemID.DIVINE_RUNE_POUCH, ItemID.DIVINE_RUNE_POUCH_TROUVER
+	);
 	public static final Set<Integer> DIZANAS_QUIVER_IDS = ImmutableSet.<Integer>builder()
 			.addAll(ItemVariationMapping.getVariations(ItemVariationMapping.map(ItemID.DIZANAS_QUIVER_CHARGED)))
 			.addAll(ItemVariationMapping.getVariations(ItemVariationMapping.map(ItemID.DIZANAS_QUIVER_INFINITE)))
@@ -170,7 +149,9 @@ public class PartyPanelPlugin extends Plugin
 				PartyDataType.SPEC,
 				PartyDataType.INV,
 				PartyDataType.WORN,
-				PartyDataType.ACTIVE_PRAYERS
+				PartyDataType.ACTIVE_PRAYERS,
+				PartyDataType.RUNE_POUCH,
+				PartyDataType.QUIVER
 		);
 		partyDataService.subscribe(this, Skill.values());
 
@@ -516,132 +497,6 @@ public class PartyPanelPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onItemContainerChanged(final ItemContainerChanged c)
-	{
-		if (myPlayer == null || !isInParty())
-		{
-			return;
-		}
-
-		if (c.getContainerId() == InventoryID.INV)
-		{
-			final ItemContainer inventory = c.getItemContainer();
-			if (itemContainerHasRunePouch(inventory))
-			{
-				final List<Item> runesInPouch = getRunePouchContents(client);
-				myPlayer.setRunesInPouch(GameItem.convertItemsToGameItems(runesInPouch.toArray(Item[]::new), itemManager));
-				currentChange.setRp(convertRunePouchContentsToPackedInts(runesInPouch));
-			}
-
-			// As long as they have the quiver in their inventory and have already worn it we should keep showing it in the UI
-			boolean hasQuiverInInventory = false;
-			for (final Item item : inventory.getItems())
-			{
-				if (DIZANAS_QUIVER_IDS.contains(item.getId()))
-				{
-					hasQuiverInInventory = true;
-					break;
-				}
-			}
-			myPlayer.getQuiver().setInInventory(hasQuiverInInventory);
-
-			// We may be able to find the quiver ammo when it enters the inventory from a storage container if they've already worn it this game session
-			if (hasQuiverInInventory && myPlayer.getQuiver().getQuiverAmmo() == null)
-			{
-				updateQuiverAmmo();
-			}
-		}
-		else if (c.getContainerId() == InventoryID.WORN)
-		{
-			final Item cape = c.getItemContainer().getItem(EquipmentInventorySlot.CAPE.getSlotIdx());
-			boolean isWearingQuiver = cape != null && DIZANAS_QUIVER_IDS.contains(cape.getId());
-			myPlayer.getQuiver().setBeingWorn(isWearingQuiver);
-
-			// When they wear the cape we need to update quiver ammo only if we don't yet know it, the var changes handle tracking
-			if (isWearingQuiver && myPlayer.getQuiver().getQuiverAmmo() == null)
-			{
-				updateQuiverAmmo();
-			}
-		}
-	}
-
-	private GameItem getQuiverAmmo()
-	{
-
-		final int quiverAmmoId = client.getVarpValue(VarPlayerID.DIZANAS_QUIVER_TEMP_AMMO);
-		final int quiverAmmoCount = client.getVarpValue(VarPlayerID.DIZANAS_QUIVER_TEMP_AMMO_AMOUNT);
-		if (quiverAmmoId == -1 || quiverAmmoCount == 0)
-		{
-			return null;
-		}
-
-		return new GameItem(quiverAmmoId, quiverAmmoCount, itemManager);
-	}
-
-	private void updateQuiverAmmo()
-	{
-		final GameItem quiverAmmo = getQuiverAmmo();
-		if (quiverAmmo == myPlayer.getQuiver().getQuiverAmmo())
-		{
-			return;
-		}
-
-		myPlayer.getQuiver().setQuiverAmmo(quiverAmmo);
-		if (quiverAmmo != null)
-		{
-			currentChange.setQ(new int[] {quiverAmmo.getId(), quiverAmmo.getQty()});
-		}
-		else
-		{
-			currentChange.setQ(new int[0]);
-		}
-	}
-
-	private static boolean itemContainerHasRunePouch(ItemContainer inventory)
-	{
-		for (final int id : RUNEPOUCH_ITEM_IDS)
-		{
-			if (inventory.contains(id))
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public int[] convertRunePouchContentsToPackedInts(final List<Item> runesInPouch)
-	{
-		return runesInPouch.stream()
-				.mapToInt(PartyBatchedChange::packRune)
-				.toArray();
-	}
-
-	public static List<Item> getRunePouchContents(Client client)
-	{
-		final EnumComposition runepouchEnum = client.getEnum(EnumID.RUNEPOUCH_RUNE);
-		final List<Item> items = new ArrayList<>();
-		for (int i = 0; i < RUNEPOUCH_AMOUNT_VARBITS.length; i++)
-		{
-			@Varbit int amount = client.getVarbitValue(RUNEPOUCH_AMOUNT_VARBITS[i]);
-			if (amount <= 0)
-			{
-				continue;
-			}
-
-			@Varbit int runeId = client.getVarbitValue(RUNEPOUCH_RUNE_VARBITS[i]);
-			if (runeId == 0)
-			{
-				continue;
-			}
-
-			final int itemId = runepouchEnum.getIntValue(runeId);
-			items.add(new Item(itemId, amount));
-		}
-
-		return items;
-	}
-
-	@Subscribe
 	public void onVarbitChanged(final VarbitChanged event)
 	{
 		if (myPlayer == null || myPlayer.getStats() == null || !isInParty())
@@ -668,18 +523,6 @@ public class PartyPanelPlugin extends Plugin
 		{
 			myPlayer.setDisease(disease);
 			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.D, disease));
-		}
-
-		if (ArrayUtils.contains(RUNEPOUCH_RUNE_VARBITS, event.getVarbitId()) || ArrayUtils.contains(RUNEPOUCH_AMOUNT_VARBITS, event.getVarbitId()))
-		{
-			List<Item> runePouchContents = getRunePouchContents(client);
-			myPlayer.setRunesInPouch(GameItem.convertItemsToGameItems(runePouchContents.toArray(Item[]::new), itemManager));
-			currentChange.setRp(convertRunePouchContentsToPackedInts(runePouchContents));
-		}
-
-		if (event.getVarpId() == VarPlayerID.DIZANAS_QUIVER_TEMP_AMMO_AMOUNT || event.getVarpId() == VarPlayerID.DIZANAS_QUIVER_TEMP_AMMO)
-		{
-			updateQuiverAmmo();
 		}
 
 		if (event.getVarbitId() == VarbitID.SPELLBOOK)
@@ -822,21 +665,6 @@ public class PartyPanelPlugin extends Plugin
 		if (myPlayer.getPrayers() != null)
 		{
 			includeAvailableAndUnlockedPrayersInBatchedChange(c);
-		}
-
-		if (client.isClientThread())
-		{
-			c.setRp(convertRunePouchContentsToPackedInts(getRunePouchContents(client)));
-		}
-
-		final GameItem quiverAmmo = myPlayer.getQuiver().getQuiverAmmo();
-		if (quiverAmmo != null)
-		{
-			c.setQ(new int[] {quiverAmmo.getId(), quiverAmmo.getQty()});
-		}
-		else
-		{
-			c.setQ(new int[0]);
 		}
 
 		c.setMemberId(partyService.getLocalMember().getMemberId()); // Add member ID before sending
