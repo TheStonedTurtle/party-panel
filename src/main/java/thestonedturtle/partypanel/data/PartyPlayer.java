@@ -47,7 +47,7 @@ public class PartyPlayer
 	private GameItem[] inventory;
 	private GameItem[] equipment;
 	private Prayers prayers;
-	private int stamina;
+	private boolean staminaActive;
 	private int poison;
 	private int disease;
 	private int world;
@@ -64,7 +64,7 @@ public class PartyPlayer
 		this.inventory = new GameItem[28];
 		this.equipment = new GameItem[EquipmentInventorySlot.AMMO.getSlotIdx() + 1];
 		this.prayers = null;
-		this.stamina = 0;
+		this.staminaActive = false;
 		this.poison = 0;
 		this.disease = 0;
 		this.world = 0;
@@ -83,7 +83,7 @@ public class PartyPlayer
 	public PartyPlayer(final PartyMember member, final Client client, final ItemManager itemManager, final ClientThread clientThread)
 	{
 		this();
-		this.stamina = client.getVarbitValue(VarbitID.STAMINA_DURATION);
+		this.staminaActive = client.getVarbitValue(VarbitID.STAMINA_DURATION) > 0;
 		this.poison = client.getVarpValue(VarPlayerID.POISON);
 		this.disease = client.getVarpValue(VarPlayerID.DISEASE);
 		this.world = client.getWorld();

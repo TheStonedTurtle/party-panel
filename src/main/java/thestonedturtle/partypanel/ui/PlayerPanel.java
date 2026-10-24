@@ -230,7 +230,7 @@ public class PlayerPanel extends JPanel
 			heart = HEART_DISEASE;
 		}
 		banner.setCurrentHeart(heart, spriteManager);
-		banner.setUsingStamIcon(player.getStamina() > 0, spriteManager);
+		banner.setUsingStamIcon(player.isStaminaActive(), spriteManager);
 
 		if (!showInfo)
 		{

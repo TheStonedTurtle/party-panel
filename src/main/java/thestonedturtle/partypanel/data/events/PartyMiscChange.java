@@ -34,8 +34,8 @@ import thestonedturtle.partypanel.data.PartyPlayer;
 public class PartyMiscChange implements PartyProcess
 {
 	PartyMisc t;
-	Integer v;
-	String s;
+	Integer v = null;
+	Boolean b = null;
 
 	public enum PartyMisc
 	{
@@ -50,14 +50,12 @@ public class PartyMiscChange implements PartyProcess
 	{
 		this.t = t;
 		this.v = v;
-		this.s = null;
 	}
 
-	public PartyMiscChange(PartyMisc t, String s)
+	public PartyMiscChange(PartyMisc t, Boolean b)
 	{
 		this.t = t;
-		this.v = null;
-		this.s = s;
+		this.b = b;
 	}
 
 	@Override
@@ -66,7 +64,7 @@ public class PartyMiscChange implements PartyProcess
 		switch (t)
 		{
 			case ST:
-				p.setStamina(v);
+				p.setStaminaActive(b);
 				break;
 			case P:
 				p.setPoison(v);

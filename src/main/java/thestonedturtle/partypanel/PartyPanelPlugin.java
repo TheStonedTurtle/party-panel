@@ -29,7 +29,7 @@ import net.runelite.client.party.PartyMember;
 import net.runelite.client.party.PartyService;
 import net.runelite.client.party.WSClient;
 import net.runelite.client.party.events.UserPart;
-import net.runelite.client.party.messages.PartyDataMessage;
+import net.runelite.client.party.messages.PartyData;
 import net.runelite.client.party.messages.UserSync;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -502,11 +502,12 @@ public class PartyPanelPlugin extends Plugin
 			return;
 		}
 
-		final int stamina = client.getVarbitValue(VarbitID.STAMINA_DURATION);
-		if (stamina != myPlayer.getStamina())
+		// Cap at 1 so we only transmit when stamina changes states (active vs expires)
+		final boolean staminaActive = client.getVarbitValue(VarbitID.STAMINA_DURATION) > 0;
+		if (staminaActive != myPlayer.isStaminaActive())
 		{
-			myPlayer.setStamina(stamina);
-			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.ST, stamina));
+			myPlayer.setStaminaActive(staminaActive);
+			currentChange.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.ST, staminaActive));
 		}
 
 		final int poison = client.getVarpValue(VarPlayerID.POISON);
@@ -654,7 +655,7 @@ public class PartyPanelPlugin extends Plugin
 		// A lot of this data is now handled by the PartyDataService
 
 		// Misc
-		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.ST, myPlayer.getStamina()));
+		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.ST, myPlayer.isStaminaActive()));
 		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.P, myPlayer.getPoison()));
 		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.D, myPlayer.getDisease()));
 		c.getM().add(new PartyMiscChange(PartyMiscChange.PartyMisc.W, myPlayer.getWorld()));
