@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, TheStonedTurtle <https://github.com/TheStonedTurtle>
+ * Copyright (c) 2026, TheStonedTurtle <https://github.com/TheStonedTurtle>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,24 +22,21 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package thestonedturtle.partypanel.data.events;
+package thestonedturtle.partypanel.data;
+
 
 import lombok.Value;
-import net.runelite.api.Skill;
-import thestonedturtle.partypanel.data.PartyPlayer;
+import net.runelite.client.party.PartyMember;
 
 @Value
-public class PartyStatChange implements PartyProcess
+class MemberBannerSnapshot
 {
-	int s; // Skill ordinal
-	int l; // Level
-	int b; // Boosted Level
+	String displayName;
+	int specEnergy;
+	int combatLevel;
 
-	@Override
-	public void process(PartyPlayer p)
+	static MemberBannerSnapshot of(PartyMember m, int combatLevel)
 	{
-		final Skill skill = Skill.values()[s];
-		p.getStats().getBaseLevels().put(skill, l);
-		p.getStats().getBoostedLevels().put(skill, b);
+		return new MemberBannerSnapshot(m.getDisplayName(), m.getSpecEnergy(), combatLevel);
 	}
 }

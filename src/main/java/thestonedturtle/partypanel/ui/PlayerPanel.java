@@ -230,7 +230,7 @@ public class PlayerPanel extends JPanel
 			heart = HEART_DISEASE;
 		}
 		banner.setCurrentHeart(heart, spriteManager);
-		banner.setUsingStamIcon(player.getStamina() > 0, spriteManager);
+		banner.setUsingStamIcon(player.isStaminaActive(), spriteManager);
 
 		if (!showInfo)
 		{
@@ -242,7 +242,7 @@ public class PlayerPanel extends JPanel
 			inventoryPanel.updateInventory(player.getInventory(), player.getRunesInPouch());
 		}
 
-		if (tabMap.getOrDefault(SpriteID.SideiconsInterface.INVENTORY, false))
+		if (tabMap.getOrDefault(SpriteID.SideiconsInterface.EQUIPMENT, false))
 		{
 			for (final EquipmentInventorySlot equipSlot : EquipmentInventorySlot.values())
 			{

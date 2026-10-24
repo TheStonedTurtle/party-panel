@@ -27,6 +27,7 @@ package thestonedturtle.partypanel.data;
 import lombok.Getter;
 import net.runelite.api.Client;
 import net.runelite.api.Prayer;
+import net.runelite.client.party.PartyMember;
 import thestonedturtle.partypanel.ui.prayer.PrayerSprites;
 
 import java.util.HashMap;
@@ -71,34 +72,32 @@ public class Prayers
 
 	public boolean updatePrayerState(final PrayerSprites p, final Client client)
 	{
-		boolean changed, available, enabled, unlocked;
-
-		PrayerData data = prayerData.get(p.getPrayer());
+		boolean available, unlocked;
 		if (p.isUnlocked(client))
 		{
 			client.runScript(PRAYER_IS_AVAILABLE, p.getItemID());
 			available = client.getIntStack()[0] > 0;
-			enabled = client.isPrayerActive(p.getPrayer());
 			unlocked = true;
 		}
 		else
 		{
 			available = false;
-			enabled = false;
 			unlocked = false;
 		}
 
-
+		boolean changed;
+		PrayerData data = prayerData.get(p.getPrayer());
 		if (data == null)
 		{
-			data = new PrayerData(p.getPrayer(), available, enabled, unlocked);
+			// enabled is handled from PartyDataService, default to false
+			data = new PrayerData(p.getPrayer(), available, false, unlocked);
 			changed = true;
 		}
 		else
 		{
-			changed = data.isAvailable() != available || data.isEnabled() != enabled || data.isUnlocked() != unlocked;
+			changed = data.isAvailable() != available || data.isUnlocked() != unlocked;
 			data.setAvailable(available);
-			data.setEnabled(enabled);
+			data.setUnlocked(unlocked);
 		}
 
 		prayerData.put(data.getPrayer(), data);
@@ -107,6 +106,24 @@ public class Prayers
 
 	public static boolean isUnlockedByDefault(Prayer p)
 	{
-		return !p.name().equals("DEADEYE") && !p.name().equals("MYSTIC_VIGOUR");
+		switch (p)
+		{
+			case DEADEYE:
+			case MYSTIC_VIGOUR:
+			case ZEAL:
+				return false;
+			default:
+				return true;
+		}
+	}
+
+	// PartyDataService handles transmitting currently enabled prayers
+	public void updateFromPartyMember(final PartyMember member)
+	{
+		for (final Prayer p : Prayer.values())
+		{
+			PrayerData data = prayerData.get(p);
+			data.setEnabled(member.getPrayers().contains(p));
+		}
 	}
 }

@@ -34,20 +34,15 @@ import thestonedturtle.partypanel.data.PartyPlayer;
 public class PartyMiscChange implements PartyProcess
 {
 	PartyMisc t;
-	Integer v;
-	String s;
+	Integer v = null;
+	Boolean b = null;
 
 	public enum PartyMisc
 	{
-		S, // Special
-		R, // RUN
-		C, // Combat
-		T, // Total
 		ST, // Stamina duration
 		P, // Poison
 		D, // Disease
 		W, // World
-		U, // Username
 		SP, // Spellbook
 	}
 
@@ -55,14 +50,12 @@ public class PartyMiscChange implements PartyProcess
 	{
 		this.t = t;
 		this.v = v;
-		this.s = null;
 	}
 
-	public PartyMiscChange(PartyMisc t, String s)
+	public PartyMiscChange(PartyMisc t, Boolean b)
 	{
 		this.t = t;
-		this.v = null;
-		this.s = s;
+		this.b = b;
 	}
 
 	@Override
@@ -70,20 +63,8 @@ public class PartyMiscChange implements PartyProcess
 	{
 		switch (t)
 		{
-			case S:
-				p.getStats().setSpecialPercent(v);
-				break;
-			case C:
-				p.getStats().setCombatLevel(v);
-				break;
-			case T:
-				p.getStats().setTotalLevel(v);
-				break;
-			case R:
-				p.getStats().setRunEnergy(v);
-				break;
 			case ST:
-				p.setStamina(v);
+				p.setStaminaActive(b);
 				break;
 			case P:
 				p.setPoison(v);
@@ -93,9 +74,6 @@ public class PartyMiscChange implements PartyProcess
 				break;
 			case W:
 				p.setWorld(v);
-				break;
-			case U:
-				p.setUsername(s);
 				break;
 			case SP:
 				p.setSpellbook(v);

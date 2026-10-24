@@ -24,16 +24,18 @@
  */
 package thestonedturtle.partypanel.ui.prayer;
 
-import java.awt.Dimension;
-import java.awt.image.BufferedImage;
-import javax.swing.ImageIcon;
-import javax.swing.JLabel;
 import lombok.Getter;
 import net.runelite.api.SpriteID;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.util.Text;
 import thestonedturtle.partypanel.ImgUtil;
 import thestonedturtle.partypanel.data.PrayerData;
+
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import java.awt.Dimension;
+import java.awt.image.BufferedImage;
+
 import static thestonedturtle.partypanel.data.Prayers.isUnlockedByDefault;
 
 public class PrayerSlot extends JLabel
@@ -90,7 +92,9 @@ public class PrayerSlot extends JLabel
 			return;
 		}
 
-		data = updatedData;
+		// Keep a copy since this object is updated elsewhere. We want to be able to compare updated state to render state
+		// So the copy will ensure we can check for changes
+		data = updatedData.copy();
 
 		BufferedImage icon = data.isAvailable() ? availableImage : unavailableImage;
 		if (data.isEnabled())

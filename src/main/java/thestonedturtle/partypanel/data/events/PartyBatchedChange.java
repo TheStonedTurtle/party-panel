@@ -27,17 +27,12 @@ package thestonedturtle.partypanel.data.events;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import net.runelite.api.EquipmentInventorySlot;
-import net.runelite.api.Item;
 import net.runelite.api.Prayer;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.party.messages.PartyMemberMessage;
-import thestonedturtle.partypanel.PartyPanelPlugin;
-import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -46,130 +41,68 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class PartyBatchedChange extends PartyMemberMessage
 {
-	int[] i; // Inventory
-	int[] e; // equipment
-	Collection<PartyStatChange> s = new ArrayList<>(); // Stat Changes
 	Collection<PartyMiscChange> m = new ArrayList<>(); // Misc Changes
 	Integer ap; // Available Prayers, bit-packed & contains all available prayers on every change
-	Integer ep; // Enabled Prayers, bit-packed & contains all enabled prayers on every change
-	Integer up; // Unlocked Prayers, bit-packed & contains all unlocked prayers on every change. Only for deadeye/vigour currently
-	int[] rp; // rp itemId and qty
-	int[] q; // Quiver itemId and qty
+	Integer up; // Unlocked Prayers, bit-packed & contains all unlocked prayers on every change
 
 	public boolean isValid()
 	{
-		return i != null
-				|| e != null
-				|| (s != null && !s.isEmpty())
-				|| (m != null && !m.isEmpty())
+		return (m != null && !m.isEmpty())
 				|| ap != null
-				|| ep != null
-				|| up != null
-				|| rp != null
-				|| q != null;
+				|| up != null;
 	}
 
 	// Unset unneeded variables to minimize payload
 	public void removeDefaults()
 	{
-		s = (s == null || s.isEmpty()) ? null : s;
 		m = (m == null || m.isEmpty()) ? null : m;
 	}
 
 	public void process(PartyPlayer player, ItemManager itemManager)
 	{
-		if (i != null)
-		{
-			final GameItem[] gameItems = GameItem.convertItemsToGameItems(i, itemManager);
-			player.setInventory(gameItems);
-			player.getQuiver().setInInventory(false);
-			for (final GameItem item : gameItems)
-			{
-				if (item == null)
-				{
-					continue;
-				}
-
-				if (PartyPanelPlugin.DIZANAS_QUIVER_IDS.contains(item.getId()))
-				{
-					player.getQuiver().setInInventory(true);
-					break;
-				}
-			}
-		}
-
-		if (e != null)
-		{
-			final GameItem[] gameItems = GameItem.convertItemsToGameItems(e, itemManager);
-			player.setEquipment(gameItems);
-			player.getQuiver().setBeingWorn(false);
-			if (gameItems.length > EquipmentInventorySlot.CAPE.getSlotIdx())
-			{
-				final GameItem cape = gameItems[EquipmentInventorySlot.CAPE.getSlotIdx()];
-				player.getQuiver().setBeingWorn(cape != null && PartyPanelPlugin.DIZANAS_QUIVER_IDS.contains(cape.getId()));
-			}
-		}
-
-		if (s != null)
-		{
-			s.forEach(change -> change.process(player));
-		}
-
+		// A lot of this data is now handled by the PartyDataService
 		if (m != null)
 		{
 			m.forEach(change -> change.process(player));
 		}
 
-		if (ap != null || ep != null || up != null)
+		if (ap != null || up != null)
 		{
 			processPrayers(player);
-		}
-
-		if (rp != null)
-		{
-			Item[] runePouchContents = Arrays.stream(rp)
-					.mapToObj(PartyBatchedChange::unpackRune)
-					.toArray(Item[]::new);
-			player.setRunesInPouch(GameItem.convertItemsToGameItems(runePouchContents, itemManager));
-		}
-
-		if (q != null)
-		{
-			if (q.length == 0)
-			{
-				player.getQuiver().setQuiverAmmo(null);
-			}
-			else
-			{
-				assert q.length == 2;
-				player.getQuiver().setQuiverAmmo(new GameItem(q[0], q[1], itemManager));
-			}
 		}
 	}
 
 	private void processPrayers(PartyPlayer player)
 	{
-		// Default all prayers to not available and not enabled
+		// Reset all prayers when one of the states change since the unpacked version only contains the truthy values
 		player.getPrayers().getPrayerData().forEach((idx, p) ->
 		{
-			p.setAvailable(false);
-			p.setEnabled(false);
-			p.setUnlocked(false);
+			if (ap != null)
+			{
+				p.setAvailable(false);
+			}
+
+			if (up != null)
+			{
+				p.setUnlocked(false);
+			}
 		});
 
-		for (final Prayer p : unpackActivePrayers())
+		// enabled prayers are handled by PartyDataService
+		if (ap != null)
 		{
-			player.getPrayers().getPrayerData().get(p).setAvailable(true);
+			for (final Prayer p : unpack(ap))
+			{
+				player.getPrayers().getPrayerData().get(p).setAvailable(true);
+			}
 		}
 
-		for (final Prayer p : unpackEnabledPrayers())
+		if (up != null)
 		{
-			player.getPrayers().getPrayerData().get(p).setEnabled(true);
-		}
-
-		for (final Prayer p : unpack(up))
-		{
-			player.getPrayers().getPrayerData().get(p).setUnlocked(true);
+			for (final Prayer p : unpack(up))
+			{
+				player.getPrayers().getPrayerData().get(p).setUnlocked(true);
+			}
 		}
 	}
 
@@ -177,30 +110,7 @@ public class PartyBatchedChange extends PartyMemberMessage
 	{
 		return m != null
 				&& m.stream()
-				.anyMatch(e ->
-				{
-					switch (e.t)
-					{
-						case C:
-						case W:
-						case U:
-						case SP:
-							return true;
-					}
-
-					return false;
-				});
-	}
-
-	public boolean hasStatChange()
-	{
-		return (s != null && !s.isEmpty())
-				|| (m != null && m.stream().anyMatch(e ->
-				e.getT() == PartyMiscChange.PartyMisc.S
-						|| e.getT() == PartyMiscChange.PartyMisc.R
-						|| e.getT() == PartyMiscChange.PartyMisc.C
-						|| e.getT() == PartyMiscChange.PartyMisc.T)
-		);
+				.anyMatch(e -> e.t.equals(PartyMiscChange.PartyMisc.W));
 	}
 
 	public static <E extends Enum<E>> int pack(Collection<E> items)
@@ -234,37 +144,5 @@ public class PartyBatchedChange extends PartyMemberMessage
 		}
 
 		return out;
-	}
-
-	public static int packRune(final Item item)
-	{
-		return packRune(item.getId(), item.getQuantity());
-	}
-
-	public static int packRune(final int itemId, final int qty)
-	{
-		// qty can only be between 1 and 16,000, which is 14 bits of the 31 available bits (excluding sign)
-		// pack the qty into the left-most 14 bits by offsetting it by 18
-		int packed = qty << 18;
-		return packed | itemId;
-	}
-
-	public static Item unpackRune(final int packed)
-	{
-		final int qty = packed >>> 18;
-		// To retrieve the itemId we need to set the left most 14 bits to 0
-		final int itemId = packed & 0x3FFFF;
-
-		return new Item(itemId, qty);
-	}
-
-	public Collection<Prayer> unpackActivePrayers()
-	{
-		return unpack(ap);
-	}
-
-	public Collection<Prayer> unpackEnabledPrayers()
-	{
-		return unpack(ep);
 	}
 }

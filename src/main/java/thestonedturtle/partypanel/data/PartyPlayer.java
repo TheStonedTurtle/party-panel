@@ -28,10 +28,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import net.runelite.api.Client;
 import net.runelite.api.EquipmentInventorySlot;
-import net.runelite.api.Item;
-import net.runelite.api.ItemContainer;
 import net.runelite.api.Skill;
-import net.runelite.api.gameval.InventoryID;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.callback.ClientThread;
@@ -39,19 +36,18 @@ import net.runelite.client.game.ItemManager;
 import net.runelite.client.party.PartyMember;
 import thestonedturtle.partypanel.PartyPanelPlugin;
 
-import java.util.List;
+import java.util.Objects;
 
 @Data
 @EqualsAndHashCode
 public class PartyPlayer
 {
 	private transient PartyMember member;
-	private String username;
 	private Stats stats;
 	private GameItem[] inventory;
 	private GameItem[] equipment;
 	private Prayers prayers;
-	private int stamina;
+	private boolean staminaActive;
 	private int poison;
 	private int disease;
 	private int world;
@@ -59,16 +55,16 @@ public class PartyPlayer
 	private Quiver quiver;
 	// 0=Standard, 1=Ancient, 2=Lunar, 3=Arceuus
 	private int spellbook;
+	private transient MemberBannerSnapshot snapshot;
 
-	public PartyPlayer(final PartyMember member)
+	public PartyPlayer()
 	{
-		this.member = member;
-		this.username = "";
+		this.member = null;
 		this.stats = null;
 		this.inventory = new GameItem[28];
 		this.equipment = new GameItem[EquipmentInventorySlot.AMMO.getSlotIdx() + 1];
 		this.prayers = null;
-		this.stamina = 0;
+		this.staminaActive = false;
 		this.poison = 0;
 		this.disease = 0;
 		this.world = 0;
@@ -77,73 +73,44 @@ public class PartyPlayer
 		this.spellbook = -1;
 	}
 
+	public PartyPlayer(final PartyMember member, final ItemManager itemManager)
+	{
+		this();
+
+		updateMemberInfo(member, itemManager);
+	}
+
 	public PartyPlayer(final PartyMember member, final Client client, final ItemManager itemManager, final ClientThread clientThread)
 	{
-		this(member);
-		this.stamina = client.getVarbitValue(VarbitID.STAMINA_DURATION);
+		this();
+		this.staminaActive = client.getVarbitValue(VarbitID.STAMINA_DURATION) > 0;
 		this.poison = client.getVarpValue(VarPlayerID.POISON);
 		this.disease = client.getVarpValue(VarPlayerID.DISEASE);
 		this.world = client.getWorld();
 
-		clientThread.invoke(() -> updatePlayerInfo(client, itemManager));
+		if (member != null)
+		{
+			updateMemberInfo(member, itemManager);
+		}
+
+		clientThread.invoke(() -> updatePlayerInfo(client));
 	}
 
-	public void updatePlayerInfo(final Client client, final ItemManager itemManager)
+	public void updatePlayerInfo(final Client client)
 	{
 		assert client.isClientThread();
 
 		// Player is logged in
 		if (client.getLocalPlayer() != null)
 		{
-			this.username = client.getLocalPlayer().getName();
-			this.stats = new Stats(client);
-
-			final ItemContainer invi = client.getItemContainer(InventoryID.INV);
-			if (invi != null)
+			if (this.stats == null)
 			{
-				this.inventory = GameItem.convertItemsToGameItems(invi.getItems(), itemManager);
-				final List<Item> runesInPouch = PartyPanelPlugin.getRunePouchContents(client);
-				this.runesInPouch = GameItem.convertItemsToGameItems(runesInPouch.toArray(Item[]::new), itemManager);
-
-				boolean hasQuiverInInventory = false;
-				for (final Item item : invi.getItems())
-				{
-					if (PartyPanelPlugin.DIZANAS_QUIVER_IDS.contains(item.getId()))
-					{
-						hasQuiverInInventory = true;
-						break;
-					}
-				}
-				quiver.setInInventory(hasQuiverInInventory);
-			}
-
-			final ItemContainer equip = client.getItemContainer(InventoryID.WORN);
-			if (equip != null)
-			{
-				this.equipment = GameItem.convertItemsToGameItems(equip.getItems(), itemManager);
-
-				final Item cape = equip.getItem(EquipmentInventorySlot.CAPE.getSlotIdx());
-				boolean isWearingQuiver = cape != null && PartyPanelPlugin.DIZANAS_QUIVER_IDS.contains(cape.getId());
-				quiver.setBeingWorn(isWearingQuiver);
+				this.stats = new Stats(client);
 			}
 
 			if (this.prayers == null)
 			{
 				prayers = new Prayers(client);
-			}
-		}
-
-		if (quiver.isSlotVisible())
-		{
-			final int quiverAmmoId = client.getVarpValue(VarPlayerID.DIZANAS_QUIVER_TEMP_AMMO);
-			final int quiverAmmoCount = client.getVarpValue(VarPlayerID.DIZANAS_QUIVER_TEMP_AMMO_AMOUNT);
-			if (quiverAmmoId == -1 || quiverAmmoCount == 0)
-			{
-				quiver.setQuiverAmmo(null);
-			}
-			else
-			{
-				quiver.setQuiverAmmo(new GameItem(quiverAmmoId, quiverAmmoCount, itemManager));
 			}
 		}
 	}
@@ -173,23 +140,92 @@ public class PartyPlayer
 		return Math.min(stats.getBaseLevels().get(skill), allowVirtualLevels ? 126 : 99);
 	}
 
-	public void setSkillsBoostedLevel(final Skill skill, final int level)
+	public boolean updateMemberInfo(final PartyMember newData, final ItemManager itemManager)
 	{
-		if (stats == null)
+		final PartyMember oldMember = member;
+		member = newData;
+
+		if (member.getInv() != null)
 		{
-			return;
+			inventory = GameItem.convertItemsToGameItems(member.getInv(), itemManager);
+			quiver.setInInventory(false);
+			for (final GameItem item : inventory)
+			{
+				if (item == null)
+				{
+					continue;
+				}
+
+				if (PartyPanelPlugin.DIZANAS_QUIVER_IDS.contains(item.getId()))
+				{
+					quiver.setInInventory(true);
+					break;
+				}
+			}
 		}
 
-		stats.getBoostedLevels().put(skill, level);
+		if (member.getWorn() != null)
+		{
+			equipment = GameItem.convertItemsToGameItems(member.getWorn(), itemManager);
+			quiver.setBeingWorn(false);
+			for (final GameItem item : equipment)
+			{
+				if (item == null)
+				{
+					continue;
+				}
+
+				if (PartyPanelPlugin.DIZANAS_QUIVER_IDS.contains(item.getId()))
+				{
+					quiver.setBeingWorn(true);
+				}
+			}
+		}
+
+		if (prayers == null)
+		{
+			prayers = new Prayers();
+		}
+
+		if (member.getPrayers() != null)
+		{
+			prayers.updateFromPartyMember(member);
+		}
+
+		if (stats == null)
+		{
+			stats = new Stats();
+		}
+		stats.handleMemberUpdate(member);
+
+		if (member.getRunepouch() != null)
+		{
+			runesInPouch = GameItem.convertItemsToGameItems(member.getRunepouch(), itemManager);
+		}
+
+		if (member.getQuiver() != null)
+		{
+			quiver.setQuiverAmmo(new GameItem(member.getQuiver(), itemManager));
+			// inv and worn checks handle the other properties of quiver
+		}
+
+		final MemberBannerSnapshot newSnapshot = MemberBannerSnapshot.of(member, stats.getCombatLevel());
+		final boolean hasBreakingChange = oldMember == null || !newSnapshot.equals(snapshot);
+
+		snapshot = newSnapshot;
+
+		return hasBreakingChange;
 	}
 
-	public void setSkillsRealLevel(final Skill skill, final int level)
+	public String getUsername()
 	{
-		if (stats == null)
+		final String username = member == null ? null : member.getDisplayName();
+
+		if (Objects.equals(username, "<unknown>"))
 		{
-			return;
+			return null;
 		}
 
-		stats.getBaseLevels().put(skill, level);
+		return username;
 	}
 }

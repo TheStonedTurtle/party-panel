@@ -110,7 +110,7 @@ public class PlayerBanner extends JPanel
 		worldLabel.setHorizontalTextPosition(JLabel.LEFT);
 		worldLabel.setVisible(displayWorld);
 
-		usingStamIcon = player.getStamina() > 0;
+		usingStamIcon = player.isStaminaActive();
 		statsPanel.add(createIconPanel(spriteManager, SpriteID.Staticons.HITPOINTS, Skill.HITPOINTS.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.HITPOINTS))));
 		statsPanel.add(createIconPanel(spriteManager, SpriteID.Staticons.PRAYER, Skill.PRAYER.getName(), String.valueOf(player.getSkillBoostedLevel(Skill.PRAYER))));
 		statsPanel.add(createIconPanel(spriteManager, SpriteID.OVERLAY_MULTIWAY, SPECIAL_ATTACK_NAME, player.getStats() == null ? "0" : String.valueOf(player.getStats().getSpecialPercent())));
