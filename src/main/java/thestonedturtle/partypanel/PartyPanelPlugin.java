@@ -182,8 +182,6 @@ public class PartyPanelPlugin extends Plugin
 		{
 			final PartyBatchedChange cleanUserInfo = partyPlayerAsBatchedChange();
 			cleanUserInfo.setM(Collections.emptySet());
-			cleanUserInfo.setRp(null);
-			cleanUserInfo.setQ(new int[0]);
 			partyService.send(cleanUserInfo);
 		}
 

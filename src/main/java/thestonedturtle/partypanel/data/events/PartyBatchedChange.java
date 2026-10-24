@@ -27,15 +27,12 @@ package thestonedturtle.partypanel.data.events;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import net.runelite.api.Item;
 import net.runelite.api.Prayer;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.party.messages.PartyMemberMessage;
-import thestonedturtle.partypanel.data.GameItem;
 import thestonedturtle.partypanel.data.PartyPlayer;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -47,16 +44,12 @@ public class PartyBatchedChange extends PartyMemberMessage
 	Collection<PartyMiscChange> m = new ArrayList<>(); // Misc Changes
 	Integer ap; // Available Prayers, bit-packed & contains all available prayers on every change
 	Integer up; // Unlocked Prayers, bit-packed & contains all unlocked prayers on every change
-	int[] rp; // rp itemId and qty
-	int[] q; // Quiver itemId and qty
 
 	public boolean isValid()
 	{
 		return (m != null && !m.isEmpty())
 				|| ap != null
-				|| up != null
-				|| rp != null
-				|| q != null;
+				|| up != null;
 	}
 
 	// Unset unneeded variables to minimize payload
@@ -76,27 +69,6 @@ public class PartyBatchedChange extends PartyMemberMessage
 		if (ap != null || up != null)
 		{
 			processPrayers(player);
-		}
-
-		if (rp != null)
-		{
-			Item[] runePouchContents = Arrays.stream(rp)
-					.mapToObj(PartyBatchedChange::unpackRune)
-					.toArray(Item[]::new);
-			player.setRunesInPouch(GameItem.convertItemsToGameItems(runePouchContents, itemManager));
-		}
-
-		if (q != null)
-		{
-			if (q.length == 0)
-			{
-				player.getQuiver().setQuiverAmmo(null);
-			}
-			else
-			{
-				assert q.length == 2;
-				player.getQuiver().setQuiverAmmo(new GameItem(q[0], q[1], itemManager));
-			}
 		}
 	}
 
@@ -166,27 +138,5 @@ public class PartyBatchedChange extends PartyMemberMessage
 		}
 
 		return out;
-	}
-
-	public static int packRune(final Item item)
-	{
-		return packRune(item.getId(), item.getQuantity());
-	}
-
-	public static int packRune(final int itemId, final int qty)
-	{
-		// qty can only be between 1 and 16,000, which is 14 bits of the 31 available bits (excluding sign)
-		// pack the qty into the left-most 14 bits by offsetting it by 18
-		int packed = qty << 18;
-		return packed | itemId;
-	}
-
-	public static Item unpackRune(final int packed)
-	{
-		final int qty = packed >>> 18;
-		// To retrieve the itemId we need to set the left most 14 bits to 0
-		final int itemId = packed & 0x3FFFF;
-
-		return new Item(itemId, qty);
 	}
 }
