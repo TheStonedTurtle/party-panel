@@ -454,7 +454,7 @@ public class PartyPanelPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onPartyDataMessage(final PartyDataMessage event)
+	public void onPartyData(final PartyData event)
 	{
 		// PartyDataService tracks data for the local player (since it transmits it for us anyway)
 		// In theory we could ignore these updates, but I am keeping this data locally for backwards compatibility reasons
