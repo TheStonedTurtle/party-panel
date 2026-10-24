@@ -206,7 +206,7 @@ public class PartyPlayer
 		if (member.getQuiver() != null)
 		{
 			quiver.setQuiverAmmo(new GameItem(member.getQuiver(), itemManager));
-			// inv and worn chicks handle the other properties of quiver
+			// inv and worn checks handle the other properties of quiver
 		}
 
 		final MemberBannerSnapshot newSnapshot = MemberBannerSnapshot.of(member, stats.getCombatLevel());
