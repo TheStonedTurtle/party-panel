@@ -74,12 +74,18 @@ public class PartyBatchedChange extends PartyMemberMessage
 
 	private void processPrayers(PartyPlayer player)
 	{
-		// Default all prayers to not available and not enabled
+		// Reset all prayers when one of the states change since the unpacked version only contains the truthy values
 		player.getPrayers().getPrayerData().forEach((idx, p) ->
 		{
-			p.setAvailable(false);
-			p.setEnabled(false);
-			p.setUnlocked(false);
+			if (ap != null)
+			{
+				p.setAvailable(false);
+			}
+
+			if (up != null)
+			{
+				p.setUnlocked(false);
+			}
 		});
 
 		// enabled prayers are handled by PartyDataService
